@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from "mongoose";
-import { comparePassword, hashPassword } from "../utils/bcrypt";
+import { comparePass, hashPass } from "../utils/bcrypt";
 
 export interface UserDocument extends Document {
   name: string;
@@ -8,6 +8,8 @@ export interface UserDocument extends Document {
   avatar?: string | null;
   createdAt: Date;
   updatedAt: Date;
+
+  comparePassword(val: string): Promise<boolean>;
 }
 
 const userSchema = new Schema<UserDocument>(
@@ -38,13 +40,13 @@ const userSchema = new Schema<UserDocument>(
 
 userSchema.pre("save", async function (next) {
   if (this.password && this.isModified("password")) {
-    this.password = await hashPassword(this.password);
+    this.password = await hashPass(this.password);
   }
   next();
 });
 
 userSchema.methods.comparePassword = async function (val: string) {
-  return comparePassword(val, this.password);
+  return comparePass(val, this.password);
 };
 
 const UserModel = mongoose.model<UserDocument>("User", userSchema);

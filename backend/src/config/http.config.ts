@@ -7,6 +7,7 @@ export const HTTP_STATUS = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
+  UNPROCESSABLE_ENTITY: 422,
   INTERNAL_SERVER_ERROR: 500,
 } as const;
 
@@ -18,6 +19,7 @@ export const HTTP_STATUS_MESSAGE = {
   [HTTP_STATUS.UNAUTHORIZED]: "Unauthorized",
   [HTTP_STATUS.FORBIDDEN]: "Forbidden",
   [HTTP_STATUS.NOT_FOUND]: "Not Found",
+  [HTTP_STATUS.UNPROCESSABLE_ENTITY]: "Invalid field value",
   [HTTP_STATUS.CONFLICT]: "Conflict",
   [HTTP_STATUS.INTERNAL_SERVER_ERROR]: "Internal Server Error",
 } as const;

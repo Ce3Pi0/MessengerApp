@@ -1,9 +1,18 @@
 import { ErrorRequestHandler } from "express";
 import { HTTP_STATUS, HTTP_STATUS_MESSAGE } from "../config/http.config";
-import { AppError, ErrorCodes } from "../utils/app-error";
+import {
+  AppError,
+  ErrorCodes,
+  UnprocessableEntityException,
+} from "../utils/app-error";
+import { ZodError } from "zod";
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, next): any => {
   console.error(`Error occurred: ${req.path}`, err);
+
+  if (err instanceof ZodError) {
+    err = new UnprocessableEntityException(err.errors[0].message);
+  }
 
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
