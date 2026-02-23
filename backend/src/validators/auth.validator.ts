@@ -18,15 +18,21 @@ export const passwordSchema = z
     `Invalid password length | min length: ${MIN_PASSWORD_LEN}`,
   );
 
-export const registerSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(MIN_NAME_LEN, "Name must contain at least 1 character(s)"),
-  email: emailSchema,
-  password: passwordSchema,
-  avatar: z.string().optional(),
-});
+export const registerSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(MIN_NAME_LEN, "Name must contain at least 1 character(s)"),
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string().trim().min(1),
+    avatar: z.string().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Confirm password does not match",
+    path: ["confirmPassword"],
+  });
 
 export const loginSchema = z.object({
   email: emailSchema,

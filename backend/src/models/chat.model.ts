@@ -4,6 +4,7 @@ export interface ChatDocument extends Document {
   participants: mongoose.Types.ObjectId[];
   lastMessage: mongoose.Types.ObjectId;
   isGroup: boolean;
+  groupName: string;
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -16,6 +17,7 @@ const chatSchema = new Schema<ChatDocument>(
     ],
     lastMessage: { type: Schema.Types.ObjectId, ref: "Message", default: null },
     isGroup: { type: Boolean, default: false },
+    groupName: { type: String },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   {
@@ -23,6 +25,6 @@ const chatSchema = new Schema<ChatDocument>(
   },
 );
 
-const chatModel = mongoose.model<ChatDocument>("Chat", chatSchema);
+const ChatModel = mongoose.model<ChatDocument>("Chat", chatSchema);
 
-export default chatModel;
+export default ChatModel;

@@ -5,13 +5,37 @@ import {
   ErrorCodes,
   UnprocessableEntityException,
 } from "../utils/app-error";
-import { ZodError } from "zod";
+import { ZodError, ZodIssue } from "zod";
+
+const formatZodErrMsg = (
+  zodIssue: ZodIssue,
+  prevErrMsg: string = "",
+): string => {
+  if (prevErrMsg) prevErrMsg += " | ";
+
+  prevErrMsg = zodIssue.message;
+  prevErrMsg += zodIssue.code === "invalid_type" ? `: ${zodIssue.path} ` : "";
+
+  return prevErrMsg;
+};
+
+const zodErrorHandler = (zodErr: ZodError): AppError => {
+  const zodErrors: ZodIssue[] = zodErr.errors;
+  let errMsg = formatZodErrMsg(zodErrors[0]);
+  zodErrors.shift();
+
+  for (let zodErr of zodErrors) {
+    errMsg += formatZodErrMsg(zodErr, errMsg);
+  }
+
+  return new UnprocessableEntityException(errMsg);
+};
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, next): any => {
   console.error(`Error occurred: ${req.path}`, err);
 
   if (err instanceof ZodError) {
-    err = new UnprocessableEntityException(err.errors[0].message);
+    err = zodErrorHandler(err);
   }
 
   if (err instanceof AppError) {
