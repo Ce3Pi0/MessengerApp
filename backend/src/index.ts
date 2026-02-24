@@ -6,7 +6,7 @@ import passport from "passport";
 import { Env } from "./config/env.config";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
 import connectDatabase from "./config/database.config";
-import "./config/jwt-passport.config";
+import "./config/jwt.strategy.config";
 import router from "./routes";
 
 const app = express();

@@ -1,3 +1,4 @@
+import { Profile } from "passport-google-oauth20";
 import UserModel from "../models/user.model";
 import {
   ConflictException,
@@ -11,9 +12,45 @@ import {
   RegisterSchemaType,
 } from "../validators/auth.validator";
 
-export const googleAuthService = async () => {
-  // Google authentication logic would go here
-  return { message: "Google authentication successful" };
+export const googleAuthRegisterService = async (body: Profile) => {
+  const profile: Profile = body;
+  let user = await UserModel.findOne({
+    googleId: profile.id,
+  });
+
+  if (!user) {
+    user = new UserModel({
+      name: profile.displayName,
+      email: profile.emails?.[0]?.value || "",
+      googleId: profile.id,
+      provider: "google",
+    });
+    await user.save();
+    console.log("New User:", user);
+  }
+  return user;
+};
+
+export const googleAuthLoginService = async (body: Express.User) => {
+  console.log("Google User:", body);
+
+  const existingUser = await UserModel.findOne({ _id: body.id });
+
+  if (!existingUser) throw new NotFoundException("User email not found");
+  const accessToken = signAccessToken(existingUser);
+  const refreshToken = signRefreshToken(existingUser);
+
+  const hashedRefreshToken: string = await hashToken(refreshToken);
+  await UserModel.updateOne(
+    { _id: existingUser._id },
+    { $set: { refreshToken: hashedRefreshToken } },
+  );
+
+  return {
+    existingUser,
+    accessToken,
+    refreshToken,
+  };
 };
 
 export const registerService = async (body: RegisterSchemaType) => {

@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../middlewares/asyncHandler.middleware";
 import { loginSchema, registerSchema } from "../validators/auth.validator";
-import { loginService, registerService } from "../services/auth.service";
+import {
+  googleAuthLoginService,
+  loginService,
+  registerService,
+} from "../services/auth.service";
 import { clearJwtAuthCookie, setJwtAuthCookie } from "../utils/cookie";
 import { HTTP_STATUS } from "../config/http.config";
 import { findByIdUserService } from "../services/user.service";
@@ -14,10 +18,15 @@ import UserModel from "../models/user.model";
 
 export const googleAuthController = asyncHandler(
   async (req: Request, res: Response) => {
-    // Google authentication logic would go here
-    return res
+    const user = req.user;
+
+    const { accessToken, refreshToken } = await googleAuthLoginService(user!);
+
+    return setJwtAuthCookie(res, accessToken, refreshToken)
       .status(HTTP_STATUS.OK)
-      .json({ message: "Google authentication successful" });
+      .json({
+        message: "Google authentication successful",
+      });
   },
 );
 
