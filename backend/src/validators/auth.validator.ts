@@ -16,7 +16,8 @@ export const passwordSchema = z
   .min(
     MIN_PASSWORD_LEN,
     `Invalid password length | min length: ${MIN_PASSWORD_LEN}`,
-  );
+  )
+  .optional();
 
 export const registerSchema = z
   .object({
@@ -26,14 +27,26 @@ export const registerSchema = z
       .min(MIN_NAME_LEN, "Name must contain at least 1 character(s)"),
     email: emailSchema,
     password: passwordSchema,
-    confirmPassword: z.string().trim().min(1),
+    googleId: z.string().trim().min(1).optional(),
+    provider: z.enum(["local", "google"]),
+    confirmPassword: z.string().trim().min(1).optional(),
     avatar: z.string().optional(),
   })
+  .refine((data) => data.googleId || data.password, {
+    message: "Invalid authentication method",
+    path: ["password", "googleId"],
+  })
+  .refine(
+    (data) => data.provider === "local" && data.password && !data.googleId,
+    {
+      message: "Invalid authentication method",
+      path: ["password", "googleId"],
+    },
+  )
   .refine((data) => data.password === data.confirmPassword, {
     message: "Confirm password does not match",
     path: ["confirmPassword"],
   });
-
 export const loginSchema = z.object({
   email: emailSchema,
   password: passwordSchema,

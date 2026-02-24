@@ -4,6 +4,7 @@ import { UnauthorizedException } from "../utils/app-error";
 import { HTTP_STATUS, HTTP_STATUS_MESSAGE } from "./http.config";
 import { Env } from "./env.config";
 import { findByIdUserService } from "../services/user.service";
+import { NextFunction, Request, Response } from "express";
 
 passport.use(
   new JwtStrategy(
@@ -18,13 +19,13 @@ passport.use(
           return token;
         },
       ]),
-      secretOrKey: Env.JWT_SECRET,
+      secretOrKey: Env.JWT_ACCESS_SECRET,
       audience: ["user"],
       algorithms: ["HS256"],
     },
-    async ({ userId }, done) => {
+    async ({ id }, done) => {
       try {
-        const user = userId && (await findByIdUserService(userId));
+        const user = id && (await findByIdUserService(id));
         return done(null, user || false);
       } catch (err) {
         return done(null, false);
@@ -33,6 +34,23 @@ passport.use(
   ),
 );
 
-export const passportAuthenticateJwt = passport.authenticate("jwt", {
-  session: false,
-});
+export const passportAuthenticateJwt = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  passport.authenticate(
+    "jwt",
+    {
+      session: false,
+    },
+    (err: any, user: Express.User, info: any) => {
+      if (info instanceof Error && info.name === "TokenExpiredError") {
+        throw new UnauthorizedException("Token expired");
+      }
+
+      req.user = user;
+      next();
+    },
+  )(req, res, next);
+};

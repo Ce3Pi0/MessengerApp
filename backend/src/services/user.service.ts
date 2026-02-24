@@ -5,5 +5,7 @@ export const findByIdUserService = async (userId: string) => {
 };
 
 export const getUsersService = async (userId: string) => {
-  return await UserModel.find({ _id: { $ne: userId } }).select("-password");
+  return await UserModel.find({ _id: { $ne: userId } })
+    .select("-password")
+    .select("-refreshToken");
 };

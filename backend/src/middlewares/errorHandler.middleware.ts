@@ -2,10 +2,14 @@ import { ErrorRequestHandler } from "express";
 import { HTTP_STATUS, HTTP_STATUS_MESSAGE } from "../config/http.config";
 import {
   AppError,
+  BadRequestException,
   ErrorCodes,
+  ForbiddenException,
+  UnauthorizedException,
   UnprocessableEntityException,
 } from "../utils/app-error";
 import { ZodError, ZodIssue } from "zod";
+import { JsonWebTokenError } from "jsonwebtoken";
 
 const formatZodErrMsg = (
   zodIssue: ZodIssue,
@@ -31,11 +35,22 @@ const zodErrorHandler = (zodErr: ZodError): AppError => {
   return new UnprocessableEntityException(errMsg);
 };
 
+const jwtErrorHandler = (err: any): AppError => {
+  if (err.name === "TokenExpiredError" || err.name === "JsonWebTokenError") {
+    return new ForbiddenException("Session expired, please login again");
+  }
+  return new UnauthorizedException("Invalid refresh token");
+};
+
 export const errorHandler: ErrorRequestHandler = (err, req, res, next): any => {
   console.error(`Error occurred: ${req.path}`, err);
 
   if (err instanceof ZodError) {
     err = zodErrorHandler(err);
+  }
+
+  if (err instanceof JsonWebTokenError) {
+    err = jwtErrorHandler(err);
   }
 
   if (err instanceof AppError) {
