@@ -10,14 +10,27 @@ export const emailSchema = z
   .email("Invalid email address")
   .min(MIN_EMAIL_LEN, `Invalid email length | min length: ${MIN_EMAIL_LEN}`);
 
-export const passwordSchema = z
-  .string()
-  .trim()
-  .min(
-    MIN_PASSWORD_LEN,
-    `Invalid password length | min length: ${MIN_PASSWORD_LEN}`,
-  )
-  .optional();
+export const requiredPasswordSchema = (fieldName: string = "password") =>
+  z
+    .string()
+    .trim()
+    .min(
+      MIN_PASSWORD_LEN,
+      `Invalid ${fieldName} length-min: ${MIN_PASSWORD_LEN}`,
+    );
+
+export const passwordSchema = requiredPasswordSchema().optional();
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: requiredPasswordSchema("currentPassword"),
+    newPassword: requiredPasswordSchema("newPassword"),
+    confirmNewPassword: requiredPasswordSchema("confirmNewPassword"),
+  })
+  .refine((data) => data.newPassword === data.confirmNewPassword, {
+    message: "Confirm password does not match",
+    path: ["confirmNewPassword"],
+  });
 
 export const registerSchema = z
   .object({
@@ -54,3 +67,4 @@ export const loginSchema = z.object({
 
 export type RegisterSchemaType = z.infer<typeof registerSchema>;
 export type LoginSchemaType = z.infer<typeof loginSchema>;
+export type ChangePasswordSchema = z.infer<typeof changePasswordSchema>;

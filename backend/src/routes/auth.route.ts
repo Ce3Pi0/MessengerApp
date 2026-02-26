@@ -1,6 +1,7 @@
 import { Request, Response, Router } from "express";
 import {
   authStatusController,
+  changePasswordController,
   googleAuthController,
   loginController,
   logoutController,
@@ -21,9 +22,13 @@ const authRoutes = Router()
     googleAuthController,
   )
   .post("/register", blockIfAuthenticated, registerController)
+
   .post("/login", blockIfAuthenticated, loginController)
   .post("/logout", passportAuthenticateJwt, logoutController)
+  .put("/change-password", passportAuthenticateJwt, changePasswordController)
+
   .get("/status", passportAuthenticateJwt, authStatusController)
-  .post("/refresh", refreshController);
+
+  .put("/refresh", refreshController);
 
 export default authRoutes;

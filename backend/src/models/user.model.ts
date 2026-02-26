@@ -1,5 +1,8 @@
-import mongoose, { Document, Schema } from "mongoose";
-import { compareVal, hashPass, hashToken } from "../utils/bcrypt";
+import mongoose, { Document, Schema, UpdateQuery } from "mongoose";
+import { comparePass, compareVal, hashPass, hashToken } from "../utils/bcrypt";
+import { UnprocessableEntityException } from "../utils/app-error";
+
+type Providers = "local" | "google" | "merged";
 
 export interface UserDocument extends Document {
   name: string;
@@ -7,7 +10,7 @@ export interface UserDocument extends Document {
   password?: string;
   googleId?: string;
   refreshToken?: string;
-  provider: "local" | "google";
+  provider: Providers;
   avatar?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -28,7 +31,11 @@ const userSchema = new Schema<UserDocument>(
     password: { type: String },
     googleId: { type: String },
     refreshToken: { type: String },
-    provider: { type: String, enum: ["local", "google"], required: true },
+    provider: {
+      type: String,
+      enum: ["local", "google", "merged"],
+      required: true,
+    },
     avatar: { type: String, default: null },
   },
   {
@@ -55,8 +62,8 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
-userSchema.methods.comparePassword = async function (val: string) {
-  return compareVal(val, this.password);
+userSchema.methods.comparePassword = async function (pass: string) {
+  return comparePass(pass, this.password);
 };
 
 const UserModel = mongoose.model<UserDocument>("User", userSchema);

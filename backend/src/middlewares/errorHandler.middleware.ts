@@ -18,7 +18,7 @@ const formatZodErrMsg = (
   if (prevErrMsg) prevErrMsg += " | ";
 
   prevErrMsg = zodIssue.message;
-  prevErrMsg += zodIssue.code === "invalid_type" ? `: ${zodIssue.path} ` : "";
+  prevErrMsg += zodIssue.code === "invalid_type" ? `: ${zodIssue.path} ` : " ";
 
   return prevErrMsg;
 };

@@ -21,13 +21,10 @@ async function verify(
   done: VerifyCallback,
 ) {
   try {
-    console.log("Google Profile:", profile);
-
-    const user = await googleAuthRegisterService(profile);
-
-    return done(null, user);
-  } catch (error) {
-    return done(error as Error);
+    const user = profile && (await googleAuthRegisterService(profile));
+    return done(null, user || false);
+  } catch (err) {
+    return done(null, false);
   }
 }
 

@@ -1,20 +1,21 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../middlewares/asyncHandler.middleware";
-import { loginSchema, registerSchema } from "../validators/auth.validator";
 import {
+  changePasswordSchema,
+  loginSchema,
+  registerSchema,
+} from "../validators/auth.validator";
+import {
+  changePasswordService,
   googleAuthLoginService,
   loginService,
+  logoutUserService,
+  refreshService,
   registerService,
 } from "../services/auth.service";
 import { clearJwtAuthCookie, setJwtAuthCookie } from "../utils/cookie";
 import { HTTP_STATUS } from "../config/http.config";
-import { findByIdUserService } from "../services/user.service";
-import { ForbiddenException, UnauthorizedException } from "../utils/app-error";
-import jwt, { JwtPayload } from "jsonwebtoken";
-import { Env } from "../config/env.config";
-import { compareVal, hashToken } from "../utils/bcrypt";
-import { signAccessToken, signRefreshToken } from "../utils/jwt-tokens";
-import UserModel from "../models/user.model";
+import { UnauthorizedException } from "../utils/app-error";
 
 export const googleAuthController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -61,15 +62,7 @@ export const logoutController = asyncHandler(
   async (req: Request, res: Response) => {
     const refreshToken = req.cookies.refreshToken;
 
-    if (refreshToken) {
-      const user = await findByIdUserService(req.user?._id);
-      if (user) {
-        await UserModel.updateOne(
-          { _id: user._id },
-          { $unset: { refreshToken: "" } },
-        );
-      }
-    }
+    await logoutUserService(refreshToken, req.user!._id);
 
     clearJwtAuthCookie(res);
 
@@ -79,35 +72,33 @@ export const logoutController = asyncHandler(
   },
 );
 
+export const changePasswordController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const body = changePasswordSchema.parse(req.body);
+
+    const { newAccessToken, newRefreshToken } = await changePasswordService(
+      body,
+      req.user!._id,
+    );
+
+    return setJwtAuthCookie(res, newAccessToken, newRefreshToken)
+      .status(HTTP_STATUS.OK)
+      .json({
+        message: "Password changed successfully",
+      });
+  },
+);
+
 export const refreshController = asyncHandler(
   async (req: Request, res: Response) => {
     const refreshToken: string = req.cookies.refreshToken;
 
-    if (!refreshToken) throw new UnauthorizedException();
+    if (!refreshToken) throw new UnauthorizedException("Missing refresh token");
 
-    const payload = jwt.verify(
-      refreshToken,
-      Env.JWT_REFRESH_SECRET,
-    ) as JwtPayload;
+    const { newAccessToken, newRefreshToken } =
+      await refreshService(refreshToken);
 
-    const user = await findByIdUserService(payload.id);
-
-    if (!user) throw new ForbiddenException();
-
-    const isValid = await compareVal(refreshToken, user.refreshToken!);
-
-    if (!isValid) throw new UnauthorizedException();
-
-    const newAccessToken = signAccessToken(user);
-    const newRefreshToken = signRefreshToken(user);
-
-    const hashedRefreshToken: string = await hashToken(newRefreshToken);
-    await UserModel.updateOne(
-      { _id: user._id },
-      { $set: { refreshToken: hashedRefreshToken } },
-    );
-
-    setJwtAuthCookie(res, newAccessToken, newRefreshToken).json({
+    return setJwtAuthCookie(res, newAccessToken, newRefreshToken).json({
       message: "Refreshed",
     });
   },
