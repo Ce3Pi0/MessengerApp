@@ -18,6 +18,6 @@ export const blockIfAuthenticated = (
       .status(HTTP_STATUS.BAD_REQUEST)
       .json({ message: "Already authenticated" });
   } catch {
-    next();
+    return next();
   }
 };

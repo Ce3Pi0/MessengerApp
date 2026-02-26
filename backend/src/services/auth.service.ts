@@ -5,6 +5,7 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  NotAllowedException,
   NotFoundException,
   UnauthorizedException,
   UnprocessableEntityException,
@@ -19,11 +20,27 @@ import {
 import { findByIdUserService } from "./user.service";
 import { Env } from "../config/env.config";
 
-export const googleAuthRegisterService = async (body: Profile) => {
+export const googleAuthService = async (body: Profile) => {
   const profile: Profile = body;
+
   let user = await UserModel.findOne({
     googleId: profile.id,
   });
+
+  const otherUser = await UserModel.findOne({
+    email: profile.emails?.[0]?.value,
+  });
+
+  if (otherUser && otherUser.provider !== "google") {
+    await otherUser.updateOne({
+      $set: {
+        googleId: profile.id,
+        provider: "merged",
+      },
+    });
+
+    user = otherUser;
+  }
 
   if (!user) {
     user = new UserModel({
@@ -31,30 +48,55 @@ export const googleAuthRegisterService = async (body: Profile) => {
       email: profile.emails?.[0]?.value || "",
       googleId: profile.id,
       provider: "google",
+      avatar: profile.photos?.[0]?.value || "",
     });
-    await user.save();
-    console.log("New User:", user);
   }
+
   return user;
 };
 
-export const googleAuthLoginService = async (body: Express.User) => {
-  console.log("Google User:", body);
+export const googleAuthLoginService = async (
+  user: Express.User,
+  oldAccessToken: string | null,
+  oldRefreshToken: string | null,
+) => {
+  if (oldAccessToken) {
+    const payload = jwt.verify(
+      oldAccessToken,
+      Env.JWT_ACCESS_SECRET,
+    ) as JwtPayload;
 
-  const existingUser = await UserModel.findOne({ _id: body.id });
+    const oldUser = await UserModel.findById(payload.id);
 
-  if (!existingUser) throw new NotFoundException("User email not found");
-  const accessToken = signAccessToken(existingUser);
-  const refreshToken = signRefreshToken(existingUser);
+    if (oldUser?.email !== user.email)
+      return {
+        errorMsg: encodeURIComponent(
+          "Google account email does not match your local account.",
+        ),
+        accessToken: "",
+        refreshToken: "",
+      };
+  }
 
-  const hashedRefreshToken: string = await hashToken(refreshToken);
-  await UserModel.updateOne(
-    { _id: existingUser._id },
-    { $set: { refreshToken: hashedRefreshToken } },
-  );
+  await user.save();
+
+  if (!user) throw new NotFoundException("User email not found");
+
+  const accessToken = oldAccessToken ? oldAccessToken : signAccessToken(user);
+  const refreshToken = oldRefreshToken
+    ? oldRefreshToken
+    : signRefreshToken(user);
+
+  if (!oldRefreshToken) {
+    const hashedRefreshToken: string = await hashToken(refreshToken);
+    await UserModel.updateOne(
+      { _id: user._id },
+      { $set: { refreshToken: hashedRefreshToken } },
+    );
+  }
 
   return {
-    existingUser,
+    errorMsg: null,
     accessToken,
     refreshToken,
   };
@@ -77,28 +119,28 @@ export const registerService = async (body: RegisterSchemaType) => {
 export const loginService = async (body: LoginSchemaType) => {
   const { email, password } = body;
 
-  const existingUser = await UserModel.findOne({ email });
+  const user = await UserModel.findOne({ email });
 
-  if (!existingUser) throw new NotFoundException("User email not found");
+  if (!user) throw new NotFoundException("User email not found");
 
-  if (existingUser.provider === "google")
+  if (user.provider === "google")
     throw new BadRequestException("Google account not merged");
 
-  const isPasswordValid = await existingUser.comparePassword(password!);
+  const isPasswordValid = await user.comparePassword(password!);
 
   if (!isPasswordValid) throw new UnauthorizedException("Invalid Password");
 
-  const accessToken = signAccessToken(existingUser);
-  const refreshToken = signRefreshToken(existingUser);
+  const accessToken = signAccessToken(user);
+  const refreshToken = signRefreshToken(user);
 
   const hashedRefreshToken: string = await hashToken(refreshToken);
   await UserModel.updateOne(
-    { _id: existingUser._id },
+    { _id: user._id },
     { $set: { refreshToken: hashedRefreshToken } },
   );
 
   return {
-    existingUser,
+    user,
     accessToken,
     refreshToken,
   };

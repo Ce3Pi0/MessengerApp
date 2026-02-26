@@ -4,7 +4,7 @@ import {
   VerifyCallback,
 } from "passport-google-oauth20";
 import { Env } from "./env.config";
-import { googleAuthRegisterService } from "../services/auth.service";
+import { googleAuthService } from "../services/auth.service";
 
 const options = {
   clientID: Env.GOOGLE_CLIENT_ID || "",
@@ -21,7 +21,7 @@ async function verify(
   done: VerifyCallback,
 ) {
   try {
-    const user = profile && (await googleAuthRegisterService(profile));
+    const user = profile && (await googleAuthService(profile));
     return done(null, user || false);
   } catch (err) {
     return done(null, false);

@@ -10,6 +10,7 @@ export const ErrorCodes = {
   ERR_UNAUTHORIZED: "ERR_UNAUTHORIZED",
   ERR_FORBIDDEN: "ERR_FORBIDDEN",
   ERR_NOT_FOUND: "ERR_NOT_FOUND",
+  ERR_NOT_ALLOWED: "ERR_NOT_ALLOWED",
   ERR_CONFLICT: "ERR_CONFLICT",
   ERR_UNPROCESSABLE_ENTITY: "ERR_UNPROCESSABLE_ENTITY",
 } as const;
@@ -54,6 +55,12 @@ export class ForbiddenException extends AppError {
 export class NotFoundException extends AppError {
   constructor(message: string = HTTP_STATUS_MESSAGE[HTTP_STATUS.NOT_FOUND]) {
     super(message, HTTP_STATUS.NOT_FOUND, ErrorCodes.ERR_NOT_FOUND);
+  }
+}
+
+export class NotAllowedException extends AppError {
+  constructor(message: string = HTTP_STATUS_MESSAGE[HTTP_STATUS.NOT_ALLOWED]) {
+    super(message, HTTP_STATUS.NOT_ALLOWED, ErrorCodes.ERR_NOT_ALLOWED);
   }
 }
 

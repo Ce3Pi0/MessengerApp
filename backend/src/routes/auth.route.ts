@@ -3,6 +3,7 @@ import {
   authStatusController,
   changePasswordController,
   googleAuthController,
+  linkAccountController,
   loginController,
   logoutController,
   refreshController,
@@ -12,12 +13,20 @@ import { blockIfAuthenticated } from "../middlewares/blockIfAuthenticated.middle
 import { passportAuthenticateJwt } from "../middlewares/authJwt.middleware";
 import { passportAuthenticateGoogle } from "../middlewares/authGoogle.middleware";
 import passport from "../config/passport.config";
+import { blockIfGoogleAccount } from "../middlewares/blockIfGoogleAccount.middleware";
+import { blockIfMerged } from "../middlewares/blockIfMerged.middleware";
 
 const authRoutes = Router()
-  .get("/google", blockIfAuthenticated, passportAuthenticateGoogle)
+  .get(
+    "/google",
+    blockIfMerged,
+    blockIfGoogleAccount,
+    passportAuthenticateGoogle,
+  )
   .get(
     "/google/success",
-    blockIfAuthenticated,
+    blockIfMerged,
+    blockIfGoogleAccount,
     passport.authenticate("google", { session: false }),
     googleAuthController,
   )
@@ -26,6 +35,14 @@ const authRoutes = Router()
   .post("/login", blockIfAuthenticated, loginController)
   .post("/logout", passportAuthenticateJwt, logoutController)
   .put("/change-password", passportAuthenticateJwt, changePasswordController)
+
+  .get(
+    "/link-account",
+    passportAuthenticateJwt,
+    blockIfMerged,
+    blockIfGoogleAccount,
+    linkAccountController,
+  )
 
   .get("/status", passportAuthenticateJwt, authStatusController)
 

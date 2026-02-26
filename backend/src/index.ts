@@ -8,9 +8,13 @@ import { errorHandler } from "./middlewares/errorHandler.middleware";
 import connectDatabase from "./config/database.config";
 import "./config/jwt.strategy.config";
 import router from "./routes";
+import { rateLimiter } from "./config/rateLimiter.config";
+import { rateSlowDown } from "./config/rateSlowDown.config";
 
 const app = express();
 
+app.use(rateLimiter);
+app.use(rateSlowDown);
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));

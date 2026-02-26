@@ -16,18 +16,25 @@ import {
 import { clearJwtAuthCookie, setJwtAuthCookie } from "../utils/cookie";
 import { HTTP_STATUS } from "../config/http.config";
 import { UnauthorizedException } from "../utils/app-error";
+import { Env } from "../config/env.config";
 
 export const googleAuthController = asyncHandler(
   async (req: Request, res: Response) => {
-    const user = req.user;
+    const { errorMsg, accessToken, refreshToken } =
+      await googleAuthLoginService(
+        req.user!,
+        req.cookies.accessToken,
+        req.cookies.refreshToken,
+      );
 
-    const { accessToken, refreshToken } = await googleAuthLoginService(user!);
+    if (errorMsg) {
+      return res.redirect(`${Env.FRONTEND_URL}/settings?error=${errorMsg}`);
+    }
 
-    return setJwtAuthCookie(res, accessToken, refreshToken)
-      .status(HTTP_STATUS.OK)
-      .json({
-        message: "Google authentication successful",
-      });
+    return setJwtAuthCookie(res, accessToken, refreshToken).redirect(
+      HTTP_STATUS.FOUND,
+      Env.FRONTEND_URL,
+    );
   },
 );
 
@@ -48,12 +55,13 @@ export const loginController = asyncHandler(
   async (req: Request, res: Response) => {
     const body = loginSchema.parse(req.body);
 
-    const { accessToken, refreshToken } = await loginService(body);
+    const { user, accessToken, refreshToken } = await loginService(body);
 
     return setJwtAuthCookie(res, accessToken, refreshToken)
       .status(HTTP_STATUS.OK)
       .json({
         message: "User login successful",
+        user,
       });
   },
 );
@@ -86,6 +94,12 @@ export const changePasswordController = asyncHandler(
       .json({
         message: "Password changed successfully",
       });
+  },
+);
+
+export const linkAccountController = asyncHandler(
+  async (req: Request, res: Response) => {
+    return res.redirect(HTTP_STATUS.FOUND, Env.GOOGLE_URL);
   },
 );
 
