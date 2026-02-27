@@ -25,6 +25,7 @@ import {
 import { findByIdUserService } from "./user.service";
 import { Env } from "../config/env.config";
 import { sendMail } from "../utils/sendMail";
+import validate from "deep-email-validator";
 
 export const googleAuthService = async (body: Profile) => {
   const profile: Profile = body;
@@ -119,7 +120,10 @@ export const registerService = async (body: RegisterSchemaType) => {
   const newUser = new UserModel({
     ...body,
   });
-  await newUser.save();
+
+  const validEmail: boolean = (await validate(newUser.email)).valid;
+
+  if (!validEmail) throw new BadRequestException("Invalid email address");
 
   const confirmToken: string = signConfirmToken(newUser);
 
@@ -129,6 +133,8 @@ export const registerService = async (body: RegisterSchemaType) => {
     subject: `Verify You New Account ${newUser.name}`,
     text: `This token will expire in 15 minutes!: ${Env.API_URL}/auth/verify/${confirmToken}`,
   });
+
+  await newUser.save();
 
   return newUser;
 };
