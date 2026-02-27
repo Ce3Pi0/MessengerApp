@@ -8,6 +8,8 @@ import {
   logoutController,
   refreshController,
   registerController,
+  resendVerifyController,
+  verifyController,
 } from "../controllers/auth.controller";
 import { blockIfAuthenticated } from "../middlewares/blockIfAuthenticated.middleware";
 import { passportAuthenticateJwt } from "../middlewares/authJwt.middleware";
@@ -34,6 +36,8 @@ const authRoutes = Router()
 
   .post("/login", blockIfAuthenticated, loginController)
   .post("/logout", passportAuthenticateJwt, logoutController)
+  .get("/verify/:token", verifyController)
+  .post("/resend-verification", resendVerifyController)
   .put("/change-password", passportAuthenticateJwt, changePasswordController)
 
   .get(

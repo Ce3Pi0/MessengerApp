@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../middlewares/asyncHandler.middleware";
 import { HTTP_STATUS } from "../config/http.config";
 import { getUsersService } from "../services/user.service";
+import { transporter } from "../config/nodemailer.config";
 
 export const getUsersController = asyncHandler(
   async (req: Request, res: Response) => {

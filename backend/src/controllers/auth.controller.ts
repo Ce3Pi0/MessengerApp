@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../middlewares/asyncHandler.middleware";
 import {
   changePasswordSchema,
+  emailSchema,
   loginSchema,
   registerSchema,
 } from "../validators/auth.validator";
@@ -12,11 +13,14 @@ import {
   logoutUserService,
   refreshService,
   registerService,
+  resendVerifyService,
+  verifyService,
 } from "../services/auth.service";
 import { clearJwtAuthCookie, setJwtAuthCookie } from "../utils/cookie";
 import { HTTP_STATUS } from "../config/http.config";
 import { UnauthorizedException } from "../utils/app-error";
 import { Env } from "../config/env.config";
+import { transporter } from "../config/nodemailer.config";
 
 export const googleAuthController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -77,6 +81,33 @@ export const logoutController = asyncHandler(
     return res
       .status(HTTP_STATUS.OK)
       .json({ message: "User logged out successfully" });
+  },
+);
+
+export const verifyController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const verifyToken = req.params.token as string;
+
+    if (!verifyToken)
+      throw new UnauthorizedException("Verification token not specified");
+
+    await verifyService(verifyToken);
+
+    return res.redirect(HTTP_STATUS.FOUND, `${Env.FRONTEND_URL}/login`);
+  },
+);
+
+export const resendVerifyController = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (!req.body.email) throw new UnauthorizedException("Email not specified");
+
+    const email: string = emailSchema.parse(req.body.email);
+
+    await resendVerifyService(email);
+
+    return res
+      .status(HTTP_STATUS.OK)
+      .json({ message: "Verification email sent successfully" });
   },
 );
 

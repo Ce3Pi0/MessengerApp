@@ -11,6 +11,7 @@ export interface UserDocument extends Document {
   googleId?: string;
   refreshToken?: string;
   provider: Providers;
+  isVerified: boolean;
   avatar?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -36,6 +37,7 @@ const userSchema = new Schema<UserDocument>(
       enum: ["local", "google", "merged"],
       required: true,
     },
+    isVerified: { type: Boolean, default: false },
     avatar: { type: String, default: null },
   },
   {

@@ -36,10 +36,10 @@ const zodErrorHandler = (zodErr: ZodError): AppError => {
 };
 
 const jwtErrorHandler = (err: any): AppError => {
-  if (err.name === "TokenExpiredError" || err.name === "JsonWebTokenError") {
-    return new ForbiddenException("Session expired, please login again");
+  if (err.name === "TokenExpiredError") {
+    return new ForbiddenException("Token expired");
   }
-  return new UnauthorizedException("Invalid refresh token");
+  return new UnauthorizedException("Invalid token");
 };
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, next): any => {

@@ -11,14 +11,20 @@ import {
   UnprocessableEntityException,
 } from "../utils/app-error";
 import { compareVal, hashPass, hashToken } from "../utils/bcrypt";
-import { signAccessToken, signRefreshToken } from "../utils/jwt-tokens";
+import {
+  signAccessToken,
+  signConfirmToken,
+  signRefreshToken,
+} from "../utils/jwt-tokens";
 import {
   ChangePasswordSchema,
+  EmailSchemaType,
   LoginSchemaType,
   RegisterSchemaType,
 } from "../validators/auth.validator";
 import { findByIdUserService } from "./user.service";
 import { Env } from "../config/env.config";
+import { sendMail } from "../utils/sendMail";
 
 export const googleAuthService = async (body: Profile) => {
   const profile: Profile = body;
@@ -36,6 +42,7 @@ export const googleAuthService = async (body: Profile) => {
       $set: {
         googleId: profile.id,
         provider: "merged",
+        isVerified: true,
       },
     });
 
@@ -48,6 +55,7 @@ export const googleAuthService = async (body: Profile) => {
       email: profile.emails?.[0]?.value || "",
       googleId: profile.id,
       provider: "google",
+      isVerified: true,
       avatar: profile.photos?.[0]?.value || "",
     });
   }
@@ -113,6 +121,15 @@ export const registerService = async (body: RegisterSchemaType) => {
   });
   await newUser.save();
 
+  const confirmToken: string = signConfirmToken(newUser);
+
+  sendMail({
+    from: Env.SENDER_EMAIL,
+    to: newUser.email,
+    subject: `Verify You New Account ${newUser.name}`,
+    text: `This token will expire in 15 minutes!: ${Env.API_URL}/auth/verify/${confirmToken}`,
+  });
+
   return newUser;
 };
 
@@ -123,8 +140,11 @@ export const loginService = async (body: LoginSchemaType) => {
 
   if (!user) throw new NotFoundException("User email not found");
 
+  if (!user.isVerified)
+    throw new UnauthorizedException("User account not confirmed");
+
   if (user.provider === "google")
-    throw new BadRequestException("Google account not merged");
+    throw new BadRequestException("Google account does not have a password");
 
   const isPasswordValid = await user.comparePassword(password!);
 
@@ -182,6 +202,44 @@ export const refreshService = async (refreshToken: string) => {
   );
 
   return { newAccessToken, newRefreshToken };
+};
+
+export const verifyService = async (verifyToken: string) => {
+  const payload = jwt.verify(verifyToken, Env.JWT_VERIFY_SECRET) as JwtPayload;
+
+  const user = await UserModel.findById(payload.id);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  if (user.isVerified)
+    throw new NotAllowedException("User is already verified");
+
+  await UserModel.updateOne(
+    { _id: payload.id },
+    {
+      $set: {
+        isVerified: true,
+      },
+    },
+  );
+};
+
+export const resendVerifyService = async (userEmail: EmailSchemaType) => {
+  const user = await UserModel.findOne({ email: userEmail });
+
+  if (!user) throw new NotFoundException("User not found");
+
+  if (user.isVerified)
+    throw new NotAllowedException("User is already verified");
+
+  const confirmToken: string = signConfirmToken(user);
+
+  sendMail({
+    from: Env.SENDER_EMAIL,
+    to: user.email,
+    subject: `Verify You New Account ${user.name}`,
+    text: `This token will expire in 15 minutes!: ${Env.API_URL}/auth/verify/${confirmToken}`,
+  });
 };
 
 export const changePasswordService = async (
