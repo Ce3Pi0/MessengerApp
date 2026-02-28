@@ -406,6 +406,17 @@ export const enable2faService = async (user: Express.User): Promise<string> => {
   });
 };
 
+export const disable2faService = async (user: Express.User) => {
+  if (!user.enabled2fa)
+    throw new NotAllowedException("2FA not enabled on this user");
+
+  await UserModel.updateOne({
+    _id: user.id,
+    enabled2fa: false,
+    secret2fa: null,
+  });
+};
+
 export const verify2faService = async (userId: string, token: string) => {
   const user = await UserModel.findById(userId);
 

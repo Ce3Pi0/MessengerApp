@@ -9,6 +9,7 @@ import {
 } from "../validators/auth.validator";
 import {
   changePasswordService,
+  disable2faService,
   enable2faService,
   forgotPasswordService,
   googleAuthLoginService,
@@ -224,6 +225,20 @@ export const enable2faController = asyncHandler(
 
     return res.status(HTTP_STATUS.OK).json({
       qrCode: data,
+    });
+  },
+);
+
+export const disable2faController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const user = req.user;
+
+    if (!user) throw new UnauthorizedException("User not found");
+
+    await disable2faService(user);
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "2FA disabled successfully",
     });
   },
 );

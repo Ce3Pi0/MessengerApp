@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express";
 import {
   authStatusController,
   changePasswordController,
+  disable2faController,
   enable2faController,
   forgotPasswordController,
   googleAuthController,
@@ -58,6 +59,7 @@ const authRoutes = Router()
     linkAccountController,
   )
   .get("/enable2fa", passportAuthenticateJwt, enable2faController)
+  .put("/disable2fa", passportAuthenticateJwt, disable2faController)
   .post("/verify2fa", restrictToMfaPending, verify2faController)
 
   .get("/status", passportAuthenticateJwt, authStatusController)

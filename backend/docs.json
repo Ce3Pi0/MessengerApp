@@ -111,6 +111,35 @@
             }
           }
         },
+        "enable2fa": {
+          "methods": "GET",
+          "required": {
+            "cookies": {
+              "accessToken": "string",
+              "refreshToken": "string"
+            }
+          }
+        },
+        "disable2fa": {
+          "methods": "PUT",
+          "required": {
+            "cookies": {
+              "accessToken": "string",
+              "refreshToken": "string"
+            }
+          }
+        },
+        "verify2fa": {
+          "methods": "POST",
+          "required": {
+            "body": {
+              "otp": "string"
+            },
+            "cookies": {
+              "mfaToken": "string"
+            }
+          }
+        },
         "status": {
           "methods": "GET",
           "required": {
