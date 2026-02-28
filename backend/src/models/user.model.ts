@@ -14,6 +14,8 @@ export interface UserDocument extends Document {
   isVerified: boolean;
   forgotPassword: boolean;
   avatar?: string | null;
+  enabled2fa: boolean;
+  secret2fa?: string;
   createdAt: Date;
   updatedAt: Date;
 
@@ -41,6 +43,8 @@ const userSchema = new Schema<UserDocument>(
     isVerified: { type: Boolean, default: false },
     forgotPassword: { type: Boolean, default: false },
     avatar: { type: String, default: null },
+    enabled2fa: { type: Boolean, default: false },
+    secret2fa: { type: String },
   },
   {
     timestamps: true,

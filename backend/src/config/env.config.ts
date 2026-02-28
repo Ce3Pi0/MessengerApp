@@ -15,6 +15,7 @@ export const Env = {
   GOOGLE_CLIENT_SECRET: getEnv("GOOGLE_CLIENT_SECRET"),
   GOOGLE_URL: getEnv("GOOGLE_URL", "auth/google"),
   CALLBACK_URL: getEnv("CALLBACK_URL", "auth/google/success"),
+  JWT_MFA_SECRET: getEnv("JWT_MFA_SECRET"),
   JWT_VERIFY_SECRET: getEnv("JWT_VERIFY_SECRET"),
   JWT_ACCESS_SECRET: getEnv("JWT_ACCESS_SECRET"),
   JWT_REFRESH_SECRET: getEnv("JWT_REFRESH_SECRET"),

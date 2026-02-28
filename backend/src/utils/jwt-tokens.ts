@@ -43,6 +43,14 @@ export const signForgotPasswordToken = (user: any) => {
   });
 };
 
+export const signMfaToken = (user: any) => {
+  const expiresIn = Env.JWT_ACCESS_EXPIRES_IN as Time;
+
+  return jwt.sign({ id: user._id, type: "mfa_pending" }, Env.JWT_MFA_SECRET, {
+    expiresIn,
+  });
+};
+
 export const jwtVerify = (token: string, secret: string): JwtPayload => {
   return jwt.verify(token, secret) as JwtPayload;
 };

@@ -9,6 +9,7 @@ import {
 } from "../validators/auth.validator";
 import {
   changePasswordService,
+  enable2faService,
   forgotPasswordService,
   googleAuthLoginService,
   loginService,
@@ -18,11 +19,16 @@ import {
   resendVerifyService,
   sendForgotPasswordService,
   updatePasswordService,
+  verify2faService,
   verifyService,
 } from "../services/auth.service";
 import { clearJwtAuthCookie, setJwtAuthCookie } from "../utils/cookie";
 import { HTTP_STATUS } from "../config/http.config";
-import { UnauthorizedException } from "../utils/app-error";
+import {
+  BadRequestException,
+  InternalServerException,
+  UnauthorizedException,
+} from "../utils/app-error";
 import { Env } from "../config/env.config";
 
 export const googleAuthController = asyncHandler(
@@ -62,12 +68,14 @@ export const loginController = asyncHandler(
   async (req: Request, res: Response) => {
     const body = loginSchema.parse(req.body);
 
-    const { user, accessToken, refreshToken } = await loginService(body);
+    const { user, mfaRequired, mfaToken, accessToken, refreshToken } =
+      await loginService(body);
 
-    return setJwtAuthCookie(res, accessToken, refreshToken)
+    return setJwtAuthCookie(res, accessToken, refreshToken, mfaToken)
       .status(HTTP_STATUS.OK)
       .json({
         message: "User login successful",
+        mfaRequired,
         user,
       });
   },
@@ -201,6 +209,42 @@ export const refreshController = asyncHandler(
     return setJwtAuthCookie(res, newAccessToken, newRefreshToken).json({
       message: "Refreshed",
     });
+  },
+);
+
+export const enable2faController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const user = req.user;
+
+    if (!user) throw new UnauthorizedException("User not found");
+
+    const data: string = await enable2faService(user);
+
+    if (!data) throw new InternalServerException("QR Code generation issue");
+
+    return res.status(HTTP_STATUS.OK).json({
+      qrCode: data,
+    });
+  },
+);
+
+export const verify2faController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.userId;
+
+    if (!userId) throw new BadRequestException("User Id not provided");
+
+    const otp: string = req.body.otp as string;
+
+    if (!otp) throw new BadRequestException("OTP not provided");
+
+    const { accessToken, refreshToken } = await verify2faService(userId, otp);
+
+    setJwtAuthCookie(res, accessToken, refreshToken)
+      .status(HTTP_STATUS.OK)
+      .json({
+        message: "2FA verified successfully",
+      });
   },
 );
 

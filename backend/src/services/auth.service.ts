@@ -1,9 +1,12 @@
+import speakeasy from "speakeasy";
+import qrcode from "qrcode";
 import { Profile } from "passport-google-oauth20";
 import UserModel from "../models/user.model";
 import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  InternalServerException,
   NotAllowedException,
   NotFoundException,
   UnauthorizedException,
@@ -15,6 +18,7 @@ import {
   signAccessToken,
   signConfirmToken,
   signForgotPasswordToken,
+  signMfaToken,
   signRefreshToken,
 } from "../utils/jwt-tokens";
 import {
@@ -162,6 +166,17 @@ export const loginService = async (body: LoginSchemaType) => {
 
   if (!isPasswordValid) throw new UnauthorizedException("Invalid Password");
 
+  // Tokens get created on 2fa verification
+  if (user.enabled2fa) {
+    const mfaToken = signMfaToken(user);
+
+    return {
+      user,
+      mfaToken,
+      mfaRequired: true,
+    };
+  }
+
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
 
@@ -175,6 +190,7 @@ export const loginService = async (body: LoginSchemaType) => {
     user,
     accessToken,
     refreshToken,
+    mfaRequired: false,
   };
 };
 
@@ -365,4 +381,61 @@ export const changePasswordService = async (
   );
 
   return { newAccessToken, newRefreshToken };
+};
+
+export const enable2faService = async (user: Express.User): Promise<string> => {
+  const secret = speakeasy.generateSecret({
+    name: "Messenger Application",
+  });
+
+  await UserModel.updateOne({
+    _id: user.id,
+    enabled2fa: true,
+    secret2fa: secret.base32,
+  });
+
+  return new Promise((resolve, reject) => {
+    qrcode.toDataURL(secret.otpauth_url!, (err, data) => {
+      if (err) {
+        return reject(
+          new InternalServerException("Failed to generate QR Code"),
+        );
+      }
+      resolve(data);
+    });
+  });
+};
+
+export const verify2faService = async (userId: string, token: string) => {
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  if (!user.enabled2fa)
+    throw new NotAllowedException("2FA not enabled on this user");
+
+  const verified = speakeasy.totp.verify({
+    secret: user.secret2fa!,
+    encoding: "base32",
+    token,
+    window: 1,
+  });
+
+  if (!verified) throw new UnauthorizedException("Invalid token");
+
+  const accessToken = signAccessToken(user);
+  const refreshToken = signRefreshToken(user);
+
+  const hashedRefreshToken: string = await hashToken(refreshToken);
+
+  await UserModel.updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        refreshToken: hashedRefreshToken,
+      },
+    },
+  );
+
+  return { accessToken, refreshToken };
 };

@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express";
 import {
   authStatusController,
   changePasswordController,
+  enable2faController,
   forgotPasswordController,
   googleAuthController,
   linkAccountController,
@@ -12,6 +13,7 @@ import {
   resendVerifyController,
   sendForgotPasswordController,
   updatePasswordController,
+  verify2faController,
   verifyController,
 } from "../controllers/auth.controller";
 import { blockIfAuthenticated } from "../middlewares/blockIfAuthenticated.middleware";
@@ -20,6 +22,7 @@ import { passportAuthenticateGoogle } from "../middlewares/authGoogle.middleware
 import passport from "../config/passport.config";
 import { blockIfGoogleAccount } from "../middlewares/blockIfGoogleAccount.middleware";
 import { blockIfMerged } from "../middlewares/blockIfMerged.middleware";
+import { restrictToMfaPending } from "../middlewares/restrictToMfaPending.middleware";
 
 const authRoutes = Router()
   .get(
@@ -54,6 +57,8 @@ const authRoutes = Router()
     blockIfGoogleAccount,
     linkAccountController,
   )
+  .get("/enable2fa", passportAuthenticateJwt, enable2faController)
+  .post("/verify2fa", restrictToMfaPending, verify2faController)
 
   .get("/status", passportAuthenticateJwt, authStatusController)
 
