@@ -65,7 +65,18 @@ export const loginSchema = z.object({
   password: passwordSchema,
 });
 
+export const updatePasswordSchema = z
+  .object({
+    newPassword: requiredPasswordSchema("newPassword"),
+    confirmNewPassword: requiredPasswordSchema("confirmNewPassword"),
+  })
+  .refine((data) => data.newPassword === data.confirmNewPassword, {
+    message: "Confirm password does not match",
+    path: ["confirmNewPassword"],
+  });
+
 export type EmailSchemaType = z.infer<typeof emailSchema>;
 export type RegisterSchemaType = z.infer<typeof registerSchema>;
 export type LoginSchemaType = z.infer<typeof loginSchema>;
 export type ChangePasswordSchema = z.infer<typeof changePasswordSchema>;
+export type UpdatePasswordSchema = z.infer<typeof updatePasswordSchema>;

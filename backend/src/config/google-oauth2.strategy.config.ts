@@ -9,7 +9,7 @@ import { googleAuthService } from "../services/auth.service";
 const options = {
   clientID: Env.GOOGLE_CLIENT_ID || "",
   clientSecret: Env.GOOGLE_CLIENT_SECRET || "",
-  callbackURL: Env.CALLBACK_URL,
+  callbackURL: `${Env.API_URL}${Env.API_VERSION}${Env.CALLBACK_URL}`,
   state: false,
   proxy: true,
 };

@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
-import jwt, { JwtPayload } from "jsonwebtoken";
 import { Env } from "../config/env.config";
 import { HTTP_STATUS } from "../config/http.config";
 import UserModel from "../models/user.model";
+import { jwtVerify } from "../utils/jwt-tokens";
 
 export const blockIfMerged = (
   req: Request,
@@ -14,10 +14,7 @@ export const blockIfMerged = (
   if (!accessToken) return next();
 
   try {
-    const payload = jwt.verify(
-      accessToken,
-      Env.JWT_ACCESS_SECRET,
-    ) as JwtPayload;
+    const payload = jwtVerify(accessToken, Env.JWT_ACCESS_SECRET);
 
     if (payload.provider === "merged")
       return res

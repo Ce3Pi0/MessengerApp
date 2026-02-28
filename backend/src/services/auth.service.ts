@@ -1,4 +1,3 @@
-import jwt, { JwtPayload } from "jsonwebtoken";
 import { Profile } from "passport-google-oauth20";
 import UserModel from "../models/user.model";
 import {
@@ -12,8 +11,10 @@ import {
 } from "../utils/app-error";
 import { compareVal, hashPass, hashToken } from "../utils/bcrypt";
 import {
+  jwtVerify,
   signAccessToken,
   signConfirmToken,
+  signForgotPasswordToken,
   signRefreshToken,
 } from "../utils/jwt-tokens";
 import {
@@ -21,11 +22,12 @@ import {
   EmailSchemaType,
   LoginSchemaType,
   RegisterSchemaType,
+  UpdatePasswordSchema,
 } from "../validators/auth.validator";
 import { findByIdUserService } from "./user.service";
 import { Env } from "../config/env.config";
 import { sendMail } from "../utils/sendMail";
-import validate from "deep-email-validator";
+import emailValidator, { ValidationResult } from "node-email-verifier";
 
 export const googleAuthService = async (body: Profile) => {
   const profile: Profile = body;
@@ -70,10 +72,7 @@ export const googleAuthLoginService = async (
   oldRefreshToken: string | null,
 ) => {
   if (oldAccessToken) {
-    const payload = jwt.verify(
-      oldAccessToken,
-      Env.JWT_ACCESS_SECRET,
-    ) as JwtPayload;
+    const payload = jwtVerify(oldAccessToken, Env.JWT_ACCESS_SECRET);
 
     const oldUser = await UserModel.findById(payload.id);
 
@@ -121,9 +120,14 @@ export const registerService = async (body: RegisterSchemaType) => {
     ...body,
   });
 
-  const validEmail: boolean = (await validate(newUser.email)).valid;
+  const validEmail = (await emailValidator(newUser.email, {
+    detailed: true,
+    checkMx: true,
+    timeout: "500ms",
+  })) as ValidationResult;
 
-  if (!validEmail) throw new BadRequestException("Invalid email address");
+  if (!validEmail.valid)
+    throw new BadRequestException(`Invalid email address ${newUser.email}`);
 
   const confirmToken: string = signConfirmToken(newUser);
 
@@ -131,7 +135,7 @@ export const registerService = async (body: RegisterSchemaType) => {
     from: Env.SENDER_EMAIL,
     to: newUser.email,
     subject: `Verify You New Account ${newUser.name}`,
-    text: `This token will expire in 15 minutes!: ${Env.API_URL}/auth/verify/${confirmToken}`,
+    text: `This token will expire in 15 minutes!: ${Env.API_URL}${Env.API_VERSION}auth/verify/${confirmToken}`,
   });
 
   await newUser.save();
@@ -151,6 +155,8 @@ export const loginService = async (body: LoginSchemaType) => {
 
   if (user.provider === "google")
     throw new BadRequestException("Google account does not have a password");
+
+  if (user.forgotPassword) throw new UnauthorizedException("Password not set");
 
   const isPasswordValid = await user.comparePassword(password!);
 
@@ -185,10 +191,7 @@ export const logoutUserService = async (refreshToken: string, id: string) => {
 };
 
 export const refreshService = async (refreshToken: string) => {
-  const payload = jwt.verify(
-    refreshToken,
-    Env.JWT_REFRESH_SECRET,
-  ) as JwtPayload;
+  const payload = jwtVerify(refreshToken, Env.JWT_REFRESH_SECRET);
 
   const user = await findByIdUserService(payload.id);
 
@@ -211,7 +214,7 @@ export const refreshService = async (refreshToken: string) => {
 };
 
 export const verifyService = async (verifyToken: string) => {
-  const payload = jwt.verify(verifyToken, Env.JWT_VERIFY_SECRET) as JwtPayload;
+  const payload = jwtVerify(verifyToken, Env.JWT_VERIFY_SECRET);
 
   const user = await UserModel.findById(payload.id);
 
@@ -244,8 +247,85 @@ export const resendVerifyService = async (userEmail: EmailSchemaType) => {
     from: Env.SENDER_EMAIL,
     to: user.email,
     subject: `Verify You New Account ${user.name}`,
-    text: `This token will expire in 15 minutes!: ${Env.API_URL}/auth/verify/${confirmToken}`,
+    text: `This token will expire in 15 minutes!: ${Env.API_URL}${Env.API_VERSION}auth/verify/${confirmToken}`,
   });
+};
+
+export const sendForgotPasswordService = async (userEmail: EmailSchemaType) => {
+  const user = await UserModel.findOne({ email: userEmail });
+
+  if (!user) throw new NotFoundException("User not found");
+
+  if (!user.isVerified) throw new NotAllowedException("User is not verified");
+
+  if (user.provider === "google")
+    throw new NotAllowedException("Google account does not have a password");
+
+  const forgotPasswordToken: string = signForgotPasswordToken(user);
+
+  sendMail({
+    from: Env.SENDER_EMAIL,
+    to: user.email,
+    subject: `Update Your Password ${user.name}`,
+    text: `This token will expire in 15 minutes!: ${Env.API_URL}${Env.API_VERSION}auth/forgot-password/${forgotPasswordToken}`,
+  });
+};
+
+export const forgotPasswordService = async (forgotPasswordToken: string) => {
+  const payload = jwtVerify(
+    forgotPasswordToken,
+    Env.JWT_FORGOT_PASSWORD_SECRET,
+  );
+
+  const user = await UserModel.findById(payload.id);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  if (!user.isVerified) throw new NotAllowedException("User is not verified");
+
+  await UserModel.updateOne(
+    { _id: payload.id },
+    {
+      $set: {
+        forgotPassword: true,
+        refreshToken: "",
+      },
+    },
+  );
+};
+
+export const updatePasswordService = async (
+  body: UpdatePasswordSchema,
+  forgotPasswordToken: string,
+) => {
+  const { newPassword } = body;
+
+  const payload = jwtVerify(
+    forgotPasswordToken,
+    Env.JWT_FORGOT_PASSWORD_SECRET,
+  );
+
+  const user = await UserModel.findById(payload.id);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  if (!user.forgotPassword)
+    throw new BadRequestException("User password still valid");
+
+  const sameAsOld: boolean = await user.comparePassword(newPassword!);
+  if (sameAsOld) throw new BadRequestException("Password cannot be the same");
+
+  const hashedPass: string = await hashPass(newPassword);
+
+  await UserModel.updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        password: hashedPass,
+        forgotPassword: false,
+      },
+    },
+  );
 };
 
 export const changePasswordService = async (

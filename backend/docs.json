@@ -1,0 +1,177 @@
+{
+  "api": "test",
+  "version": "1.0.0",
+  "contact": {
+    "email": "hristijannikolovski16@gmail.com"
+  },
+  "syntax": "/api/v<version number>/<endpoint>/<route>/<params>",
+  "endpoints": {
+    "server": {
+      "routes": {
+        "status": {
+          "methods": "GET",
+          "required": null
+        }
+      }
+    },
+    "auth": {
+      "routes": {
+        "google": {
+          "methods": "GET",
+          "required": null,
+          "routes": {
+            "success": {
+              "methods": "GET",
+              "required": {
+                "cookies": {
+                  "accessToken": "string",
+                  "refreshToken": "string"
+                }
+              }
+            }
+          }
+        },
+        "register": {
+          "methods": "POST",
+          "required": {
+            "body": {
+              "name": "string",
+              "email": "string",
+              "provider": "string",
+              "password": "string",
+              "confirmPassword": "string",
+              "avatar": "string"
+            }
+          }
+        },
+        "login": {
+          "methods": "POST",
+          "required": {
+            "body": { "email": "string", "password": "string" }
+          }
+        },
+        "logout": {
+          "methods": "POST",
+          "required": {
+            "cookies": { "accessToken": "string", "refreshToken": "string" }
+          }
+        },
+        "verify/:token": {
+          "methods": "GET",
+          "required": null
+        },
+        "resend-verification": {
+          "methods": "POST",
+          "required": {
+            "body": { "email": "string" }
+          }
+        },
+        "change-password": {
+          "methods": "PUT",
+          "required": {
+            "body": {
+              "currentPassword": "string",
+              "newPassword": "string",
+              "confirmNewPassword": "string"
+            },
+            "cookies": {
+              "accessToken": "string",
+              "refreshToken": "string"
+            }
+          }
+        },
+        "send-forgot-password": {
+          "methods": "POST",
+          "required": {
+            "body": {
+              "email": "string"
+            }
+          }
+        },
+        "forgot-password/:token": {
+          "methods": "GET",
+          "required": null
+        },
+        "update-forgotten-password/:token": {
+          "methods": "POST",
+          "required": {
+            "body": {
+              "email": "string",
+              "newPassword": "string",
+              "confirmNewPassword": "string"
+            }
+          }
+        },
+        "link-account": {
+          "methods": "GET",
+          "required": {
+            "cookies": {
+              "accessToken": "string",
+              "refreshToken": "string"
+            }
+          }
+        },
+        "status": {
+          "methods": "GET",
+          "required": {
+            "cookies": {
+              "accessToken": "string",
+              "refreshToken": "string"
+            }
+          }
+        },
+        "refresh": {
+          "methods": "PUT",
+          "required": {
+            "cookies": {
+              "refreshToken": "string"
+            }
+          }
+        }
+      }
+    },
+    "chat": {
+      "routes": {
+        "create": {
+          "methods": "post",
+          "required": {
+            "body": {
+              "participantId": "string | null",
+              "participants": "string[]",
+              "isGroup": "boolean",
+              "groupName": "string | null"
+            }
+          }
+        },
+        "all": {
+          "methods": "GET",
+          "required": null
+        },
+        "/:id": {
+          "methods": "GET",
+          "required": null
+        }
+      },
+      "required": {
+        "cookies": {
+          "accessToken": "string",
+          "refreshToken": "string"
+        }
+      }
+    },
+    "users": {
+      "routes": {
+        "all": {
+          "methods": "GET",
+          "required": null
+        }
+      },
+      "required": {
+        "cookies": {
+          "accessToken": "string",
+          "refreshToken": "string"
+        }
+      }
+    }
+  }
+}

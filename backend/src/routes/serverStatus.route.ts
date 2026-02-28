@@ -4,7 +4,7 @@ import { HTTP_STATUS } from "../config/http.config";
 
 const serverStatusRoutes = Router().get(
   "/status",
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (_: Request, res: Response) => {
     res.status(HTTP_STATUS.OK).json({
       message: "Server is running",
       status: "OK",

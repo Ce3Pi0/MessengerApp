@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express";
 import {
   authStatusController,
   changePasswordController,
+  forgotPasswordController,
   googleAuthController,
   linkAccountController,
   loginController,
@@ -9,6 +10,8 @@ import {
   refreshController,
   registerController,
   resendVerifyController,
+  sendForgotPasswordController,
+  updatePasswordController,
   verifyController,
 } from "../controllers/auth.controller";
 import { blockIfAuthenticated } from "../middlewares/blockIfAuthenticated.middleware";
@@ -36,10 +39,14 @@ const authRoutes = Router()
 
   .post("/login", blockIfAuthenticated, loginController)
   .post("/logout", passportAuthenticateJwt, logoutController)
+
   .get("/verify/:token", verifyController)
   .post("/resend-verification", resendVerifyController)
   .put("/change-password", passportAuthenticateJwt, changePasswordController)
 
+  .post("/send-forgot-password", sendForgotPasswordController)
+  .get("/forgot-password/:token", forgotPasswordController)
+  .post("/update-forgotten-password/:token", updatePasswordController)
   .get(
     "/link-account",
     passportAuthenticateJwt,

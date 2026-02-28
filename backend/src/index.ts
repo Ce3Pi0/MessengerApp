@@ -10,11 +10,10 @@ import "./config/jwt.strategy.config";
 import router from "./routes";
 import { rateLimiter } from "./config/rateLimiter.config";
 import { rateSlowDown } from "./config/rateSlowDown.config";
+import path from "path";
 
 const app = express();
 
-app.use(rateLimiter);
-app.use(rateSlowDown);
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -25,7 +24,14 @@ app.use(
   }),
 );
 app.use(passport.initialize());
-app.use("/api", router);
+
+app.get("/", (_, res) => {
+  res.sendFile(path.join(process.cwd(), "docs.json"));
+});
+
+app.use("/api", rateLimiter);
+app.use("/api", rateSlowDown);
+app.use("/api/v1", router);
 
 app.use(errorHandler);
 

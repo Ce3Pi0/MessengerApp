@@ -5,22 +5,25 @@ import {
   emailSchema,
   loginSchema,
   registerSchema,
+  updatePasswordSchema,
 } from "../validators/auth.validator";
 import {
   changePasswordService,
+  forgotPasswordService,
   googleAuthLoginService,
   loginService,
   logoutUserService,
   refreshService,
   registerService,
   resendVerifyService,
+  sendForgotPasswordService,
+  updatePasswordService,
   verifyService,
 } from "../services/auth.service";
 import { clearJwtAuthCookie, setJwtAuthCookie } from "../utils/cookie";
 import { HTTP_STATUS } from "../config/http.config";
 import { UnauthorizedException } from "../utils/app-error";
 import { Env } from "../config/env.config";
-import { transporter } from "../config/nodemailer.config";
 
 export const googleAuthController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -128,9 +131,61 @@ export const changePasswordController = asyncHandler(
   },
 );
 
+export const sendForgotPasswordController = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (!req.body.email) throw new UnauthorizedException("Email not specified");
+
+    const email: string = emailSchema.parse(req.body.email);
+
+    await sendForgotPasswordService(email);
+
+    return res
+      .status(HTTP_STATUS.OK)
+      .json({ message: "Reset password email sent successfully" });
+  },
+);
+
+export const forgotPasswordController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const forgotPasswordToken = req.params.token as string;
+
+    if (!forgotPasswordToken)
+      throw new UnauthorizedException("Verification token not specified");
+
+    await forgotPasswordService(forgotPasswordToken);
+
+    return res.redirect(
+      HTTP_STATUS.FOUND,
+      `${Env.FRONTEND_URL}/forgot-password/${forgotPasswordToken}`,
+    );
+  },
+);
+
+export const updatePasswordController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const forgotPasswordToken = req.params.token as string;
+
+    if (!forgotPasswordToken)
+      throw new UnauthorizedException("Verification token not specified");
+
+    if (!req.body) throw new UnauthorizedException("Body not specified");
+
+    const body = updatePasswordSchema.parse(req.body);
+
+    await updatePasswordService(body, forgotPasswordToken);
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "Password updated successfully",
+    });
+  },
+);
+
 export const linkAccountController = asyncHandler(
   async (req: Request, res: Response) => {
-    return res.redirect(HTTP_STATUS.FOUND, Env.GOOGLE_URL);
+    return res.redirect(
+      HTTP_STATUS.FOUND,
+      `${Env.API_URL}${Env.API_VERSION}${Env.GOOGLE_URL}`,
+    );
   },
 );
 

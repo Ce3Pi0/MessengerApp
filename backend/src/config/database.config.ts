@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import mdq from "mongo-date-query";
 import { Env } from "./env.config";
 import UserModel from "../models/user.model";
+import { sendMail } from "../utils/sendMail";
 
 const connectDatabase = async () => {
   try {
@@ -26,6 +27,12 @@ const checkUsers = () => {
   }).then((user) => {
     if (user) {
       console.log(`User with pending deletion found (email: ${user.email})`);
+      sendMail({
+        from: Env.SENDER_EMAIL,
+        to: user.email,
+        subject: "Your account has been deleted",
+        text: "Your account on Messenger Application has been deleted due to inactivity",
+      });
       return UserModel.findByIdAndDelete(user.id);
     }
   });

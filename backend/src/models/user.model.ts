@@ -12,6 +12,7 @@ export interface UserDocument extends Document {
   refreshToken?: string;
   provider: Providers;
   isVerified: boolean;
+  forgotPassword: boolean;
   avatar?: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -38,6 +39,7 @@ const userSchema = new Schema<UserDocument>(
       required: true,
     },
     isVerified: { type: Boolean, default: false },
+    forgotPassword: { type: Boolean, default: false },
     avatar: { type: String, default: null },
   },
   {

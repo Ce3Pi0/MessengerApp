@@ -1,7 +1,12 @@
 import ChatModel from "../models/chat.model";
 import MessageModel from "../models/message.model";
 import UserModel from "../models/user.model";
-import { BadRequestException, NotFoundException } from "../utils/app-error";
+import {
+  BadRequestException,
+  NotAllowedException,
+  NotFoundException,
+} from "../utils/app-error";
+import { checkParticipants } from "../utils/checkParticipants";
 
 export const createChatService = async (
   userId: string,
@@ -18,6 +23,8 @@ export const createChatService = async (
   let allParticipantsIds: string[] = [];
 
   if (isGroup && participants?.length && groupName) {
+    await checkParticipants(participants);
+
     allParticipantsIds = [userId, ...participants];
     chat = await ChatModel.create({
       participants: allParticipantsIds,
