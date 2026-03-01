@@ -74,6 +74,7 @@ export const googleAuthLoginService = async (
   user: Express.User,
   oldAccessToken: string | null,
   oldRefreshToken: string | null,
+  mfaToken: string | null,
 ) => {
   if (oldAccessToken) {
     const payload = jwtVerify(oldAccessToken, Env.JWT_ACCESS_SECRET);
@@ -90,9 +91,19 @@ export const googleAuthLoginService = async (
       };
   }
 
+  if (!user) throw new NotFoundException("User email not found");
+
   await user.save();
 
-  if (!user) throw new NotFoundException("User email not found");
+  if (user.enabled2fa) {
+    const mfaToken = signMfaToken(user);
+
+    return {
+      errorMsg: null,
+      mfaRequired: true,
+      mfaToken,
+    };
+  }
 
   const accessToken = oldAccessToken ? oldAccessToken : signAccessToken(user);
   const refreshToken = oldRefreshToken
@@ -109,6 +120,7 @@ export const googleAuthLoginService = async (
 
   return {
     errorMsg: null,
+    mfaRequired: true,
     accessToken,
     refreshToken,
   };

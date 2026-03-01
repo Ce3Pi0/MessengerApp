@@ -11,3 +11,5 @@ export const sendMessageSchema = z
     message: "Either content or image must be provided",
     path: ["content"],
   });
+
+export type SendMessageSchemaType = z.infer<typeof sendMessageSchema>;

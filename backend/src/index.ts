@@ -1,3 +1,4 @@
+import http from "http";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
 import express from "express";
@@ -11,10 +12,14 @@ import router from "./routes";
 import { rateLimiter } from "./config/rateLimiter.config";
 import { rateSlowDown } from "./config/rateSlowDown.config";
 import path from "path";
+import { initializeSocket } from "./lib/socket";
 
 const app = express();
+const server = http.createServer(app);
 
-app.use(express.json());
+initializeSocket(server);
+
+app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(
@@ -35,7 +40,7 @@ app.use("/api/v1", router);
 
 app.use(errorHandler);
 
-app.listen(Env.PORT, async () => {
+server.listen(Env.PORT, async () => {
   await connectDatabase();
   console.log(`Server is running on port ${Env.PORT} in ${Env.NODE_ENV} mode`);
 });

@@ -19,8 +19,6 @@ const CHECK_INTERVAL: number = 5000;
 const GRACE_PERIOD: number = 30;
 
 const checkUsers = () => {
-  console.log("*** Cleaner Looking For Users ***");
-
   UserModel.findOne({
     isVerified: false,
     createdAt: mdq.beforeLastDays(GRACE_PERIOD),

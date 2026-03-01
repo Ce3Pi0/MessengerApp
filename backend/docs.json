@@ -201,6 +201,27 @@
           "refreshToken": "string"
         }
       }
+    },
+    "messages": {
+      "routes": {
+        "send": {
+          "methods": "POST",
+          "required": {
+            "body": {
+              "chatId": "string",
+              "content": "string",
+              "image": "string",
+              "replyToId": "string"
+            }
+          }
+        }
+      },
+      "required": {
+        "cookies": {
+          "accessToken": "string",
+          "refreshToken": "string"
+        }
+      }
     }
   }
 }

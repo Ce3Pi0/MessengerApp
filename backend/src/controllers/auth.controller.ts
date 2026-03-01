@@ -34,20 +34,25 @@ import { Env } from "../config/env.config";
 
 export const googleAuthController = asyncHandler(
   async (req: Request, res: Response) => {
-    const { errorMsg, accessToken, refreshToken } =
+    const { errorMsg, accessToken, refreshToken, mfaToken, mfaRequired } =
       await googleAuthLoginService(
         req.user!,
         req.cookies.accessToken,
         req.cookies.refreshToken,
+        req.cookies.mfaToken,
       );
 
     if (errorMsg) {
       return res.redirect(`${Env.FRONTEND_URL}/settings?error=${errorMsg}`);
     }
 
-    return setJwtAuthCookie(res, accessToken, refreshToken).redirect(
+    const redirectUrl: string = mfaRequired
+      ? Env.FRONTEND_URL + "/2fa"
+      : Env.FRONTEND_URL;
+
+    return setJwtAuthCookie(res, accessToken, refreshToken, mfaToken).redirect(
       HTTP_STATUS.FOUND,
-      Env.FRONTEND_URL,
+      redirectUrl,
     );
   },
 );
