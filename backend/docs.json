@@ -156,6 +156,15 @@
               "refreshToken": "string"
             }
           }
+        },
+        "delete": {
+          "methods": "POST",
+          "required": {
+            "cookies": {
+              "accessToken": "string",
+              "refreshToken": "string"
+            }
+          }
         }
       }
     },
@@ -174,11 +183,17 @@
         },
         "all": {
           "methods": "GET",
-          "required": null
+          "required": null,
+          "query": {
+            "cursor": "string"
+          }
         },
         "/:id": {
           "methods": "GET",
-          "required": null
+          "required": null,
+          "query": {
+            "cursor": "string"
+          }
         }
       },
       "required": {
@@ -192,7 +207,10 @@
       "routes": {
         "all": {
           "methods": "GET",
-          "required": null
+          "required": null,
+          "query": {
+            "cursor": "string"
+          }
         }
       },
       "required": {
@@ -212,6 +230,25 @@
               "content": "string",
               "image": "string",
               "replyToId": "string"
+            }
+          }
+        },
+        "edit": {
+          "methods": "PUT",
+          "required": {
+            "body": {
+              "chatId": "string",
+              "messageId": "string",
+              "content": "string"
+            }
+          }
+        },
+        "delete": {
+          "methods": "DELETE",
+          "required": {
+            "body": {
+              "chatId": "string",
+              "messageId": "string"
             }
           }
         }

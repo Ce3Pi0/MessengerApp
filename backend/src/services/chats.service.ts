@@ -61,12 +61,18 @@ export const createChatService = async (
   }
 };
 
-export const getUserChatService = async (userId: string) => {
-  const chats = await ChatModel.find({
-    participants: {
-      $in: [userId],
-    },
-  })
+export const getUserChatService = async (
+  userId: string,
+  cursor?: string,
+  limit: number = 10,
+) => {
+  const query: any = { participants: { $in: [userId] } };
+
+  if (cursor) {
+    query.updatedAt = { $gt: cursor };
+  }
+
+  const chats = await ChatModel.find(query)
     .populate("participants", "name avatar")
     .populate({
       path: "lastMessage",
@@ -75,12 +81,21 @@ export const getUserChatService = async (userId: string) => {
         select: "name avatar",
       },
     })
-    .sort({ updatedAt: -1 }); // TODO: Check order -1 or 1 to change from ascending to descending
+    .sort({ updatedAt: -1 })
+    .limit(limit);
 
-  return chats;
+  const next =
+    chats.length === limit ? chats[chats.length - 1].updatedAt : null;
+
+  return { chats, next };
 };
 
-export const getSingleChatService = async (chatId: string, userId: string) => {
+export const getSingleChatService = async (
+  chatId: string,
+  userId: string,
+  cursor?: string,
+  limit: number = 10,
+) => {
   const chat = await ChatModel.findOne({
     _id: chatId,
     participants: {
@@ -90,7 +105,13 @@ export const getSingleChatService = async (chatId: string, userId: string) => {
 
   if (!chat) throw new BadRequestException("Chat not found");
 
-  const messages = await MessageModel.find({ chatId })
+  const query: any = { chatId };
+
+  if (cursor) {
+    query.updatedAt = { $gt: cursor };
+  }
+
+  const messages = await MessageModel.find(query)
     .populate("sender", "name avatar")
     .populate({
       path: "replyTo",
@@ -100,11 +121,16 @@ export const getSingleChatService = async (chatId: string, userId: string) => {
         select: "name avatar",
       },
     })
-    .sort({ createdAt: -1 }); // TODO: Check order -1 or 1 to change from ascending to descending
+    .sort({ createdAt: -1 })
+    .limit(10);
+
+  const next =
+    messages.length === limit ? messages[messages.length - 1].createdAt : null;
 
   return {
     chat,
     messages,
+    next,
   };
 };
 

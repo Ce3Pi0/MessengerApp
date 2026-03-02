@@ -12,4 +12,17 @@ export const sendMessageSchema = z
     path: ["content"],
   });
 
+export const editMessageSchema = z.object({
+  chatId: z.string().trim().min(1),
+  messageId: z.string().trim().min(1),
+  content: z.string().trim(),
+});
+
+export const deleteMessageSchema = z.object({
+  chatId: z.string().trim().min(1),
+  messageId: z.string().trim().min(1),
+});
+
 export type SendMessageSchemaType = z.infer<typeof sendMessageSchema>;
+export type EditMessageSchemaType = z.infer<typeof editMessageSchema>;
+export type DeleteMessageSchemaType = z.infer<typeof deleteMessageSchema>;

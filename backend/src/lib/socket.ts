@@ -124,6 +124,40 @@ export const emitNewMessageToChatRoom = (
   }
 };
 
+export const emitUpdatedMessageToChatRoom = (
+  senderId: string,
+  chatId: string,
+  message: any,
+) => {
+  const io = getIO();
+  const senderSocketId = onlineUsers.get(senderId);
+
+  if (senderSocketId) {
+    io.to(`chat:${chatId}`)
+      .except(senderSocketId)
+      .emit("message:update", message);
+  } else {
+    io.to(`chat:${chatId}`).emit("message:update", message);
+  }
+};
+
+export const emitDeletedMessageToChatRoom = (
+  senderId: string,
+  chatId: string,
+  messageId: string,
+) => {
+  const io = getIO();
+  const senderSocketId = onlineUsers.get(senderId);
+
+  if (senderSocketId) {
+    io.to(`chat:${chatId}`)
+      .except(senderSocketId)
+      .emit("message:delete", messageId);
+  } else {
+    io.to(`chat:${chatId}`).emit("message:delete", messageId);
+  }
+};
+
 export const emitLastMessageToParticipant = (
   participantIds: string[],
   chatId: string,

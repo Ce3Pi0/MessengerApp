@@ -1,12 +1,17 @@
-import mongoose from "mongoose";
 import cloudinary from "../config/cloudinary.config";
 import ChatModel from "../models/chat.model";
 import MessageModel from "../models/message.model";
 import { BadRequestException, NotFoundException } from "../utils/app-error";
-import { SendMessageSchemaType } from "../validators/message.validator";
 import {
+  SendMessageSchemaType,
+  EditMessageSchemaType,
+  DeleteMessageSchemaType,
+} from "../validators/message.validator";
+import {
+  emitDeletedMessageToChatRoom,
   emitLastMessageToParticipant,
   emitNewMessageToChatRoom,
+  emitUpdatedMessageToChatRoom,
 } from "../lib/socket";
 
 export const sendMessageService = async (
@@ -61,7 +66,7 @@ export const sendMessageService = async (
     },
   ]);
 
-  await ChatModel.updateOne(
+  const updatedChat = await ChatModel.updateOne(
     {
       _id: chat._id,
     },
@@ -77,5 +82,76 @@ export const sendMessageService = async (
   const allParticipantIds = chat.participants.map((id) => id.toString());
   emitLastMessageToParticipant(allParticipantIds, chatId, newMessage);
 
+  return { newMessage, chat: updatedChat };
+};
+
+export const editMessageService = async (
+  userId: string,
+  body: EditMessageSchemaType,
+) => {
+  const { messageId, chatId, content } = body;
+
+  const chat = await ChatModel.findOne({
+    _id: chatId,
+    participants: {
+      $in: [userId],
+    },
+  });
+
+  if (!chat) throw new BadRequestException("Chat not found");
+
+  const oldMessage = await MessageModel.findOne({
+    _id: messageId,
+    chatId,
+    sender: userId,
+  });
+
+  if (!oldMessage) throw new NotFoundException("Message not found");
+
+  if (oldMessage.image)
+    throw new BadRequestException("Image message cannot be edited");
+
+  const newMessage = await MessageModel.findByIdAndUpdate(
+    messageId,
+    {
+      content,
+    },
+    { new: true },
+  );
+
+  emitUpdatedMessageToChatRoom(userId, chatId, newMessage);
+
   return { newMessage, chat };
+};
+
+export const deleteMessageService = async (
+  userId: string,
+  body: DeleteMessageSchemaType,
+) => {
+  const { chatId, messageId } = body;
+
+  const chat = await ChatModel.findOne({
+    _id: chatId,
+    participants: {
+      $in: [userId],
+    },
+  });
+
+  if (!chat) throw new BadRequestException("Chat not found");
+
+  const message = await MessageModel.findOne({
+    _id: messageId,
+    chatId,
+    sender: userId,
+  });
+
+  if (!message) throw new NotFoundException("Message not found");
+
+  await MessageModel.deleteOne({
+    _id: messageId,
+  });
+
+  emitDeletedMessageToChatRoom(userId, chatId, messageId);
+
+  return { chat };
 };

@@ -462,3 +462,11 @@ export const verify2faService = async (userId: string, token: string) => {
 
   return { accessToken, refreshToken };
 };
+
+export const deleteUserService = async (userId: string) => {
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  await UserModel.deleteOne({ _id: userId });
+};

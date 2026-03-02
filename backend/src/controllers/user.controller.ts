@@ -7,11 +7,12 @@ import { transporter } from "../config/nodemailer.config";
 export const getUsersController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?._id;
+    const cursor = req.query.cursor as string | undefined;
 
-    const users = await getUsersService(userId);
+    const { users, nextCursor } = await getUsersService(userId, cursor);
 
     return res
       .status(HTTP_STATUS.OK)
-      .json({ message: "Users retrieved successfully", users });
+      .json({ message: "Users retrieved successfully", nextCursor, users });
   },
 );

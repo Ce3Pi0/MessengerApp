@@ -25,24 +25,32 @@ export const createChatController = asyncHandler(
 export const getUserChatsController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?._id;
-    const chats = await getUserChatService(userId);
+    const cursor = req.query.cursor as string | undefined;
+
+    const { chats, next } = await getUserChatService(userId, cursor);
 
     return res
       .status(HTTP_STATUS.OK)
-      .json({ message: "Chats retrieved successfully", chats });
+      .json({ message: "Chats retrieved successfully", chats, next });
   },
 );
 
 export const getSingleChatController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?._id;
+    const cursor = req.query.cursor as string | undefined;
     const { id } = chatIdSchema.parse(req.params);
 
-    const { chat, messages } = await getSingleChatService(id, userId);
+    const { chat, messages, next } = await getSingleChatService(
+      id,
+      userId,
+      cursor,
+    );
 
     return res.status(HTTP_STATUS.OK).json({
       message: "Chat and messages retrieved successfully",
       chat,
+      next,
       messages,
     });
   },
