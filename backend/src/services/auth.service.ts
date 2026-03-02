@@ -32,6 +32,7 @@ import { findByIdUserService } from "./user.service";
 import { Env } from "../config/env.config";
 import { sendMail } from "../utils/sendMail";
 import emailValidator, { ValidationResult } from "node-email-verifier";
+import cloudinary from "../config/cloudinary.config";
 
 export const googleAuthService = async (body: Profile) => {
   const profile: Profile = body;
@@ -131,6 +132,11 @@ export const registerService = async (body: RegisterSchemaType) => {
   const existingUser = await UserModel.findOne({ email });
 
   if (existingUser) throw new ConflictException("Email already in use");
+
+  if (body.avatar) {
+    const uploadRes = await cloudinary.uploader.upload(body.avatar);
+    body.avatar = uploadRes.secure_url;
+  }
 
   const newUser = new UserModel({
     ...body,

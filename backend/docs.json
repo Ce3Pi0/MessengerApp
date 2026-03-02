@@ -188,7 +188,7 @@
             "cursor": "string"
           }
         },
-        "/:id": {
+        ":id": {
           "methods": "GET",
           "required": null,
           "query": {
@@ -210,6 +210,19 @@
           "required": null,
           "query": {
             "cursor": "string"
+          },
+          ":id": {
+            "methods": "GET",
+            "required": null
+          },
+          "update": {
+            "methods": "PUT",
+            "required": {
+              "body": {
+                "name": "string | null",
+                "avatar": "string | null"
+              }
+            }
           }
         }
       },

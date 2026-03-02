@@ -53,6 +53,7 @@ const userSchema = new Schema<UserDocument>(
         if (ret) {
           delete (ret as any).password;
           delete (ret as any).refreshToken;
+          delete (ret as any).secret2fa;
         }
         return ret;
       },

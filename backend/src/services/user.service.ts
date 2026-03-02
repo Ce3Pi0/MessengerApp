@@ -1,5 +1,7 @@
+import cloudinary from "../config/cloudinary.config";
 import UserModel from "../models/user.model";
-import { BadRequestException } from "../utils/app-error";
+import { BadRequestException, NotFoundException } from "../utils/app-error";
+import { UpdateUserSchemaType } from "../validators/user.validator";
 
 export const findByIdUserService = async (userId: string) => {
   const user = await UserModel.findById(userId);
@@ -19,7 +21,9 @@ export const getUsersService = async (
   }
 
   const users = await UserModel.find(query)
-    .select("-password -refreshToken")
+    .select(
+      "-password -refreshToken -forgotPassword -provider -isVerified -enabled2fa -secret2fa",
+    )
     .sort({ _id: 1 })
     .limit(limit);
 
@@ -30,4 +34,51 @@ export const getUsersService = async (
     users,
     nextCursor,
   };
+};
+
+export const getSingleUserService = async (
+  currentUserId: any,
+  userId: string,
+) => {
+  const curUser = await UserModel.findById(currentUserId).select(
+    "-password -refreshToken -forgotPassword -isVerified -secret2fa",
+  );
+
+  if (!curUser) throw new NotFoundException("User not found");
+
+  if (currentUserId.toString() === userId) return curUser;
+
+  const user = await UserModel.findById(userId).select(
+    "-password -refreshToken -forgotPassword -provider -isVerified -enabled2fa -secret2fa",
+  );
+
+  return user;
+};
+
+export const updateUserService = async (
+  userId: string,
+  body: UpdateUserSchemaType,
+) => {
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  const { name: newName, avatar } = body;
+
+  if (user.name === newName)
+    throw new BadRequestException("New name must be differ from the old name");
+  if (user.avatar === avatar && avatar)
+    throw new BadRequestException(
+      "New avatar must be different from the old avatar",
+    );
+
+  if (newName) user.name = newName;
+  if (avatar) {
+    const uploadRes = await cloudinary.uploader.upload(avatar);
+    user.avatar = uploadRes.secure_url;
+  }
+
+  await user.save();
+
+  return user;
 };
