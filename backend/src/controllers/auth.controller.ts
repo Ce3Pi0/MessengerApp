@@ -40,7 +40,6 @@ export const googleAuthController = asyncHandler(
         req.user!,
         req.cookies.accessToken,
         req.cookies.refreshToken,
-        req.cookies.mfaToken,
       );
 
     if (errorMsg) {

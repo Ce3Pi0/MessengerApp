@@ -73,12 +73,11 @@ export const googleAuthService = async (body: Profile) => {
 
 export const googleAuthLoginService = async (
   user: Express.User,
-  oldAccessToken: string | null,
-  oldRefreshToken: string | null,
-  mfaToken: string | null,
+  curAccessToken: string | null,
+  curRefreshToken: string | null,
 ) => {
-  if (oldAccessToken) {
-    const payload = jwtVerify(oldAccessToken, Env.JWT_ACCESS_SECRET);
+  if (curAccessToken) {
+    const payload = jwtVerify(curAccessToken, Env.JWT_ACCESS_SECRET);
 
     const oldUser = await UserModel.findById(payload.id);
 
@@ -106,12 +105,13 @@ export const googleAuthLoginService = async (
     };
   }
 
-  const accessToken = oldAccessToken ? oldAccessToken : signAccessToken(user);
-  const refreshToken = oldRefreshToken
-    ? oldRefreshToken
+  const accessToken = curAccessToken ? curAccessToken : signAccessToken(user);
+
+  const refreshToken = curRefreshToken
+    ? curRefreshToken
     : signRefreshToken(user);
 
-  if (!oldRefreshToken) {
+  if (!curRefreshToken) {
     const hashedRefreshToken: string = await hashToken(refreshToken);
     await UserModel.updateOne(
       { _id: user._id },
