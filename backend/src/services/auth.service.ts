@@ -189,7 +189,7 @@ export const loginService = async (body: LoginSchemaType) => {
     const mfaToken = signMfaToken(user);
 
     return {
-      user,
+      user: null,
       mfaToken,
       mfaRequired: true,
     };

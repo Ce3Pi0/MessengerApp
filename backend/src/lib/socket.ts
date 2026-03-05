@@ -15,7 +15,7 @@ const onlineUsers = new Map<string, string>();
 export const initializeSocket = (httpServer: HTTPServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: Env.FRONTEND_URL,
+      origin: "http://localhost:5173",
       methods: ["GET", "POST", "PUT", "DELETE"],
       credentials: true,
     },
@@ -26,13 +26,17 @@ export const initializeSocket = (httpServer: HTTPServer) => {
       const rawCookie = socket.handshake.headers.cookie;
       if (!rawCookie) return next(new Error("Unauthorized"));
 
-      const token = rawCookie?.split("=")?.[1]?.trim();
-      if (!token) return next(new Error("Unauthorized"));
+      if (!rawCookie.includes("accessToken="))
+        return next(new Error("Unauthorized"));
+
+      const token = rawCookie?.split(";")[0].split("=")[1];
+
+      if (!token) return next(new Error("Access token missing"));
 
       const decodedToken = jwtVerify(token, Env.JWT_ACCESS_SECRET);
       if (!decodedToken) return next(new Error("Unauthorized"));
 
-      socket.userId = decodedToken.userId;
+      socket.userId = decodedToken.id;
       next();
     } catch (err) {
       next(new Error("Internal server error"));
@@ -40,6 +44,8 @@ export const initializeSocket = (httpServer: HTTPServer) => {
   });
 
   io.on("connection", (socket: AuthenticatedSocket) => {
+    console.log("New socket connection", socket.userId);
+
     if (!socket.userId) {
       socket.disconnect(true);
       return;

@@ -15,10 +15,7 @@ const options = {
     (req) => {
       const token = req.cookies.accessToken;
 
-      if (!token)
-        throw new UnauthorizedException(
-          HTTP_STATUS_MESSAGE[HTTP_STATUS.UNAUTHORIZED],
-        );
+      if (!token) throw new UnauthorizedException("Missing token");
       return token;
     },
   ]),

@@ -75,8 +75,7 @@
               "confirmNewPassword": "string"
             },
             "cookies": {
-              "accessToken": "string",
-              "refreshToken": "string"
+              "accessToken": "string"
             }
           }
         },
@@ -106,8 +105,7 @@
           "methods": "GET",
           "required": {
             "cookies": {
-              "accessToken": "string",
-              "refreshToken": "string"
+              "accessToken": "string"
             }
           }
         },
@@ -115,8 +113,7 @@
           "methods": "GET",
           "required": {
             "cookies": {
-              "accessToken": "string",
-              "refreshToken": "string"
+              "accessToken": "string"
             }
           }
         },
@@ -124,8 +121,7 @@
           "methods": "PUT",
           "required": {
             "cookies": {
-              "accessToken": "string",
-              "refreshToken": "string"
+              "accessToken": "string"
             }
           }
         },
@@ -144,8 +140,7 @@
           "methods": "GET",
           "required": {
             "cookies": {
-              "accessToken": "string",
-              "refreshToken": "string"
+              "accessToken": "string"
             }
           }
         },
@@ -161,8 +156,7 @@
           "methods": "POST",
           "required": {
             "cookies": {
-              "accessToken": "string",
-              "refreshToken": "string"
+              "accessToken": "string"
             }
           }
         }
