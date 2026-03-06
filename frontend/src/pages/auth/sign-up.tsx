@@ -7,11 +7,13 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Link } from "react-router-dom";
-import CustomFormField from "./custom-form-field";
+import CustomFormField from "../../components/custom-form-field";
 import {
   type RegisterFormSchemaType,
   registerFormSchema,
 } from "@/validators/auth.validator";
+import OrWith from "@/components/or-with";
+import OauthButton from "@/components/oauth-button";
 
 const SignUp = () => {
   const { register, isSigningUp } = useAuth();
@@ -22,13 +24,17 @@ const SignUp = () => {
       name: "",
       email: "",
       password: "",
+      confirmPassword: "",
+      provider: "local",
     },
   });
 
-  const onSubmit = (values: RegisterFormSchemaType) => {
+  const onSubmit = async (values: RegisterFormSchemaType) => {
     if (isSigningUp) return;
-
-    register(values);
+    const isOk = await register(values);
+    if (isOk) {
+      form.reset();
+    }
   };
 
   return (
@@ -46,18 +52,28 @@ const SignUp = () => {
                 className="grid gap-4"
               >
                 <CustomFormField
+                  fieldName="Name"
                   name="name"
                   control={form.control}
                   placeholder="John Doe"
                 />
                 <CustomFormField
+                  fieldName="Email"
                   name="email"
                   control={form.control}
                   type="email"
                   placeholder="johndoe@example.com"
                 />
                 <CustomFormField
+                  fieldName="Password"
                   name="password"
+                  control={form.control}
+                  type="password"
+                  placeholder="********"
+                />
+                <CustomFormField
+                  fieldName="Confirm Password"
+                  name="confirmPassword"
                   control={form.control}
                   type="password"
                   placeholder="********"
@@ -74,6 +90,9 @@ const SignUp = () => {
                 </div>
               </form>
             </Form>
+
+            <OrWith />
+            <OauthButton />
           </CardContent>
         </Card>
       </div>

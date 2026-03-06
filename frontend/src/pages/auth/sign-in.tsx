@@ -7,14 +7,16 @@ import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { Link } from "react-router-dom";
-import CustomFormField from "./custom-form-field";
+import CustomFormField from "../../components/custom-form-field";
 import {
   type LoginFormSchemaType,
   loginFormSchema,
 } from "@/validators/auth.validator";
+import OrWith from "@/components/or-with";
+import OauthButton from "@/components/oauth-button";
 
 const SignIn = () => {
-  const { login, isLoggingIn } = useAuth();
+  const { login, resendVerification, isLoggingIn, isConfirmed } = useAuth();
 
   const form = useForm<LoginFormSchemaType>({
     resolver: zodResolver(loginFormSchema),
@@ -26,7 +28,6 @@ const SignIn = () => {
 
   const onSubmit = (values: LoginFormSchemaType) => {
     if (isLoggingIn) return;
-
     login(values);
   };
 
@@ -45,12 +46,14 @@ const SignIn = () => {
                 className="grid gap-4"
               >
                 <CustomFormField
+                  fieldName="Email"
                   name="email"
                   control={form.control}
                   type="email"
                   placeholder="johndoe@example.com"
                 />
                 <CustomFormField
+                  fieldName="Password"
                   name="password"
                   control={form.control}
                   type="password"
@@ -66,8 +69,21 @@ const SignIn = () => {
                     Sign up
                   </Link>
                 </div>
+
+                {form.getValues("email") && isConfirmed === false && (
+                  <div
+                    onClick={() => {
+                      resendVerification({ email: form.getValues("email") });
+                    }}
+                    className="text-center text-sm underline cursor-pointer w-fit mx-auto"
+                  >
+                    Resend verification email
+                  </div>
+                )}
               </form>
             </Form>
+            <OrWith />
+            <OauthButton />
           </CardContent>
         </Card>
       </div>

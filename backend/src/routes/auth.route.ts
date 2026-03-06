@@ -47,6 +47,7 @@ const authRoutes = Router()
 
   .get("/verify/:token", verifyController)
   .post("/resend-verification", resendVerifyController)
+
   .put("/change-password", passportAuthenticateJwt, changePasswordController)
 
   .post("/send-forgot-password", sendForgotPasswordController)

@@ -44,8 +44,6 @@ export const initializeSocket = (httpServer: HTTPServer) => {
   });
 
   io.on("connection", (socket: AuthenticatedSocket) => {
-    console.log("New socket connection", socket.userId);
-
     if (!socket.userId) {
       socket.disconnect(true);
       return;

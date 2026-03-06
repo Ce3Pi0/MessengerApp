@@ -26,7 +26,7 @@ export const useSocket = create<SocketState>()((set, get) => ({
 
     const newSocket = io(BASE_URL, {
       withCredentials: true,
-      // Change after strict mode is disabled
+      // TODO: Change after strict mode is disabled
       transports: ["websocket"],
       autoConnect: true,
     });

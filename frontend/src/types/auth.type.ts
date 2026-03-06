@@ -15,6 +15,8 @@ export interface UserType {
   name: string;
   email: string;
   avatar?: string;
+  provider: string;
+  enabled2fa: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

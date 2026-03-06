@@ -121,7 +121,7 @@ export const googleAuthLoginService = async (
 
   return {
     errorMsg: null,
-    mfaRequired: true,
+    mfaRequired: false,
     accessToken,
     refreshToken,
   };

@@ -10,19 +10,26 @@ import type { Control } from "react-hook-form";
 
 interface Props {
   control: Control<any, any, any>;
+  fieldName: string;
   name: string;
   type?: React.HTMLInputTypeAttribute;
   placeholder: string;
 }
 
-const CustomFormField = ({ name, control, type, placeholder }: Props) => {
+const CustomFormField = ({
+  fieldName,
+  name,
+  control,
+  type,
+  placeholder,
+}: Props) => {
   return (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{name}</FormLabel>
+          <FormLabel>{fieldName}</FormLabel>
           <FormControl>
             <Input type={type} placeholder={placeholder} {...field} />
           </FormControl>

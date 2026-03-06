@@ -43,7 +43,9 @@ export const googleAuthController = asyncHandler(
       );
 
     if (errorMsg) {
-      return res.redirect(`${Env.FRONTEND_URL}/settings?error=${errorMsg}`);
+      return res.redirect(
+        `${Env.FRONTEND_URL}/linking-error?message=${errorMsg}`,
+      );
     }
 
     const redirectUrl: string = mfaRequired
@@ -110,7 +112,7 @@ export const verifyController = asyncHandler(
 
     await verifyService(verifyToken);
 
-    return res.redirect(HTTP_STATUS.FOUND, `${Env.FRONTEND_URL}/login`);
+    return res.redirect(HTTP_STATUS.FOUND, `${Env.FRONTEND_URL}/`);
   },
 );
 
