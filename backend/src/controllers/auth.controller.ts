@@ -260,12 +260,16 @@ export const verify2faController = asyncHandler(
 
     if (!otp) throw new BadRequestException("OTP not provided");
 
-    const { accessToken, refreshToken } = await verify2faService(userId, otp);
+    const { user, accessToken, refreshToken } = await verify2faService(
+      userId,
+      otp,
+    );
 
     setJwtAuthCookie(res, accessToken, refreshToken)
       .status(HTTP_STATUS.OK)
       .json({
         message: "2FA verified successfully",
+        user,
       });
   },
 );

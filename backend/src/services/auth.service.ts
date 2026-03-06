@@ -406,11 +406,10 @@ export const enable2faService = async (user: Express.User): Promise<string> => {
     name: "Messenger Application",
   });
 
-  await UserModel.updateOne({
-    _id: user.id,
-    enabled2fa: true,
-    secret2fa: secret.base32,
-  });
+  await UserModel.updateOne(
+    { _id: user._id },
+    { $set: { secret2fa: secret.base32 } },
+  );
 
   return new Promise((resolve, reject) => {
     qrcode.toDataURL(secret.otpauth_url!, (err, data) => {
@@ -428,19 +427,23 @@ export const disable2faService = async (user: Express.User) => {
   if (!user.enabled2fa)
     throw new NotAllowedException("2FA not enabled on this user");
 
-  await UserModel.updateOne({
-    _id: user.id,
-    enabled2fa: false,
-    secret2fa: null,
-  });
+  await UserModel.updateOne(
+    { _id: user._id },
+    {
+      $set: {
+        enabled2fa: false,
+        secret2fa: null,
+      },
+    },
+  );
 };
 
 export const verify2faService = async (userId: string, token: string) => {
-  const user = await UserModel.findById(userId);
+  let user = await UserModel.findById(userId);
 
   if (!user) throw new NotFoundException("User not found");
 
-  if (!user.enabled2fa)
+  if (!user.secret2fa)
     throw new NotAllowedException("2FA not enabled on this user");
 
   const verified = speakeasy.totp.verify({
@@ -457,16 +460,23 @@ export const verify2faService = async (userId: string, token: string) => {
 
   const hashedRefreshToken: string = await hashToken(refreshToken);
 
-  await UserModel.updateOne(
+  if (!user.enabled2fa)
+    await UserModel.updateOne(
+      { _id: user._id },
+      { $set: { enabled2fa: true } },
+    );
+
+  user = await UserModel.findOneAndUpdate(
     { _id: user._id },
     {
       $set: {
         refreshToken: hashedRefreshToken,
       },
     },
+    { new: true },
   );
 
-  return { accessToken, refreshToken };
+  return { user, accessToken, refreshToken };
 };
 
 export const deleteUserService = async (userId: string) => {

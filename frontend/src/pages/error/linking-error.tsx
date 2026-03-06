@@ -7,19 +7,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { OTHER_ROUTES } from "@/routes/routes";
 import { TriangleAlertIcon } from "lucide-react";
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const LinkingError = () => {
+  const navigate = useNavigate();
+
   const [searchParams, _] = useSearchParams();
   const message = searchParams.get("message");
 
   const [isOpen, setIsOpen] = useState(message !== null);
 
   if (!message?.includes("Google")) {
-    window.location.href = "/";
+    navigate(OTHER_ROUTES.ROOT);
   }
+
+  const handleClick = () => {
+    setIsOpen(false);
+    navigate(OTHER_ROUTES.ROOT);
+  };
 
   return (
     <AlertDialog open={isOpen}>
@@ -36,8 +44,7 @@ const LinkingError = () => {
         <AlertDialogFooter>
           <AlertDialogCancel
             onClick={() => {
-              setIsOpen(false);
-              window.location.href = "/";
+              handleClick();
             }}
           >
             Okay

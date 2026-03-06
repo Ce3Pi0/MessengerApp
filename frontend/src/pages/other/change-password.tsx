@@ -11,6 +11,7 @@ import {
 import { Form } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/use-auth";
+import { OTHER_ROUTES } from "@/routes/routes";
 import {
   changePasswordFormSchema,
   type ChangePasswordFormSchemaType,
@@ -38,7 +39,7 @@ const ChangePassword = () => {
   const onSubmit = async (values: ChangePasswordFormSchemaType) => {
     if (isChanging) return;
     const success = await changePassword(values);
-    if (success) navigate("/");
+    if (success) navigate(OTHER_ROUTES.ROOT);
   };
 
   const handleClose = (open: boolean) => {

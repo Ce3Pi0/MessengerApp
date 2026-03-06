@@ -60,9 +60,10 @@ const authRoutes = Router()
     blockIfGoogleAccount,
     linkAccountController,
   )
-  .get("/enable2fa", passportAuthenticateJwt, enable2faController)
-  .put("/disable2fa", passportAuthenticateJwt, disable2faController)
+  .post("/enable2fa", passportAuthenticateJwt, enable2faController)
   .post("/verify2fa", restrictToMfaPending, verify2faController)
+
+  .put("/disable2fa", passportAuthenticateJwt, disable2faController)
 
   .get("/status", passportAuthenticateJwt, authStatusController)
 

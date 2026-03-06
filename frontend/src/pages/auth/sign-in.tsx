@@ -6,7 +6,7 @@ import Logo from "@/components/logo";
 import { Form } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import CustomFormField from "../../components/custom-form-field";
 import {
   type LoginFormSchemaType,
@@ -14,9 +14,12 @@ import {
 } from "@/validators/auth.validator";
 import OrWith from "@/components/or-with";
 import OauthButton from "@/components/oauth-button";
+import { AUTH_ROUTES } from "@/routes/routes";
 
 const SignIn = () => {
   const { login, resendVerification, isLoggingIn, isConfirmed } = useAuth();
+
+  const navigate = useNavigate();
 
   const form = useForm<LoginFormSchemaType>({
     resolver: zodResolver(loginFormSchema),
@@ -26,9 +29,10 @@ const SignIn = () => {
     },
   });
 
-  const onSubmit = (values: LoginFormSchemaType) => {
+  const onSubmit = async (values: LoginFormSchemaType) => {
     if (isLoggingIn) return;
-    login(values);
+    const mfaRequired = await login(values);
+    if (mfaRequired) navigate(AUTH_ROUTES.VERIFY_2FA);
   };
 
   return (

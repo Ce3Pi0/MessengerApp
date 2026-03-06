@@ -10,13 +10,28 @@ export type LoginType = {
   password: string;
 };
 
+export type Provider = "local" | "google" | "merged";
+
 export interface UserType {
   _id: string;
   name: string;
   email: string;
   avatar?: string;
-  provider: string;
+  provider: Provider;
   enabled2fa: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type ResendVerificationType = {
+  email: string;
+};
+
+export type ChangePasswordType = {
+  newPassword: string;
+  confirmNewPassword: string;
+};
+
+export type Verify2FAType = {
+  otp: string;
+};

@@ -8,15 +8,15 @@ export const restrictToMfaPending = (
   res: Response,
   next: NextFunction,
 ) => {
-  const token = req.cookies.mfaToken;
+  const accessToken = req.cookies.accessToken;
+  const mfaToken = req.cookies.mfaToken;
 
-  if (!token) throw new UnauthorizedException("MFA session missing");
+  if (!accessToken && !mfaToken)
+    throw new UnauthorizedException("MFA session missing");
 
-  const payload = jwtVerify(token, Env.JWT_MFA_SECRET);
-
-  if (payload.type !== "mfa_pending") {
-    throw new UnauthorizedException("Invalid session type");
-  }
+  const payload = accessToken
+    ? jwtVerify(accessToken, Env.JWT_ACCESS_SECRET)
+    : jwtVerify(mfaToken, Env.JWT_MFA_SECRET);
 
   req.userId = payload.id;
 
