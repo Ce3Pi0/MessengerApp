@@ -32,6 +32,20 @@ export type ChangePasswordType = {
   confirmNewPassword: string;
 };
 
+export type SetPasswordType = {
+  password: string;
+  confirmPassword: string;
+};
+
 export type Verify2FAType = {
   otp: string;
+};
+
+export type ForgotPasswordType = {
+  email: string;
+};
+
+export type UpdatePasswordType = {
+  newPassword: string;
+  confirmNewPassword: string;
 };

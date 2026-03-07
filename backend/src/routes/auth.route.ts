@@ -14,6 +14,7 @@ import {
   registerController,
   resendVerifyController,
   sendForgotPasswordController,
+  setPasswordController,
   updatePasswordController,
   verify2faController,
   verifyController,
@@ -60,6 +61,7 @@ const authRoutes = Router()
     blockIfGoogleAccount,
     linkAccountController,
   )
+  .post("/set-password", passportAuthenticateJwt, setPasswordController)
   .post("/enable2fa", passportAuthenticateJwt, enable2faController)
   .post("/verify2fa", restrictToMfaPending, verify2faController)
 

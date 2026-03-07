@@ -62,10 +62,16 @@ const UserDropdown = () => {
         )}
         {/* TODO: Implement UI and logic */}
         {user?.provider === "google" && (
-          <DropdownMenuItem>Set Password</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => navigate(PROTECTED_ROUTES.SET_PASSWORD)}
+          >
+            Set Password
+          </DropdownMenuItem>
         )}
         {user?.provider !== "google" && (
-          <DropdownMenuItem onClick={() => navigate("/change-password")}>
+          <DropdownMenuItem
+            onClick={() => navigate(PROTECTED_ROUTES.CHANGE_PASSWORD)}
+          >
             Change Password
           </DropdownMenuItem>
         )}
@@ -79,7 +85,9 @@ const UserDropdown = () => {
             Disable 2FA
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
+        <DropdownMenuItem variant="destructive" onClick={logout}>
+          Logout
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

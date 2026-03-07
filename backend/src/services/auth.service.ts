@@ -26,6 +26,7 @@ import {
   EmailSchemaType,
   LoginSchemaType,
   RegisterSchemaType,
+  SetPasswordSchemaType,
   UpdatePasswordSchema,
 } from "../validators/auth.validator";
 import { findByIdUserService } from "./user.service";
@@ -283,6 +284,37 @@ export const resendVerifyService = async (userEmail: EmailSchemaType) => {
     subject: `Verify You New Account ${user.name}`,
     text: `This token will expire in 15 minutes!: ${Env.API_URL}${Env.API_VERSION}auth/verify/${confirmToken}`,
   });
+};
+
+export const setPasswordService = async (
+  body: SetPasswordSchemaType,
+  userId: string,
+) => {
+  const { password } = body;
+  let user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  if (user.provider !== "google")
+    throw new NotAllowedException("User already has a password");
+
+  const hashedPass: string = await hashPass(password);
+
+  user = await UserModel.findOneAndUpdate(
+    { _id: user._id },
+    {
+      $set: {
+        password: hashedPass,
+        provider: "merged",
+      },
+    },
+    { new: true },
+  );
+
+  const newAccessToken = signAccessToken(user);
+  const newRefreshToken = signRefreshToken(user);
+
+  return { user, newAccessToken, newRefreshToken };
 };
 
 export const sendForgotPasswordService = async (userEmail: EmailSchemaType) => {

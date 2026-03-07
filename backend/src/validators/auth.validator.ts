@@ -21,6 +21,16 @@ export const requiredPasswordSchema = (fieldName: string = "password") =>
 
 export const passwordSchema = requiredPasswordSchema().optional();
 
+export const setPasswordSchema = z
+  .object({
+    password: requiredPasswordSchema("password"),
+    confirmPassword: requiredPasswordSchema("confirmPassword"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Confirm password does not match",
+    path: ["confirmPassword"],
+  });
+
 export const changePasswordSchema = z
   .object({
     currentPassword: requiredPasswordSchema("currentPassword"),
@@ -78,5 +88,6 @@ export const updatePasswordSchema = z
 export type EmailSchemaType = z.infer<typeof emailSchema>;
 export type RegisterSchemaType = z.infer<typeof registerSchema>;
 export type LoginSchemaType = z.infer<typeof loginSchema>;
+export type SetPasswordSchemaType = z.infer<typeof setPasswordSchema>;
 export type ChangePasswordSchema = z.infer<typeof changePasswordSchema>;
 export type UpdatePasswordSchema = z.infer<typeof updatePasswordSchema>;

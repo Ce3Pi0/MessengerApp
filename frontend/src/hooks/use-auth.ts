@@ -1,9 +1,12 @@
 import { API } from "@/lib/axios-client";
 import type {
   ChangePasswordType,
+  ForgotPasswordType,
   LoginType,
   RegisterType,
   ResendVerificationType,
+  SetPasswordType,
+  UpdatePasswordType,
   UserType,
   Verify2FAType,
 } from "@/types/auth.type";
@@ -20,11 +23,14 @@ import {
 interface AuthState {
   user: UserType | null;
   isLoggingIn: boolean;
+  isUpdating: boolean;
   waitingMfa: boolean;
   isConfirmed: boolean | undefined;
   isSigningUp: boolean;
+  sendingForgotPassword: boolean;
   isAuthStatusLoading: boolean;
   isChanging: boolean;
+  isSetting: boolean;
   mfaStatusChanging: boolean;
   mfaVerifying: boolean;
   qrCode: string | null;
@@ -33,7 +39,13 @@ interface AuthState {
   login: (data: LoginType) => Promise<boolean>;
   resendVerification: (data: ResendVerificationType) => void;
   logout: () => void;
+  sendForgotPassword: (data: ForgotPasswordType) => void;
+  updatePassword: (
+    data: UpdatePasswordType,
+    token: string | null,
+  ) => Promise<boolean>;
   changePassword: (data: ChangePasswordType) => Promise<boolean>;
+  setPassword: (data: SetPasswordType) => Promise<boolean>;
   enable2fa: () => Promise<boolean>;
   verify2fa: (data: Verify2FAType) => Promise<boolean>;
   disable2fa: () => Promise<boolean>;
@@ -45,17 +57,21 @@ export const useAuth = create<AuthState>()(
     (set) => ({
       user: null,
       isSigningUp: false,
+      sendingForgotPassword: false,
       isLoggingIn: false,
+      isUpdating: false,
       waitingMfa: false,
       isAuthStatusLoading: false,
       isConfirmed: undefined,
       isChanging: false,
+      isSetting: false,
       mfaStatusChanging: false,
       mfaVerifying: false,
       qrCode: null,
 
       register: async (data: RegisterType) => {
         set({ isSigningUp: true });
+
         try {
           await API.post("/auth/register", data);
           toast.success(
@@ -89,14 +105,13 @@ export const useAuth = create<AuthState>()(
         } catch (err: any) {
           if (err.response?.data?.message === "User account not confirmed") {
             set({ isConfirmed: false });
-          } else set({ isConfirmed: undefined });
+          }
           toast.error(err.response?.data?.message || "Login failed");
           return false;
         } finally {
           set({ isLoggingIn: false });
         }
       },
-
       resendVerification: async (data: ResendVerificationType) => {
         try {
           await API.post("/auth/resend-verification", data);
@@ -119,6 +134,38 @@ export const useAuth = create<AuthState>()(
           toast.error(err.response?.data?.message || "Logout failed");
         }
       },
+      sendForgotPassword: async (data: ForgotPasswordType) => {
+        try {
+          const res = await API.post("/auth/send-forgot-password", data);
+          toast.success(
+            res?.data?.message || "Password reset instructions sent!",
+          );
+        } catch (err: any) {
+          toast.error(
+            err.response?.data?.message ||
+              "Password reset email could not be sent",
+          );
+        }
+      },
+      updatePassword: async (
+        data: UpdatePasswordType,
+        token: string | null,
+      ) => {
+        set({ isUpdating: true });
+        try {
+          const res = await API.post(
+            `/auth/update-forgotten-password/${token}`,
+            data,
+          );
+          toast.success(res?.data?.message || "Password reset successfully!");
+          return true;
+        } catch (err: any) {
+          toast.error(err.response?.data?.message || "Password reset failed");
+          return false;
+        } finally {
+          set({ isUpdating: false });
+        }
+      },
       changePassword: async (data: ChangePasswordType) => {
         set({ isChanging: true });
         try {
@@ -132,6 +179,22 @@ export const useAuth = create<AuthState>()(
           return false;
         } finally {
           set({ isChanging: false });
+        }
+      },
+      setPassword: async (data: SetPasswordType) => {
+        set({ isSetting: true });
+        try {
+          const res = await API.post("/auth/set-password", data);
+          toast.success("Password set successfully!");
+          set({ user: res.data.user });
+          return true;
+        } catch (err: any) {
+          toast.error(
+            err.response?.data?.message || "Setting the password failed",
+          );
+          return false;
+        } finally {
+          set({ isSetting: false });
         }
       },
       enable2fa: async () => {
@@ -155,8 +218,9 @@ export const useAuth = create<AuthState>()(
           toast.success("2FA verified successfully.");
 
           const userId = useAuth.getState().user?._id;
-          if (isUserOnline(userId)) useSocket.getState().connectSocket();
-          set({ user: res.data.user, qrCode: null, waitingMfa: false });
+          if (!isUserOnline(userId)) useSocket.getState().connectSocket();
+
+          set({ user: res.data.user, qrCode: null });
           return true;
         } catch (err: any) {
           toast.error(err.response?.data?.message || "Verifying 2FA failed");

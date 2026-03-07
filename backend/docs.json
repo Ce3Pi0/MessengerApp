@@ -66,6 +66,18 @@
             "body": { "email": "string" }
           }
         },
+        "set-password": {
+          "methods": "POST",
+          "required": {
+            "body": {
+              "password": "string",
+              "confirmPassword": "string"
+            },
+            "cookies": {
+              "accessToken": "string"
+            }
+          }
+        },
         "change-password": {
           "methods": "PUT",
           "required": {

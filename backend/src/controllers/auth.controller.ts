@@ -5,6 +5,7 @@ import {
   emailSchema,
   loginSchema,
   registerSchema,
+  setPasswordSchema,
   updatePasswordSchema,
 } from "../validators/auth.validator";
 import {
@@ -20,6 +21,7 @@ import {
   registerService,
   resendVerifyService,
   sendForgotPasswordService,
+  setPasswordService,
   updatePasswordService,
   verify2faService,
   verifyService,
@@ -130,6 +132,24 @@ export const resendVerifyController = asyncHandler(
   },
 );
 
+export const setPasswordController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const body = setPasswordSchema.parse(req.body);
+
+    const { user, newAccessToken, newRefreshToken } = await setPasswordService(
+      body,
+      req.user!._id,
+    );
+
+    return setJwtAuthCookie(res, newAccessToken, newRefreshToken)
+      .status(HTTP_STATUS.OK)
+      .json({
+        message: "Password set successfully",
+        user,
+      });
+  },
+);
+
 export const changePasswordController = asyncHandler(
   async (req: Request, res: Response) => {
     const body = changePasswordSchema.parse(req.body);
@@ -172,7 +192,7 @@ export const forgotPasswordController = asyncHandler(
 
     return res.redirect(
       HTTP_STATUS.FOUND,
-      `${Env.FRONTEND_URL}/forgot-password/${forgotPasswordToken}`,
+      `${Env.FRONTEND_URL}/forgot-password?token=${forgotPasswordToken}`,
     );
   },
 );

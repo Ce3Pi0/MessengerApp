@@ -63,6 +63,12 @@ const SignIn = () => {
                   type="password"
                   placeholder="********"
                 />
+                <a
+                  className="underline text-xs hover:text-blue-300 w-fit"
+                  href="/forgot-password"
+                >
+                  Forgot Password?
+                </a>
                 <Button disabled={isLoggingIn} type="submit" className="w-full">
                   {isLoggingIn && <Spinner />} Sign in
                 </Button>

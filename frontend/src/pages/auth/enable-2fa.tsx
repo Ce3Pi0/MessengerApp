@@ -1,6 +1,5 @@
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import QrCode from "@/components/qr-code";
+import QrCodeAlert from "@/components/custom-alert";
 import {
   Dialog,
   DialogContent,
@@ -9,8 +8,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
-import { PROTECTED_ROUTES } from "@/routes/routes";
-import { AlertCircleIcon } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -35,39 +32,8 @@ const Enable2fa = () => {
             Scan the QR code in you Authenticator app
           </DialogDescription>
         </DialogHeader>
-        {!qrCode && (
-          <Alert variant="destructive" className="max-w-md">
-            <AlertCircleIcon />
-            <AlertTitle>QR Code Not Available</AlertTitle>
-            <AlertDescription>
-              The QR code is not available at this time!
-              <a className="underline" href="/">
-                Go Back
-              </a>
-            </AlertDescription>
-          </Alert>
-        )}
-        {qrCode && (
-          <>
-            (
-            <Card
-              className="p-7
-        m-1"
-            >
-              <CardContent className="flex flex-row align-middle justify-center">
-                <img src={qrCode} />
-              </CardContent>
-            </Card>
-            <Button
-              className="max-w-1/3"
-              type="button"
-              onClick={() => navigate(PROTECTED_ROUTES.VERIFY_2FA)}
-            >
-              Verify
-            </Button>
-            )
-          </>
-        )}
+        {!qrCode && <QrCodeAlert />}
+        {qrCode && <QrCode />}
       </DialogContent>
     </Dialog>
   );
