@@ -17,7 +17,7 @@ import OauthButton from "@/components/oauth-button";
 import { AUTH_ROUTES } from "@/routes/routes";
 
 const SignIn = () => {
-  const { login, resendVerification, isLoggingIn, isConfirmed } = useAuth();
+  const { login, resendVerification, isLoading, isConfirmed } = useAuth();
 
   const navigate = useNavigate();
 
@@ -30,7 +30,7 @@ const SignIn = () => {
   });
 
   const onSubmit = async (values: LoginFormSchemaType) => {
-    if (isLoggingIn) return;
+    if (isLoading) return;
     const mfaRequired = await login(values);
     if (mfaRequired) navigate(AUTH_ROUTES.VERIFY_2FA);
   };
@@ -69,8 +69,8 @@ const SignIn = () => {
                 >
                   Forgot Password?
                 </a>
-                <Button disabled={isLoggingIn} type="submit" className="w-full">
-                  {isLoggingIn && <Spinner />} Sign in
+                <Button disabled={isLoading} type="submit" className="w-full">
+                  {isLoading && <Spinner />} Sign in
                 </Button>
 
                 <div className="text-center text-sm">

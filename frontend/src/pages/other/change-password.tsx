@@ -22,7 +22,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 const ChangePassword = () => {
-  const { isChanging, changePassword } = useAuth();
+  const { isLoading, changePassword } = useAuth();
 
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(true);
@@ -37,7 +37,7 @@ const ChangePassword = () => {
   });
 
   const onSubmit = async (values: ChangePasswordFormSchemaType) => {
-    if (isChanging) return;
+    if (isLoading) return;
     const success = await changePassword(values);
     if (success) navigate(OTHER_ROUTES.ROOT);
   };
@@ -91,8 +91,8 @@ const ChangePassword = () => {
                   placeholder="********"
                 />
                 <div className="flex flex-row justify-center gap-10">
-                  <Button type="submit" className="w-1/2">
-                    {isChanging && <Spinner />}Change Password
+                  <Button disabled={isLoading} type="submit" className="w-1/2">
+                    {isLoading && <Spinner />}Change Password
                   </Button>
                 </div>
               </form>

@@ -22,7 +22,7 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 
 const SetPassword = () => {
-  const { isSetting, setPassword } = useAuth();
+  const { isLoading, setPassword } = useAuth();
 
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(true);
@@ -36,7 +36,7 @@ const SetPassword = () => {
   });
 
   const onSubmit = async (values: SetPasswordFormSchemaType) => {
-    if (isSetting) return;
+    if (isLoading) return;
     const success = await setPassword(values);
     if (success) navigate(OTHER_ROUTES.ROOT);
   };
@@ -82,8 +82,8 @@ const SetPassword = () => {
                   placeholder="********"
                 />
                 <div className="flex flex-row justify-center gap-10">
-                  <Button type="submit" className="w-1/2">
-                    {isSetting && <Spinner />}Set Password
+                  <Button disabled={isLoading} type="submit" className="w-1/2">
+                    {isLoading && <Spinner />}Set Password
                   </Button>
                 </div>
               </form>

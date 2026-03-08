@@ -7,6 +7,7 @@ import type {
   ResendVerificationType,
   SetPasswordType,
   UpdatePasswordType,
+  UpdateUserType,
   UserType,
   Verify2FAType,
 } from "@/types/auth.type";
@@ -14,27 +15,16 @@ import { toast } from "sonner";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useSocket } from "./use-socket";
-import {
-  accessTokenExpiredError,
-  handleRefresh,
-  isUserOnline,
-} from "@/lib/helper";
+import { accessTokenExpiredError, isUserOnline } from "@/lib/helper";
 
 interface AuthState {
   user: UserType | null;
-  isLoggingIn: boolean;
-  isUpdating: boolean;
+  isLoading: boolean;
   waitingMfa: boolean;
   isConfirmed: boolean | undefined;
-  isSigningUp: boolean;
-  sendingForgotPassword: boolean;
-  isAuthStatusLoading: boolean;
-  isChanging: boolean;
-  isSetting: boolean;
-  mfaStatusChanging: boolean;
-  mfaVerifying: boolean;
   qrCode: string | null;
 
+  setUser: (user: UserType | null) => void;
   register: (data: RegisterType) => Promise<boolean>;
   login: (data: LoginType) => Promise<boolean>;
   resendVerification: (data: ResendVerificationType) => void;
@@ -46,31 +36,30 @@ interface AuthState {
   ) => Promise<boolean>;
   changePassword: (data: ChangePasswordType) => Promise<boolean>;
   setPassword: (data: SetPasswordType) => Promise<boolean>;
-  enable2fa: () => Promise<boolean>;
+  enable2fa: () => void;
   verify2fa: (data: Verify2FAType) => Promise<boolean>;
   disable2fa: () => Promise<boolean>;
   isAuthStatus: () => void;
+  updateAccount: (data: UpdateUserType) => Promise<boolean>;
+  deleteAccount: () => Promise<boolean>;
 }
 
 export const useAuth = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      isSigningUp: false,
-      sendingForgotPassword: false,
-      isLoggingIn: false,
-      isUpdating: false,
+      isLoading: false,
       waitingMfa: false,
-      isAuthStatusLoading: false,
       isConfirmed: undefined,
-      isChanging: false,
-      isSetting: false,
-      mfaStatusChanging: false,
-      mfaVerifying: false,
       qrCode: null,
 
+      setUser: (newUser: UserType | null) =>
+        set((state) => ({
+          ...state,
+          user: newUser,
+        })),
       register: async (data: RegisterType) => {
-        set({ isSigningUp: true });
+        set({ isLoading: true });
 
         try {
           await API.post("/auth/register", data);
@@ -82,13 +71,15 @@ export const useAuth = create<AuthState>()(
           toast.error(err.response?.data?.message || "Register failed");
           return false;
         } finally {
-          set({ isSigningUp: false });
+          set({ isLoading: false });
         }
       },
       login: async (data: LoginType) => {
-        set({ isLoggingIn: true, waitingMfa: false });
+        set({ isLoading: true, waitingMfa: false });
+
         try {
           const res = await API.post("/auth/login", data);
+
           set({ user: res.data.user, waitingMfa: res.data.mfaRequired });
 
           if (useAuth.getState().isConfirmed !== undefined)
@@ -109,7 +100,7 @@ export const useAuth = create<AuthState>()(
           toast.error(err.response?.data?.message || "Login failed");
           return false;
         } finally {
-          set({ isLoggingIn: false });
+          set({ isLoading: false });
         }
       },
       resendVerification: async (data: ResendVerificationType) => {
@@ -127,6 +118,7 @@ export const useAuth = create<AuthState>()(
       logout: async () => {
         try {
           await API.post("/auth/logout");
+
           set({ user: null });
           useSocket.getState().disconnectSocket();
           toast.success("Logout successful!");
@@ -135,6 +127,7 @@ export const useAuth = create<AuthState>()(
         }
       },
       sendForgotPassword: async (data: ForgotPasswordType) => {
+        set({ isLoading: true });
         try {
           const res = await API.post("/auth/send-forgot-password", data);
           toast.success(
@@ -145,13 +138,15 @@ export const useAuth = create<AuthState>()(
             err.response?.data?.message ||
               "Password reset email could not be sent",
           );
+        } finally {
+          set({ isLoading: true });
         }
       },
       updatePassword: async (
         data: UpdatePasswordType,
         token: string | null,
       ) => {
-        set({ isUpdating: true });
+        set({ isLoading: true });
         try {
           const res = await API.post(
             `/auth/update-forgotten-password/${token}`,
@@ -163,11 +158,11 @@ export const useAuth = create<AuthState>()(
           toast.error(err.response?.data?.message || "Password reset failed");
           return false;
         } finally {
-          set({ isUpdating: false });
+          set({ isLoading: false });
         }
       },
       changePassword: async (data: ChangePasswordType) => {
-        set({ isChanging: true });
+        set({ isLoading: true });
         try {
           await API.put("/auth/change-password", data);
           toast.success("Password updated successfully!");
@@ -178,11 +173,11 @@ export const useAuth = create<AuthState>()(
           );
           return false;
         } finally {
-          set({ isChanging: false });
+          set({ isLoading: false });
         }
       },
       setPassword: async (data: SetPasswordType) => {
-        set({ isSetting: true });
+        set({ isLoading: true });
         try {
           const res = await API.post("/auth/set-password", data);
           toast.success("Password set successfully!");
@@ -194,25 +189,20 @@ export const useAuth = create<AuthState>()(
           );
           return false;
         } finally {
-          set({ isSetting: false });
+          set({ isLoading: false });
         }
       },
       enable2fa: async () => {
-        set({ mfaStatusChanging: true });
         try {
           const res = await API.post("/auth/enable2fa");
           set({ qrCode: res.data.qrCode });
           toast.success("2FA enabled! Please verify to complete the process.");
-          return true;
         } catch (err: any) {
           toast.error(err.response?.data?.message || "Enabling 2FA failed");
-          return false;
-        } finally {
-          set({ mfaStatusChanging: false });
         }
       },
       verify2fa: async (data: Verify2FAType) => {
-        set({ mfaVerifying: true });
+        set({ isLoading: true });
         try {
           const res = await API.post("/auth/verify2fa", data);
           toast.success("2FA verified successfully.");
@@ -226,7 +216,7 @@ export const useAuth = create<AuthState>()(
           toast.error(err.response?.data?.message || "Verifying 2FA failed");
           return false;
         } finally {
-          set({ mfaVerifying: false });
+          set({ isLoading: false });
         }
       },
       disable2fa: async () => {
@@ -245,22 +235,52 @@ export const useAuth = create<AuthState>()(
         }
       },
       isAuthStatus: async () => {
-        set({ isAuthStatusLoading: true });
+        set({ isLoading: true });
 
         try {
           const res = await API.get("/auth/status");
           set({ user: res.data.user });
           useSocket.getState().connectSocket();
         } catch (err: any) {
-          if (accessTokenExpiredError(err, useAuth.getState().user)) {
-            handleRefresh(set);
-          } else if (useAuth.getState().user) {
+          if (
+            useAuth.getState().user &&
+            !accessTokenExpiredError(err, useAuth.getState().user)
+          ) {
             toast.error(err.response?.data?.message || "Authentication failed");
           }
           set({ user: null });
           useSocket.getState().disconnectSocket();
         } finally {
-          set({ isAuthStatusLoading: false });
+          set({ isLoading: false });
+        }
+      },
+      updateAccount: async (data: UpdateUserType) => {
+        set({ isLoading: true });
+        try {
+          const res = await API.put("/users/update", data);
+          set({ user: res.data.user });
+          toast.success("Account updated successfully!");
+          return true;
+        } catch (err: any) {
+          toast.error(err.response?.data?.message || "Account update failed");
+          return false;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      deleteAccount: async () => {
+        set({ isLoading: true });
+        try {
+          const res = await API.delete("/users/delete");
+          set({ user: null });
+          useSocket.getState().disconnectSocket();
+          toast.success(res.data?.message || "Account deleted successfully!");
+          return true;
+        } catch (err: any) {
+          toast.error(err.response?.data?.message || "Account deletion failed");
+          return false;
+        } finally {
+          set({ isLoading: false });
         }
       },
     }),

@@ -8,14 +8,28 @@ export const isUserOnline = (userId?: string): boolean => {
   return onlineUsers.includes(userId);
 };
 
-export const handleRefresh = async (set: any) => {
-  await API.put("/auth/refresh");
-  const res = await API.get("/auth/status");
-  set({ user: res.data.user });
-  useSocket.getState().connectSocket();
+export const handleRefresh = async (set: any): Promise<boolean> => {
+  try {
+    const res = await API.put("/auth/refresh");
+    set(res.data.user);
+    useSocket.getState().connectSocket();
+    return true;
+  } catch (err: any) {
+    set({ user: null });
+    return false;
+  }
 };
 
 export const accessTokenExpiredError = (err: any, user: UserType | null) =>
   err.response?.status === 401 &&
   err.response?.data?.message === "Missing token" &&
   user;
+
+export const fileToBase64 = (file: Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};

@@ -6,8 +6,8 @@ const OauthButton = () => {
     import.meta.env.MODE === "development" ? import.meta.env.VITE_API_URL : "/";
   const backendUrl =
     import.meta.env.MODE === "development"
-      ? BASE_URL + "/api/v1/auth/google"
-      : "/api/v1/auth/google";
+      ? BASE_URL + "api/v1/auth/google"
+      : "api/v1/auth/google";
 
   return (
     <Button

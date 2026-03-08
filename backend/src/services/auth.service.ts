@@ -29,7 +29,6 @@ import {
   SetPasswordSchemaType,
   UpdatePasswordSchema,
 } from "../validators/auth.validator";
-import { findByIdUserService } from "./user.service";
 import { Env } from "../config/env.config";
 import { sendMail } from "../utils/sendMail";
 import emailValidator, { ValidationResult } from "node-email-verifier";
@@ -215,7 +214,7 @@ export const loginService = async (body: LoginSchemaType) => {
 
 export const logoutUserService = async (refreshToken: string, id: string) => {
   if (refreshToken) {
-    const user = await findByIdUserService(id);
+    const user = await UserModel.findById(id);
     if (user) {
       await UserModel.updateOne(
         { _id: user._id },
@@ -228,7 +227,7 @@ export const logoutUserService = async (refreshToken: string, id: string) => {
 export const refreshService = async (refreshToken: string) => {
   const payload = jwtVerify(refreshToken, Env.JWT_REFRESH_SECRET);
 
-  const user = await findByIdUserService(payload.id);
+  let user = await UserModel.findById(payload.id);
 
   if (!user) throw new ForbiddenException();
 
@@ -240,12 +239,13 @@ export const refreshService = async (refreshToken: string) => {
   const newRefreshToken = signRefreshToken(user);
 
   const hashedRefreshToken: string = await hashToken(newRefreshToken);
-  await UserModel.updateOne(
+  user = await UserModel.findOneAndUpdate(
     { _id: user._id },
     { $set: { refreshToken: hashedRefreshToken } },
+    { new: true },
   );
 
-  return { newAccessToken, newRefreshToken };
+  return { user, newAccessToken, newRefreshToken };
 };
 
 export const verifyService = async (verifyToken: string) => {
@@ -509,12 +509,4 @@ export const verify2faService = async (userId: string, token: string) => {
   );
 
   return { user, accessToken, refreshToken };
-};
-
-export const deleteUserService = async (userId: string) => {
-  const user = await UserModel.findById(userId);
-
-  if (!user) throw new NotFoundException("User not found");
-
-  await UserModel.deleteOne({ _id: userId });
 };

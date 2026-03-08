@@ -16,7 +16,7 @@ import OrWith from "@/components/or-with";
 import OauthButton from "@/components/oauth-button";
 
 const SignUp = () => {
-  const { register, isSigningUp } = useAuth();
+  const { register, isLoading } = useAuth();
 
   const form = useForm<RegisterFormSchemaType>({
     resolver: zodResolver(registerFormSchema),
@@ -30,7 +30,7 @@ const SignUp = () => {
   });
 
   const onSubmit = async (values: RegisterFormSchemaType) => {
-    if (isSigningUp) return;
+    if (isLoading) return;
     const isOk = await register(values);
     if (isOk) {
       form.reset();
@@ -78,8 +78,8 @@ const SignUp = () => {
                   type="password"
                   placeholder="********"
                 />
-                <Button disabled={isSigningUp} type="submit" className="w-full">
-                  {isSigningUp && <Spinner />} Sign up
+                <Button disabled={isLoading} type="submit" className="w-full">
+                  {isLoading && <Spinner />} Sign up
                 </Button>
 
                 <div className="text-center text-sm">

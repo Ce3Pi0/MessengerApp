@@ -10,7 +10,8 @@ import { useNavigate } from "react-router-dom";
 import AvatarWithBadge from "./avatar-with-badge";
 import { isUserOnline } from "@/lib/helper";
 import LogoType from "./logo-type";
-import { OTHER_ROUTES, PROTECTED_ROUTES } from "@/routes/routes";
+import { PROTECTED_ROUTES } from "@/routes/routes";
+import { PencilLineIcon, Trash2Icon } from "lucide-react";
 
 const UserDropdown = () => {
   const navigate = useNavigate();
@@ -19,21 +20,16 @@ const UserDropdown = () => {
     import.meta.env.MODE === "development" ? import.meta.env.VITE_API_URL : "/";
   const backendUrl =
     import.meta.env.MODE === "development"
-      ? BASE_URL + "/api/v1/auth/google"
-      : "/api/v1/auth/google";
+      ? BASE_URL + "api/v1/auth/google"
+      : "api/v1/auth/google";
 
-  const { user, logout, enable2fa, disable2fa } = useAuth();
+  const { user, logout, enable2fa } = useAuth();
 
   const isOnline = isUserOnline(user?._id);
 
-  const handleEnable2FA = async () => {
-    const res = await enable2fa();
-    if (res) navigate(PROTECTED_ROUTES.ENABLE_2FA);
-  };
-
-  const handleDisable2FA = async () => {
-    const res = await disable2fa();
-    if (res) navigate(OTHER_ROUTES.ROOT);
+  const handleEnable2FA = () => {
+    enable2fa();
+    navigate(PROTECTED_ROUTES.ENABLE_2FA);
   };
 
   return (
@@ -49,10 +45,16 @@ const UserDropdown = () => {
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-48 rounded-lg z-99999" align="end">
-        <DropdownMenuLabel className="flex flex-row justify-between">
-          <p>{user?.name}</p>
+        <DropdownMenuLabel>Account Details</DropdownMenuLabel>
+        <hr />
+        <DropdownMenuItem
+          onClick={() => navigate(PROTECTED_ROUTES.EDIT_ACCOUNT)}
+          className="flex flex-row justify-between items-center"
+        >
+          <PencilLineIcon className="size-3" />
+          {user?.name}
           <LogoType provider={user?.provider || "local"} />
-        </DropdownMenuLabel>
+        </DropdownMenuItem>
         <hr />
         {user?.provider === "local" && (
           // Google OAuth login
@@ -60,7 +62,6 @@ const UserDropdown = () => {
             Link Account
           </DropdownMenuItem>
         )}
-        {/* TODO: Implement UI and logic */}
         {user?.provider === "google" && (
           <DropdownMenuItem
             onClick={() => navigate(PROTECTED_ROUTES.SET_PASSWORD)}
@@ -81,12 +82,21 @@ const UserDropdown = () => {
           </DropdownMenuItem>
         )}
         {user?.enabled2fa && (
-          <DropdownMenuItem onClick={() => handleDisable2FA()}>
+          <DropdownMenuItem
+            onClick={() => navigate(PROTECTED_ROUTES.CONFIRM_DISABLE_2FA)}
+          >
             Disable 2FA
           </DropdownMenuItem>
         )}
         <DropdownMenuItem variant="destructive" onClick={logout}>
           Logout
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          variant="destructive"
+          onClick={() => navigate(PROTECTED_ROUTES.DELETE_ACCOUNT)}
+        >
+          <Trash2Icon />
+          Delete Account
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

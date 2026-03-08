@@ -24,7 +24,7 @@ interface Props {
 }
 
 const OtpForm = ({ cardTitle, handleConfirm }: Props) => {
-  const { mfaVerifying } = useAuth();
+  const { isLoading } = useAuth();
   const OTP_LEN: number = 6;
 
   const [otp, setOtp] = useState("");
@@ -73,7 +73,7 @@ const OtpForm = ({ cardTitle, handleConfirm }: Props) => {
             disabled={otp.length < OTP_LEN}
             onClick={() => handleConfirm(otp)}
           >
-            {mfaVerifying && <Spinner />}
+            {isLoading && <Spinner />}
             Verify
           </Button>
         </Field>

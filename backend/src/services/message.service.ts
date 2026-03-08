@@ -13,6 +13,8 @@ import {
   emitNewMessageToChatRoom,
   emitUpdatedMessageToChatRoom,
 } from "../lib/socket";
+import { cloudinaryDelete, cloudinaryPost } from "../utils/cloudinary";
+import { getPublicIdFromUrl } from "../utils/get-url";
 
 export const sendMessageService = async (
   userId: string,
@@ -39,7 +41,7 @@ export const sendMessageService = async (
 
   let imageUrl;
   if (image) {
-    const uploadRes = await cloudinary.uploader.upload(image);
+    const uploadRes = await cloudinaryPost(image, "messages");
     imageUrl = uploadRes.secure_url;
   }
 
@@ -109,7 +111,7 @@ export const editMessageService = async (
   if (!oldMessage) throw new NotFoundException("Message not found");
 
   if (oldMessage.image)
-    throw new BadRequestException("Image message cannot be edited");
+    throw new BadRequestException("Images cannot be edited");
 
   const newMessage = await MessageModel.findByIdAndUpdate(
     messageId,
@@ -146,6 +148,13 @@ export const deleteMessageService = async (
   });
 
   if (!message) throw new NotFoundException("Message not found");
+
+  if (message.image) {
+    const publicId = getPublicIdFromUrl(message.image);
+    if (publicId) {
+      await cloudinaryDelete(publicId);
+    }
+  }
 
   await MessageModel.deleteOne({
     _id: messageId,

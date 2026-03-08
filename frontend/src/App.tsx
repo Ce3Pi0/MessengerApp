@@ -9,7 +9,7 @@ import { useSocket } from "./hooks/use-socket";
 
 function App() {
   const { pathname } = useLocation();
-  const { user, isAuthStatus, isAuthStatusLoading } = useAuth();
+  const { user, isAuthStatus, isLoading } = useAuth();
 
   const { onlineUsers } = useSocket();
 
@@ -21,7 +21,7 @@ function App() {
     isAuthStatus();
   }, [isAuthStatus]);
 
-  if (isAuthStatusLoading && !user && !isAuth) {
+  if (isLoading && !user && !isAuth) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <Logo imgClass="size-20" showText={false} />{" "}

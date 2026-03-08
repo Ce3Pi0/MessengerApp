@@ -1,8 +1,7 @@
-import { Request, Response, Router } from "express";
+import { Router } from "express";
 import {
   authStatusController,
   changePasswordController,
-  deleteUserController,
   disable2faController,
   enable2faController,
   forgotPasswordController,
@@ -69,7 +68,6 @@ const authRoutes = Router()
 
   .get("/status", passportAuthenticateJwt, authStatusController)
 
-  .put("/refresh", refreshController)
-  .delete("/delete", passportAuthenticateJwt, deleteUserController);
+  .put("/refresh", refreshController);
 
 export default authRoutes;

@@ -32,7 +32,12 @@ const Enable2fa = () => {
             Scan the QR code in you Authenticator app
           </DialogDescription>
         </DialogHeader>
-        {!qrCode && <QrCodeAlert />}
+        {!qrCode && (
+          <QrCodeAlert
+            alertTitle="QR Code Not Available"
+            alertDescription="Please try again later."
+          />
+        )}
         {qrCode && <QrCode />}
       </DialogContent>
     </Dialog>

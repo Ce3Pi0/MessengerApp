@@ -10,7 +10,6 @@ import {
 } from "../validators/auth.validator";
 import {
   changePasswordService,
-  deleteUserService,
   disable2faService,
   enable2faService,
   forgotPasswordService,
@@ -231,11 +230,12 @@ export const refreshController = asyncHandler(
 
     if (!refreshToken) throw new UnauthorizedException("Missing refresh token");
 
-    const { newAccessToken, newRefreshToken } =
+    const { user, newAccessToken, newRefreshToken } =
       await refreshService(refreshToken);
 
     return setJwtAuthCookie(res, newAccessToken, newRefreshToken).json({
       message: "Refreshed",
+      user,
     });
   },
 );
@@ -301,20 +301,6 @@ export const authStatusController = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       message: "Authenticated User",
       user,
-    });
-  },
-);
-
-export const deleteUserController = asyncHandler(
-  async (req: Request, res: Response) => {
-    const userId = req.user!._id;
-
-    await deleteUserService(userId);
-
-    clearJwtAuthCookie(res);
-
-    return res.status(HTTP_STATUS.OK).json({
-      message: "User deleted successfully",
     });
   },
 );

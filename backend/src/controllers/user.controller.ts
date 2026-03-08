@@ -8,6 +8,8 @@ import {
 } from "../services/user.service";
 import { BadRequestException } from "../utils/app-error";
 import { updateUserSchema } from "../validators/user.validator";
+import { deleteUserService } from "../services/user.service";
+import { clearJwtAuthCookie } from "../utils/cookie";
 
 export const getUsersController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -49,5 +51,19 @@ export const updateUserController = asyncHandler(
     return res
       .status(HTTP_STATUS.OK)
       .json({ message: "User updated successfully", user });
+  },
+);
+
+export const deleteUserController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user!._id;
+
+    await deleteUserService(userId);
+
+    clearJwtAuthCookie(res);
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "User deleted successfully",
+    });
   },
 );

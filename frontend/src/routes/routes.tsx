@@ -8,6 +8,9 @@ import Chats from "@/pages/chat";
 import SingleChat from "@/pages/chat/chatId";
 import LinkingError from "@/pages/error/linking-error";
 import ChangePassword from "@/pages/other/change-password";
+import ConfirmDisable2fa from "@/pages/other/confirm-disable-2fa";
+import DeleteAccount from "@/pages/other/delete-account";
+import EditAccount from "@/pages/other/edit-account";
 import SetPassword from "@/pages/other/set-password";
 
 export const AUTH_ROUTES = {
@@ -24,7 +27,10 @@ export const PROTECTED_ROUTES = {
   CHANGE_PASSWORD: "/change-password",
   SET_PASSWORD: "/set-password",
   ENABLE_2FA: "/enable-2fa",
+  CONFIRM_DISABLE_2FA: "/confirm-disable-2fa",
   VERIFY_2FA: "/verify-2fa",
+  EDIT_ACCOUNT: "/edit-account",
+  DELETE_ACCOUNT: "/delete-account",
 };
 
 export const OTHER_ROUTES = {
@@ -77,8 +83,20 @@ export const protectedRoutesPath = [
     element: <Enable2fa />,
   },
   {
+    path: PROTECTED_ROUTES.CONFIRM_DISABLE_2FA,
+    element: <ConfirmDisable2fa />,
+  },
+  {
     path: PROTECTED_ROUTES.VERIFY_2FA,
     element: <Verify2fa />,
+  },
+  {
+    path: PROTECTED_ROUTES.EDIT_ACCOUNT,
+    element: <EditAccount />,
+  },
+  {
+    path: PROTECTED_ROUTES.DELETE_ACCOUNT,
+    element: <DeleteAccount />,
   },
 ];
 

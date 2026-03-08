@@ -1,6 +1,8 @@
 import cloudinary from "../config/cloudinary.config";
 import UserModel from "../models/user.model";
 import { BadRequestException, NotFoundException } from "../utils/app-error";
+import { cloudinaryDelete, cloudinaryPost } from "../utils/cloudinary";
+import { getPublicIdFromUrl } from "../utils/get-url";
 import { UpdateUserSchemaType } from "../validators/user.validator";
 
 export const findByIdUserService = async (userId: string) => {
@@ -65,20 +67,40 @@ export const updateUserService = async (
 
   const { name: newName, avatar } = body;
 
-  if (user.name === newName)
-    throw new BadRequestException("New name must be differ from the old name");
-  if (user.avatar === avatar && avatar)
+  if (user.name === newName && user.avatar === avatar && avatar)
     throw new BadRequestException(
-      "New avatar must be different from the old avatar",
+      "New name or avatar must be different from the old",
     );
 
   if (newName) user.name = newName;
-  if (avatar) {
-    const uploadRes = await cloudinary.uploader.upload(avatar);
+  if (avatar && avatar !== user.avatar) {
+    if (user.avatar) {
+      const publicId = getPublicIdFromUrl(user.avatar);
+      if (publicId) {
+        await cloudinaryDelete(publicId);
+      }
+    }
+
+    const uploadRes = await cloudinaryPost(avatar, "user_avatars");
     user.avatar = uploadRes.secure_url;
   }
 
   await user.save();
 
   return user;
+};
+
+export const deleteUserService = async (userId: string) => {
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  if (user.avatar) {
+    const publicId = getPublicIdFromUrl(user.avatar);
+    if (publicId) {
+      await cloudinaryDelete(publicId);
+    }
+  }
+
+  await UserModel.deleteOne({ _id: userId });
 };

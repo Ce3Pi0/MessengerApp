@@ -11,8 +11,6 @@ interface LogoProps {
 const MergedLogo = ({ imgClass = "size-[30px]" }: LogoProps) => {
   const { theme } = useTheme();
 
-  console.log("Current theme:", theme);
-
   const [mergedLogo, setMergedLogo] = useState(
     theme === "dark" ? whiteMergedLogo : blackMergedLogo,
   );

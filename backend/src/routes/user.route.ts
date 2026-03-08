@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  deleteUserController,
   getSingleUserController,
   getUsersController,
   updateUserController,
@@ -10,6 +11,7 @@ const userRoutes = Router()
   .use(passportAuthenticateJwt)
   .get("/all", getUsersController)
   .get("/:id", getSingleUserController)
-  .put("/update", updateUserController);
+  .put("/update", updateUserController)
+  .delete("/delete", deleteUserController);
 
 export default userRoutes;

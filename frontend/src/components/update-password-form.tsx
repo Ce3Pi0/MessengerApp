@@ -22,7 +22,7 @@ interface Props {
 const UpdatePasswordForm = ({ token }: Props) => {
   const navigate = useNavigate();
 
-  const { isUpdating, updatePassword } = useAuth();
+  const { isLoading, updatePassword } = useAuth();
 
   const form = useForm<UpdatePasswordFormSchemaType>({
     resolver: zodResolver(updatePasswordFormSchema),
@@ -33,7 +33,7 @@ const UpdatePasswordForm = ({ token }: Props) => {
   });
 
   const handleUpdatePassword = async (values: UpdatePasswordFormSchemaType) => {
-    if (isUpdating) return;
+    if (isLoading) return;
     const res = await updatePassword(values, token);
     if (res) navigate(AUTH_ROUTES.SIGN_IN);
   };
@@ -66,8 +66,8 @@ const UpdatePasswordForm = ({ token }: Props) => {
                   type="password"
                   placeholder="********"
                 />
-                <Button disabled={isUpdating} type="submit" className="w-full">
-                  {isUpdating && <Spinner />} Reset Password
+                <Button disabled={isLoading} type="submit" className="w-full">
+                  {isLoading && <Spinner />} Reset Password
                 </Button>
                 <a
                   href="/"

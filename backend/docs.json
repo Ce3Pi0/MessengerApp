@@ -163,14 +163,6 @@
               "refreshToken": "string"
             }
           }
-        },
-        "delete": {
-          "methods": "POST",
-          "required": {
-            "cookies": {
-              "accessToken": "string"
-            }
-          }
         }
       }
     },
@@ -227,6 +219,14 @@
               "body": {
                 "name": "string | null",
                 "avatar": "string | null"
+              }
+            }
+          },
+          "delete": {
+            "methods": "POST",
+            "required": {
+              "cookies": {
+                "accessToken": "string"
               }
             }
           }

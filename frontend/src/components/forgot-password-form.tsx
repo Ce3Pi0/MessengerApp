@@ -3,13 +3,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
+import { Spinner } from "./ui/spinner";
 
 const ForgotPasswordForm = () => {
-  const { sendForgotPassword } = useAuth();
+  const { sendForgotPassword, isLoading } = useAuth();
 
   const [email, setEmail] = useState("");
 
   const handleSendEmail = () => {
+    if (isLoading) return;
     sendForgotPassword({ email });
   };
 
@@ -31,8 +33,9 @@ const ForgotPasswordForm = () => {
         className="w-full"
         type="submit"
         onClick={() => handleSendEmail()}
+        disabled={isLoading}
       >
-        Send Reset Link
+        {isLoading && <Spinner />}Send Reset Link
       </Button>
     </form>
   );
