@@ -52,13 +52,12 @@ export const createChatService = async (
       participants: allParticipantsIds,
       createdBy: userId,
     });
-
-    const populatedChat = await chat?.populate("participants", "name avatar");
-
-    emitNewChatToParticipants(allParticipantsIds, populatedChat);
-
-    return chat;
   }
+  const populatedChat = await chat?.populate("participants", "name avatar");
+
+  emitNewChatToParticipants(allParticipantsIds, populatedChat);
+
+  return chat;
 };
 
 export const getUserChatService = async (
