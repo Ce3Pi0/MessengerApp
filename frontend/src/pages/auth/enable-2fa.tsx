@@ -10,6 +10,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { OTHER_ROUTES } from "@/routes/routes";
 
 const Enable2fa = () => {
   const { qrCode } = useAuth();
@@ -19,7 +20,7 @@ const Enable2fa = () => {
   const handleClose = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
-      navigate(-1);
+      navigate(OTHER_ROUTES.ROOT);
     }
   };
 

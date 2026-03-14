@@ -30,7 +30,7 @@ const OtpForm = ({ cardTitle, handleConfirm }: Props) => {
   const [otp, setOtp] = useState("");
 
   return (
-    <Card className="mx-auto max-w-md">
+    <Card className="mx-auto max-w-md z-9999">
       <CardHeader>
         <CardTitle>{cardTitle}</CardTitle>
         <CardDescription>

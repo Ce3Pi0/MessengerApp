@@ -196,7 +196,7 @@ export const useAuth = create<AuthState>()(
         try {
           const res = await API.post("/auth/enable2fa");
           set({ qrCode: res.data.qrCode });
-          toast.success("2FA enabled! Please verify to complete the process.");
+          toast.info("2FA enabled! Please verify to complete the process.");
         } catch (err: any) {
           toast.error(err.response?.data?.message || "Enabling 2FA failed");
         }

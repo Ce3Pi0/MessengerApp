@@ -68,7 +68,7 @@ export const getUserChatService = async (
   const query: any = { participants: { $in: [userId] } };
 
   if (cursor) {
-    query.updatedAt = { $gt: cursor };
+    query.updatedAt = { $lt: cursor };
   }
 
   const chats = await ChatModel.find(query)
@@ -100,14 +100,14 @@ export const getSingleChatService = async (
     participants: {
       $in: [userId],
     },
-  });
+  }).populate("participants", "name avatar");
 
   if (!chat) throw new BadRequestException("Chat not found");
 
   const query: any = { chatId };
 
   if (cursor) {
-    query.updatedAt = { $gt: cursor };
+    query.updatedAt = { $lt: cursor };
   }
 
   const messages = await MessageModel.find(query)
@@ -121,10 +121,12 @@ export const getSingleChatService = async (
       },
     })
     .sort({ createdAt: -1 })
-    .limit(10);
+    .limit(limit);
 
   const next =
     messages.length === limit ? messages[messages.length - 1].createdAt : null;
+
+  messages.reverse();
 
   return {
     chat,

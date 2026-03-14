@@ -45,7 +45,7 @@ const ChangePassword = () => {
   const handleClose = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
-      navigate(-1);
+      navigate(OTHER_ROUTES.ROOT);
     }
   };
 

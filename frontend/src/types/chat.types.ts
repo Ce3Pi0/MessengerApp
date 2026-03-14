@@ -32,7 +32,7 @@ export type CreateChatType = {
 };
 
 export type CreateMessageType = {
-  chatId: string;
+  chatId: string | null;
   content?: string;
   image?: string;
   replyTo?: MessageType | null;

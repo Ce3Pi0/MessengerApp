@@ -19,7 +19,7 @@ import {
 import { fileToBase64 } from "@/lib/helper";
 import { cn } from "@/lib/utils";
 import { OTHER_ROUTES } from "@/routes/routes";
-import { updateUserSchemaType } from "@/validators/auth.validator";
+import { updateUserSchema } from "@/validators/auth.validator";
 import { CircleAlertIcon, UserIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -74,7 +74,7 @@ const EditAccount = ({
   const handleClose = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
-      navigate(-1);
+      navigate(OTHER_ROUTES.ROOT);
     }
   };
 
@@ -90,7 +90,7 @@ const EditAccount = ({
       }
     }
 
-    const data = updateUserSchemaType.parse({ name, avatar: avatarData });
+    const data = updateUserSchema.parse({ name, avatar: avatarData });
 
     const success = await updateAccount(data);
     if (success) navigate(OTHER_ROUTES.ROOT);
@@ -98,7 +98,7 @@ const EditAccount = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent>
+      <DialogContent className="z-9999">
         <DialogHeader className="flex flex-col items-center justify-center gap-3">
           <DialogTitle className="text-xl">Update your account</DialogTitle>
           <DialogDescription>

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/use-auth";
-import { AUTH_ROUTES } from "@/routes/routes";
+import { AUTH_ROUTES, OTHER_ROUTES } from "@/routes/routes";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -28,7 +28,7 @@ const DeleteAccount = () => {
   const handleClose = (open: boolean) => {
     setIsOpen(open);
     if (!open) {
-      navigate(-1);
+      navigate(OTHER_ROUTES.ROOT);
     }
   };
 

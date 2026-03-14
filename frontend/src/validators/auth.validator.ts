@@ -117,7 +117,7 @@ export const updatePasswordFormSchema = z.object({
     .min(MIN_PASSWORD_LEN, `Invalid password length-min: ${MIN_PASSWORD_LEN}`),
 });
 
-export const updateUserSchemaType = z
+export const updateUserSchema = z
   .object({
     name: z.string().trim().optional(),
     avatar: z.string().optional(),
@@ -136,4 +136,4 @@ export type SetPasswordFormSchemaType = z.infer<typeof setPasswordFormSchema>;
 export type UpdatePasswordFormSchemaType = z.infer<
   typeof updatePasswordFormSchema
 >;
-export type UpdateUserSchemaType = z.infer<typeof updateUserSchemaType>;
+export type UpdateUserSchemaType = z.infer<typeof updateUserSchema>;

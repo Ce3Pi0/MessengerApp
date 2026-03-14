@@ -5,23 +5,19 @@ import Logo from "./components/logo";
 import { Spinner } from "./components/ui/spinner";
 import { useLocation } from "react-router-dom";
 import { isAuthRoute } from "./routes/routes";
-import { useSocket } from "./hooks/use-socket";
 
 function App() {
   const { pathname } = useLocation();
   const { user, isAuthStatus, isLoading } = useAuth();
 
-  const { onlineUsers } = useSocket();
-
   const isAuth = isAuthRoute(pathname);
 
-  console.log(onlineUsers);
-
   useEffect(() => {
+    if (isAuth) return;
     isAuthStatus();
   }, [isAuthStatus]);
 
-  if (isLoading && !user && !isAuth) {
+  if (isLoading && !user) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
         <Logo imgClass="size-20" showText={false} />{" "}

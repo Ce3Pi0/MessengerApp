@@ -3,31 +3,54 @@ import QrCodeAlert from "@/components/custom-alert";
 import { useAuth } from "@/hooks/use-auth";
 import { OTHER_ROUTES } from "@/routes/routes";
 import { useNavigate } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useState } from "react";
 
 const Verify2fa = () => {
   const { user, qrCode, verify2fa } = useAuth();
   const navigate = useNavigate();
+
+  const [isOpen, setIsOpen] = useState(true);
 
   const handleConfirm = async (otp: string) => {
     const verified = await verify2fa({ otp });
     if (verified) navigate(OTHER_ROUTES.ROOT);
   };
 
+  const handleClose = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      navigate(OTHER_ROUTES.ROOT);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
-      {!qrCode && !user?.enabled2fa && (
-        <QrCodeAlert
-          alertTitle="QR Code Not Available"
-          alertDescription="The QR code is not available at this time!"
-        />
-      )}
-      {qrCode && (
-        <OtpForm
-          cardTitle="Complete Setting up 2FA"
-          handleConfirm={handleConfirm}
-        />
-      )}
-    </div>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="flex flex-col items-center justify-center p-10">
+        <DialogHeader className="flex flex-col items-center justify-center">
+          <DialogTitle>2FA Verification</DialogTitle>
+          <DialogDescription>Follow the instructions bellow</DialogDescription>
+        </DialogHeader>
+        {!qrCode && !user?.enabled2fa && (
+          <QrCodeAlert
+            alertTitle="QR Code Not Available"
+            alertDescription="The QR code is not available at this time!"
+          />
+        )}
+        {qrCode && (
+          <OtpForm
+            cardTitle="Complete Setting up 2FA"
+            handleConfirm={handleConfirm}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 };
 

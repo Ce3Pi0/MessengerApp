@@ -1,4 +1,5 @@
 import { format, isToday, isYesterday, isThisWeek } from "date-fns";
+import { v4 as uuidv4 } from "uuid";
 import { useSocket } from "@/hooks/use-socket";
 import { API } from "./axios-client";
 import type { UserType } from "@/types/auth.type";
@@ -52,6 +53,7 @@ export const getOtherUserAndGroup = (
   }
 
   const other = chat?.participants.find((p) => p._id !== currentUserId);
+
   const isOnline = isUserOnline(other?._id ?? "");
 
   return {
@@ -73,4 +75,8 @@ export const formatChatTime = (date: string | Date) => {
   if (isThisWeek(newDate)) return format(newDate, "EEEE");
 
   return format(newDate, "M/d");
+};
+
+export const generateUUID = (): string => {
+  return uuidv4();
 };

@@ -61,7 +61,7 @@ export const initializeSocket = (httpServer: HTTPServer) => {
     io?.emit("online:users", Array.from(onlineUsers.keys()));
 
     //create personal room for user
-    socket.join(`users:${userId}`);
+    socket.join(`user:${userId}`);
 
     socket.on(
       "chat:join",
@@ -108,8 +108,10 @@ export const emitNewChatToParticipants = (
   chat: any,
 ) => {
   const io = getIO();
+
   for (const participantId of participantIds) {
-    io.to(`user:${participantId}`).emit(`chat:new`, chat);
+    console.log(participantId, chat);
+    io.to(`user:${participantId}`).emit("chat:new", chat);
   }
 };
 
@@ -119,7 +121,7 @@ export const emitNewMessageToChatRoom = (
   message: any,
 ) => {
   const io = getIO();
-  const senderSocketId = onlineUsers.get(senderId);
+  const senderSocketId = onlineUsers.get(senderId.toString());
 
   if (senderSocketId) {
     io.to(`chat:${chatId}`).except(senderSocketId).emit("message:new", message);
@@ -134,7 +136,7 @@ export const emitUpdatedMessageToChatRoom = (
   message: any,
 ) => {
   const io = getIO();
-  const senderSocketId = onlineUsers.get(senderId);
+  const senderSocketId = onlineUsers.get(senderId.toString());
 
   if (senderSocketId) {
     io.to(`chat:${chatId}`)
@@ -151,7 +153,7 @@ export const emitDeletedMessageToChatRoom = (
   messageId: string,
 ) => {
   const io = getIO();
-  const senderSocketId = onlineUsers.get(senderId);
+  const senderSocketId = onlineUsers.get(senderId.toString());
 
   if (senderSocketId) {
     io.to(`chat:${chatId}`)
