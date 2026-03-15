@@ -17,8 +17,22 @@ const ChatBody = ({ chatId, messages, onReply, onEdit, onDelete }: Props) => {
   const { addNewMessage, editMessage, deleteMessage } = useChat();
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
+  const firstMessageIdRef = useRef<string | null>(
+    messages[messages.length - 1]?._id || null,
+  );
+  const prevMsgCount = useRef(messages.length);
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (
+      messages.length > prevMsgCount.current &&
+      messages[messages.length - 1]._id !== firstMessageIdRef.current
+    ) {
+      setTimeout(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 0);
+    }
+
+    prevMsgCount.current = messages.length;
   }, [messages]);
 
   useEffect(() => {

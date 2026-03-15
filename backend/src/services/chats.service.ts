@@ -80,6 +80,7 @@ export const getUserChatService = async (
         select: "name avatar",
       },
     })
+
     .sort({ updatedAt: -1 })
     .limit(limit);
 

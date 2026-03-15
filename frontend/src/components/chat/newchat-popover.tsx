@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { useChat } from "@/hooks/use-chat";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
@@ -16,19 +16,54 @@ import { useNavigate } from "react-router-dom";
 
 export const NewChatPopover = memo(() => {
   const navigate = useNavigate();
-  const { fetchAllUsers, users, isUsersLoading, createChat, isCreatingChat } =
-    useChat();
+  const {
+    fetchUsers,
+    fetchExtraUsers,
+    users,
+    isUsersLoading,
+    gettingMoreUsers,
+    createChat,
+    isCreatingChat,
+  } = useChat();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isGroupMode, setIsGroupMode] = useState(false);
   const [groupName, setGroupName] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
 
+  const [scrollHeight, setScrollHeight] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const filteredUsers = users?.filter((user) =>
+    user.name?.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
+  const handleScroll = async (e: React.UIEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    const { scrollTop, clientHeight, scrollHeight } = container;
+
+    const isAtBottom = scrollHeight - clientHeight <= scrollTop;
+
+    if (isAtBottom) {
+      setScrollHeight(0);
+      fetchExtraUsers();
+    }
+  };
+
   useEffect(() => {
-    fetchAllUsers();
-  }, [fetchAllUsers]);
+    if (scrollContainerRef.current && scrollHeight > 0) {
+      const container = scrollContainerRef.current;
+      const addedHeight = container.scrollHeight - scrollHeight;
+      container.scrollTop = addedHeight;
+    }
+  }, [filteredUsers]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const toggleUserSelection = (id: string) => {
     setSelectedUsers((prev) =>
@@ -91,13 +126,13 @@ export const NewChatPopover = memo(() => {
           size="icon"
           className="h-8 w-8"
         >
-          <PenBoxIcon className="!h-5 !w-5 !stroke-1" />
+          <PenBoxIcon className="h-5! w-5! stroke-1!" />
         </Button>
       </PopoverTrigger>
       <PopoverContent
         align="start"
-        className="w-80 z-[999] p-0
-         rounded-xl min-h-[400px]
+        className="w-80 z-999 p-0
+         rounded-xl min-h-100
          max-h-[80vh] flex flex-col
         "
       >
@@ -115,9 +150,11 @@ export const NewChatPopover = memo(() => {
 
           <InputGroup>
             <InputGroupInput
-              value={isGroupMode ? groupName : ""}
+              value={isGroupMode ? groupName : searchQuery}
               onChange={
-                isGroupMode ? (e) => setGroupName(e.target.value) : undefined
+                isGroupMode
+                  ? (e) => setGroupName(e.target.value)
+                  : (e) => setSearchQuery(e.target.value)
               }
               placeholder={isGroupMode ? "Enter group name" : "Search name"}
             />
@@ -131,6 +168,8 @@ export const NewChatPopover = memo(() => {
           className="flex-1 justify-center overflow-y-auto
          px-1 py-1 space-y-1
         "
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
         >
           {isUsersLoading ? (
             <Spinner className="w-6 h-6" />
@@ -144,7 +183,7 @@ export const NewChatPopover = memo(() => {
                 disabled={isCreatingChat}
                 onClick={() => setIsGroupMode(true)}
               />
-              {users?.map((user) => (
+              {filteredUsers?.map((user) => (
                 <ChatUserItem
                   key={user._id}
                   user={user}
@@ -163,6 +202,11 @@ export const NewChatPopover = memo(() => {
                 onToggle={toggleUserSelection}
               />
             ))
+          )}
+          {gettingMoreUsers && (
+            <div className="flex items-center justify-center p-2">
+              <Spinner className="w-5 h-5 text-primary!" />
+            </div>
           )}
         </div>
 

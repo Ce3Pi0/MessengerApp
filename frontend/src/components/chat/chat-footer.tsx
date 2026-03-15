@@ -4,7 +4,7 @@ import {
   type MessageSchemaType,
 } from "@/validators/message.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "../ui/button";
@@ -13,6 +13,7 @@ import { Form, FormField, FormItem } from "../ui/form";
 import { Input } from "../ui/input";
 import ChatReplyBar from "./chat-reply-bar";
 import { useChat } from "@/hooks/use-chat";
+import EditMessageBar from "./edit-message-bar";
 
 interface Props {
   replyTo: MessageType | null;
@@ -31,12 +32,12 @@ const ChatFooter = ({
   onCancelReply,
   onCancelEdit,
 }: Props) => {
-  const { sendMessage } = useChat();
+  const { sendMessage, sendEditMessage } = useChat();
 
   const [image, setImage] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [text, setText] = useState<string>(editMessage?.content || "Test");
+  const [text, setText] = useState<string>(editMessage?.content || "");
 
   const form = useForm({
     resolver: zodResolver(messageSchema),
@@ -70,19 +71,34 @@ const ChatFooter = ({
       return;
     }
 
-    //Send message
-    sendMessage({
-      chatId,
-      content: values.message,
-      image: image || undefined,
-      replyTo,
-    });
+    if (!chatId) return;
 
-    onCancelReply();
+    if (editMessage) {
+      editMessage.content = text;
+      sendEditMessage(chatId, editMessage);
+      onCancelEdit();
+    } else {
+      sendMessage({
+        chatId,
+        content: values.message,
+        image: image || undefined,
+        replyTo,
+      });
+      onCancelReply();
+    }
     handleRemoveImage();
     form.reset();
     setText("");
   };
+
+  const cancelEditAndClearField = () => {
+    setText("");
+    onCancelEdit();
+  };
+
+  useEffect(() => {
+    if (editMessage?.content) setText(editMessage.content);
+  }, [editMessage?.content]);
 
   return (
     <>
@@ -137,7 +153,7 @@ const ChatFooter = ({
                 <FormItem className="flex-1">
                   <Input
                     {...field}
-                    value={editMessage?.content ?? undefined}
+                    value={text}
                     autoComplete="off"
                     placeholder="Type new message"
                     className="min-h-10 bg-background"
@@ -168,6 +184,8 @@ const ChatFooter = ({
           onCancel={onCancelReply}
         />
       )}
+
+      {editMessage && <EditMessageBar onCancel={cancelEditAndClearField} />}
     </>
   );
 };

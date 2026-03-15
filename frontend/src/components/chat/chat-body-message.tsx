@@ -6,6 +6,7 @@ import { formatChatTime } from "@/lib/helper";
 import { Button } from "../ui/button";
 import { Edit2Icon, ReplyIcon, Trash2 } from "lucide-react";
 import { memo } from "react";
+import { useChat } from "@/hooks/use-chat";
 
 interface Props {
   message: MessageType;
@@ -16,6 +17,7 @@ interface Props {
 
 export const ChatBodyMessage = memo(
   ({ message, onReply, onEdit, onDelete }: Props) => {
+    const { sendDeleteMessage } = useChat();
     const { user } = useAuth();
 
     const userId = user?._id || null;

@@ -2,6 +2,16 @@ import ChatBody from "@/components/chat/chat-body";
 import ChatFooter from "@/components/chat/chat-footer";
 import ChatHeader from "@/components/chat/chat-header";
 import EmptyState from "@/components/empty-state";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { useAuth } from "@/hooks/use-auth";
 import { useChat } from "@/hooks/use-chat";
@@ -18,6 +28,7 @@ const SingleChat = () => {
     singleChat,
     gettingMoreMessages,
     fetchExtraMessages,
+    sendDeleteMessage,
   } = useChat();
   const { socket } = useSocket();
   const { user } = useAuth();
@@ -66,6 +77,18 @@ const SingleChat = () => {
       setScrollHeight(0);
     }
   }, [messages]);
+
+  useEffect(() => {
+    scrollContainerRef.current?.scrollTo({
+      top: scrollContainerRef.current.scrollHeight,
+      behavior: "instant",
+    });
+  }, [isSingleChatLoading]);
+  const handleDeleteConfirm = () => {
+    if (!chatId || !messageIdToDelete) return;
+    setMessageIdToDelete(null);
+    sendDeleteMessage(chatId, messageIdToDelete);
+  };
 
   if (isSingleChatLoading) {
     return (
@@ -119,6 +142,30 @@ const SingleChat = () => {
         onCancelReply={() => setReplyTo(null)}
         onCancelEdit={() => setEditMessage(null)}
       />
+
+      <AlertDialog
+        open={!!messageIdToDelete}
+        onOpenChange={(open) => !open && setMessageIdToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your
+              message from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

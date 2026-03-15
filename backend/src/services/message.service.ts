@@ -60,7 +60,7 @@ export const sendMessageService = async (
     },
     {
       path: "replyTo",
-      select: "contents image sender",
+      select: "content image sender",
       populate: {
         path: "sender",
         select: "name avatar",
@@ -120,6 +120,21 @@ export const editMessageService = async (
     },
     { new: true },
   );
+
+  await newMessage!.populate([
+    {
+      path: "sender",
+      select: "name avatar",
+    },
+    {
+      path: "replyTo",
+      select: "contents image sender",
+      populate: {
+        path: "sender",
+        select: "name avatar",
+      },
+    },
+  ]);
 
   emitUpdatedMessageToChatRoom(userId, chatId, newMessage);
 

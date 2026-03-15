@@ -14,6 +14,7 @@ import { generateUUID } from "@/lib/helper";
 interface ChatState {
   chats: ChatType[];
   nextChatsCursor: string | null;
+  nextUsersCursor: string | null;
   users: UserType[];
   singleChat: {
     chat: ChatType;
@@ -23,48 +24,75 @@ interface ChatState {
 
   gettingMoreMessages: boolean;
   gettingMoreChats: boolean;
+  gettingMoreUsers: boolean;
   isChatLoading: boolean;
   isUsersLoading: boolean;
   isCreatingChat: boolean;
   isSingleChatLoading: boolean;
 
-  fetchAllUsers: () => void;
-  // TODO: Implement pagination getting
+  fetchUsers: () => void;
+  fetchExtraUsers: () => void;
   fetchChats: () => void;
   fetchExtraChats: () => void;
   createChat: (data: CreateChatType) => Promise<ChatType | null>;
   fetchSingleChat: (chatId: string) => void;
   fetchExtraMessages: (chatId: string) => void;
   addNewChat: (newChat: ChatType) => void;
+  editMessage: (chatId: string, message: MessageType) => void;
   updateChatLastMessage: (chatId: string, lastMessage: MessageType) => void;
   sendMessage: (data: CreateMessageType) => void;
   addNewMessage: (chatId: string, message: MessageType) => void;
-  editMessage: (chatId: string, message: MessageType) => void;
+  sendEditMessage: (chatId: string, message: MessageType) => void;
   deleteMessage: (chatId: string, messageId: string) => void;
+  sendDeleteMessage: (chatId: string, messageId: string) => void;
 }
 
 export const useChat = create<ChatState>()((set, get) => ({
   chats: [],
   nextChatsCursor: null,
+  nextUsersCursor: null,
   users: [],
   singleChat: null,
 
   gettingMoreMessages: false,
   gettingMoreChats: false,
+  gettingMoreUsers: false,
   isChatLoading: false,
   isUsersLoading: false,
   isCreatingChat: false,
   isSingleChatLoading: false,
 
-  fetchAllUsers: async () => {
+  fetchUsers: async () => {
     set({ isUsersLoading: true });
     try {
       const { data } = await API.get("/users/all");
       set({ users: data.users });
+      set({ nextUsersCursor: data.next });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to fetch users");
     } finally {
       set({ isUsersLoading: false });
+    }
+  },
+  fetchExtraUsers: async () => {
+    set({ gettingMoreUsers: true });
+    try {
+      const cursor = get().nextUsersCursor;
+
+      if (!cursor) return;
+
+      const { data } = await API.get(`/users/all?cursor=${cursor}`);
+
+      set((state) => {
+        return {
+          users: [...state.users, ...data.users],
+          nextUsersCursor: data.next,
+        };
+      });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to fetch more users");
+    } finally {
+      set({ gettingMoreUsers: false });
     }
   },
   fetchChats: async () => {
@@ -193,27 +221,51 @@ export const useChat = create<ChatState>()((set, get) => ({
   },
   editMessage: (chatId, message) => {
     const data = get().singleChat;
-
-    const updatedMessages = data?.messages.map((m) => {
-      if (m._id === message._id && m.content !== message.content)
-        m.content = message.content;
-      return m;
-    });
-
     if (data?.chat._id === chatId)
       set({
         singleChat: {
           chat: data.chat,
-          messages: updatedMessages ?? [],
+          messages: data.messages.map((m) =>
+            m._id === message._id ? message : m,
+          ),
           next: data.next,
         },
       });
+  },
+  sendEditMessage: async (chatId, message) => {
+    try {
+      const { data } = await API.put("/message/edit", {
+        chatId,
+        messageId: message._id,
+        content: message.content,
+      });
+
+      const { newMessage } = data;
+
+      set((state) => {
+        if (!state.singleChat) return state;
+        return {
+          singleChat: {
+            ...state.singleChat,
+            messages: state.singleChat.messages.map((msg) => {
+              return msg._id === newMessage._id ? newMessage : msg;
+            }),
+          },
+        };
+      });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to edit the message");
+    }
   },
 
   deleteMessage: (chatId, messageId) => {
     const data = get().singleChat;
 
-    const updatedMessages = data?.messages.filter((m) => m._id !== messageId);
+    let updatedMessages = data?.messages.filter((m) => m._id !== messageId);
+    updatedMessages = updatedMessages?.map((m) => {
+      m.replyTo = m.replyTo?._id === messageId ? null : m.replyTo;
+      return m;
+    });
 
     if (data?.chat._id === chatId)
       set({
@@ -223,6 +275,38 @@ export const useChat = create<ChatState>()((set, get) => ({
           next: data.next,
         },
       });
+  },
+  sendDeleteMessage: async (chatId, messageId) => {
+    try {
+      await API.delete("/message/delete", {
+        data: {
+          messageId,
+          chatId,
+        },
+      });
+
+      let updatedMessages = get().singleChat?.messages.filter(
+        (m) => m._id !== messageId,
+      );
+      updatedMessages = updatedMessages?.map((m) => {
+        m.replyTo = m.replyTo?._id === messageId ? null : m.replyTo;
+        return m;
+      });
+
+      set((state) => {
+        if (!state.singleChat) return state;
+        return {
+          singleChat: {
+            ...state.singleChat,
+            messages: [...(updatedMessages ?? state.singleChat.messages)],
+          },
+        };
+      });
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Failed to delete the message",
+      );
+    }
   },
   sendMessage: async (data: CreateMessageType) => {
     const { chatId, replyTo, content, image } = data;

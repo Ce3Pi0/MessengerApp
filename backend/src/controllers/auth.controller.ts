@@ -51,7 +51,7 @@ export const googleAuthController = asyncHandler(
 
     const redirectUrl: string = mfaRequired
       ? Env.FRONTEND_URL + "/2fa"
-      : Env.FRONTEND_URL;
+      : Env.FRONTEND_URL + "/chat";
 
     return setJwtAuthCookie(res, accessToken, refreshToken, mfaToken).redirect(
       HTTP_STATUS.FOUND,

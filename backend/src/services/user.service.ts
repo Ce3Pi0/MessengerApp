@@ -54,6 +54,8 @@ export const getSingleUserService = async (
     "-password -refreshToken -forgotPassword -provider -isVerified -enabled2fa -secret2fa",
   );
 
+  if (!user) throw new NotFoundException("User not found");
+
   return user;
 };
 

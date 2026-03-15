@@ -20,7 +20,11 @@ export const getUsersController = asyncHandler(
 
     return res
       .status(HTTP_STATUS.OK)
-      .json({ message: "Users retrieved successfully", nextCursor, users });
+      .json({
+        message: "Users retrieved successfully",
+        next: nextCursor,
+        users,
+      });
   },
 );
 
