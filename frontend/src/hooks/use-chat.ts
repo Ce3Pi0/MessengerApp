@@ -221,13 +221,18 @@ export const useChat = create<ChatState>()((set, get) => ({
   },
   editMessage: (chatId, message) => {
     const data = get().singleChat;
+
+    const updatedMessages = data?.messages?.map((m) => {
+      if (m._id === message._id) return message;
+      m.replyTo = m.replyTo?._id === message._id ? message : m.replyTo;
+      return m;
+    });
+
     if (data?.chat._id === chatId)
       set({
         singleChat: {
           chat: data.chat,
-          messages: data.messages.map((m) =>
-            m._id === message._id ? message : m,
-          ),
+          messages: [...(updatedMessages ?? [])],
           next: data.next,
         },
       });
@@ -242,14 +247,18 @@ export const useChat = create<ChatState>()((set, get) => ({
 
       const { newMessage } = data;
 
+      const updatedMessages = get().singleChat?.messages?.map((m) => {
+        if (m._id === newMessage._id) return newMessage;
+        m.replyTo = m.replyTo?._id === newMessage._id ? newMessage : m.replyTo;
+        return m;
+      });
+
       set((state) => {
         if (!state.singleChat) return state;
         return {
           singleChat: {
             ...state.singleChat,
-            messages: state.singleChat.messages.map((msg) => {
-              return msg._id === newMessage._id ? newMessage : msg;
-            }),
+            messages: [...(updatedMessages ?? [])],
           },
         };
       });
