@@ -6,7 +6,7 @@ export interface MessageDocument extends Document {
   content?: string;
   image?: string;
   replyTo?: mongoose.Types.ObjectId;
-
+  reactions?: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -18,6 +18,9 @@ const MessageSchema = new Schema<MessageDocument>(
     content: { type: String },
     image: { type: String },
     replyTo: { type: Schema.Types.ObjectId, ref: "Message", default: null },
+    reactions: [
+      { type: Schema.Types.ObjectId, ref: "Reaction", default: null },
+    ],
   },
   {
     timestamps: true,

@@ -111,7 +111,7 @@ const SingleChat = () => {
       <ChatHeader chat={chat} currentUserId={currentUserId} />
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto bg-background"
+        className="flex-1 overflow-y-auto bg-[url(../src/assets/wp-white.png)] dark:bg-[url(../src/assets/wp.png)] bg-contain bg-center"
         onScroll={handleScroll}
       >
         {gettingMoreMessages && (

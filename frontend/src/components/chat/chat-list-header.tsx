@@ -22,7 +22,7 @@ const ChatListHeader = ({ onSearch }: Props) => {
       <div>
         <InputGroup className="bg-background text-sm">
           <InputGroupInput
-            placeholder="Search ..."
+            placeholder="Search"
             onChange={(e) => onSearch(e.target.value)}
           />
           <InputGroupAddon>

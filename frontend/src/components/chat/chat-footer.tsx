@@ -1,8 +1,5 @@
 import type { MessageType } from "@/types/chat.types";
-import {
-  messageSchema,
-  type MessageSchemaType,
-} from "@/validators/message.validators";
+import { messageSchema } from "@/validators/message.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -14,6 +11,7 @@ import { Input } from "../ui/input";
 import ChatReplyBar from "./chat-reply-bar";
 import { useChat } from "@/hooks/use-chat";
 import EditMessageBar from "./edit-message-bar";
+import EmojiSelection from "./emoji-selection";
 
 interface Props {
   replyTo: MessageType | null;
@@ -65,8 +63,8 @@ const ChatFooter = ({
     if (imageInputRef.current) imageInputRef.current.value = "";
   };
 
-  const onSubmit = (values: MessageSchemaType) => {
-    if (!values.message?.trim() && !image) {
+  const onSubmit = () => {
+    if (!text && !image) {
       toast.error("Please enter a message or select an image");
       return;
     }
@@ -80,7 +78,7 @@ const ChatFooter = ({
     } else {
       sendMessage({
         chatId,
-        content: values.message,
+        content: text,
         image: image || undefined,
         replyTo,
       });
@@ -96,6 +94,10 @@ const ChatFooter = ({
     onCancelEdit();
   };
 
+  const addEmoji = (emoji: string) => {
+    if (!emoji) return;
+    setText((prevText) => prevText + emoji);
+  };
   useEffect(() => {
     if (editMessage?.content) setText(editMessage.content);
   }, [editMessage?.content]);
@@ -138,6 +140,7 @@ const ChatFooter = ({
               >
                 <Paperclip className="h-4 w-4" />
               </Button>
+
               <input
                 type="file"
                 className="hidden"
@@ -162,6 +165,7 @@ const ChatFooter = ({
                 </FormItem>
               )}
             />
+            <EmojiSelection addEmoji={addEmoji} />
             <Button
               type="submit"
               size="icon"

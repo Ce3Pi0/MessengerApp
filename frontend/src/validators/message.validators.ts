@@ -1,7 +1,5 @@
 import { z } from "zod";
 
 export const messageSchema = z.object({
-  message: z.string().optional(),
+  message: z.string().optional() || z.emoji().optional,
 });
-
-export type MessageSchemaType = z.infer<typeof messageSchema>;

@@ -1,12 +1,10 @@
+// TODO: Fetch reactions (populate return values)
+
 import { emitNewChatToParticipants } from "../lib/socket";
 import ChatModel from "../models/chat.model";
 import MessageModel from "../models/message.model";
 import UserModel from "../models/user.model";
-import {
-  BadRequestException,
-  NotAllowedException,
-  NotFoundException,
-} from "../utils/app-error";
+import { BadRequestException, NotFoundException } from "../utils/app-error";
 import { checkParticipants } from "../utils/checkParticipants";
 
 export const createChatService = async (

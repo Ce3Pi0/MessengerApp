@@ -1,12 +1,14 @@
+import { CopyToClipboard } from "react-copy-to-clipboard";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import type { MessageType } from "@/types/chat.types";
+import type { MessageType, ReactionDataType } from "@/types/chat.types";
 import AvatarWithBadge from "../avatar-with-badge";
 import { formatChatTime } from "@/lib/helper";
 import { Button } from "../ui/button";
-import { Edit2Icon, ReplyIcon, Trash2 } from "lucide-react";
-import { memo } from "react";
-import { useChat } from "@/hooks/use-chat";
+import { Copy, Edit2Icon, ReplyIcon, Trash2 } from "lucide-react";
+import { memo, useState } from "react";
+import MessageReaction from "./message-reaction";
+import MessageReactionsInfo from "./message-reactions-info";
 
 interface Props {
   message: MessageType;
@@ -17,7 +19,6 @@ interface Props {
 
 export const ChatBodyMessage = memo(
   ({ message, onReply, onEdit, onDelete }: Props) => {
-    const { sendDeleteMessage } = useChat();
     const { user } = useAuth();
 
     const userId = user?._id || null;
@@ -53,6 +54,15 @@ export const ChatBodyMessage = memo(
         ? "bg-primary/20 border-l-primary"
         : "bg-gray-200 dark:bg-secondary border-l-[#CC4A31]",
     );
+
+    const [isPickerOpen, setIsPickerOpen] = useState(false);
+
+    //FIXME: Testing only
+    const reactionsData: ReactionDataType[] = [
+      { reactor: message.sender!, emoji: "😀" },
+      { reactor: message.sender!, emoji: "😃" },
+      { reactor: message.sender!, emoji: "😄" },
+    ];
 
     return (
       <div className={containerClass}>
@@ -102,7 +112,13 @@ export const ChatBodyMessage = memo(
               {message.content && <p>{message.content}</p>}
             </div>
 
-            {/* Reply icon button */}
+            {/* Emoji Picker icon button */}
+            <MessageReaction
+              isPickerOpen={isPickerOpen}
+              setIsPickerOpen={setIsPickerOpen}
+            />
+
+            {/* Reply button */}
             <Button
               variant="outline"
               size="icon"
@@ -148,11 +164,38 @@ export const ChatBodyMessage = memo(
               </Button>
             )}
           </div>
+          {/* { message.reactions &&  <MessageReactionsInfo
+              isCurrentUser={isCurrentUser}
+              reactionsData={message.reactions}
+            />} */}
+          {/* FIXME: Testing only */}
+          {reactionsData && (
+            <MessageReactionsInfo
+              isCurrentUser={isCurrentUser}
+              reactionsData={reactionsData}
+            />
+          )}
+
           {message.status && (
             <span className="block text-[10px] text-gray-400 mt-0.5">
               {message.status}
             </span>
           )}
+
+          <CopyToClipboard
+            text={
+              message?.content ? message?.content : message.image?.toString()!
+            }
+          >
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-xs"
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Copy />
+            </Button>
+          </CopyToClipboard>
         </div>
       </div>
     );

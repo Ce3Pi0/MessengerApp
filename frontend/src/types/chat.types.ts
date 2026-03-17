@@ -11,12 +11,18 @@ export type ChatType = {
   updatedAt: string;
 };
 
+export type ReactionDataType = {
+  reactor: UserType;
+  emoji: string;
+};
+
 export type MessageType = {
   _id: string;
   content: string | null;
   image: string | null;
   sender: UserType | null;
   replyTo: MessageType | null;
+  reactions?: ReactionDataType;
   chatId: string;
   createdAt: string;
   updatedAt: string;

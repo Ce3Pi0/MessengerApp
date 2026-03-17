@@ -30,9 +30,9 @@ const ChatListItem = ({ chat, currentUserId, onClick }: Props) => {
         : "Send a message";
 
     if (isGroup && lastMessage.image && lastMessage.sender)
-      return `${lastMessage.sender._id === currentUserId ? "You" : lastMessage.sender}: sent a 📷 photo`;
+      return `${lastMessage.sender._id === currentUserId ? "You" : lastMessage.sender.name}: sent a 📷 photo`;
     if (isGroup && lastMessage.sender)
-      return `${lastMessage.sender._id === currentUserId ? "You" : lastMessage.sender}: ${lastMessage.content}`;
+      return `${lastMessage.sender._id === currentUserId ? "You" : lastMessage.sender.name}: ${lastMessage.content}`;
 
     return lastMessage.content ? lastMessage.content : "📷 Photo";
   };
