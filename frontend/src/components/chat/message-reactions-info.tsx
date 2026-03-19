@@ -75,8 +75,6 @@ const MessageReactionsInfo = ({
     };
   }, [socket, chatId]);
 
-  console.log(messageId, reactionsData);
-
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>

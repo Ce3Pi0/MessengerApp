@@ -25,7 +25,8 @@ export const handleRefresh = async (set: any): Promise<boolean> => {
 
 export const accessTokenExpiredError = (err: any, user: UserType | null) =>
   err.response?.status === 401 &&
-  err.response?.data?.message === "Missing token" &&
+  (err.response?.data?.message === "Missing token" ||
+    err.response?.data?.message === "Token expired") &&
   user;
 
 export const fileToBase64 = (file: Blob): Promise<string> => {

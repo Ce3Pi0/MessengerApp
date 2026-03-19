@@ -11,13 +11,17 @@ interface SocketState {
   disconnectSocket: () => void;
 }
 
+let isInitializing = false;
+
 export const useSocket = create<SocketState>()((set, get) => ({
   socket: null,
   onlineUsers: [],
 
   connectSocket: () => {
     const { socket } = get();
-    if (socket?.connected) return;
+    if (socket?.connected || isInitializing) return;
+
+    isInitializing = true;
 
     if (socket && !socket.connected) {
       socket.connect();
@@ -31,11 +35,12 @@ export const useSocket = create<SocketState>()((set, get) => ({
       autoConnect: true,
     });
 
-    set({ socket: newSocket });
-
     newSocket.on("connect", () => {
       console.log("Socket connected", newSocket.id);
+      isInitializing = false;
     });
+
+    set({ socket: newSocket });
 
     newSocket.on("online:users", (userIds) => {
       console.log("Online users", userIds);

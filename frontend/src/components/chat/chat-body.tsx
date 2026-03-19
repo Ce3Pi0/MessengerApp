@@ -39,6 +39,7 @@ const ChatBody = ({ chatId, messages, onReply, onEdit, onDelete }: Props) => {
     if (!chatId || !socket) return;
 
     const handleNewMessage = (msg: MessageType) => {
+      console.log("New message", msg);
       addNewMessage(chatId, msg);
     };
 

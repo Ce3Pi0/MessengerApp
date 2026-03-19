@@ -1,9 +1,10 @@
 import { PROTECTED_ROUTES } from "@/routes/routes";
 import type { ChatType } from "@/types/chat.types";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AvatarWithBadge from "../avatar-with-badge";
 import { getOtherUserAndGroup } from "@/lib/helper";
+import ChatInfoPopover from "./chat-info-popover";
 
 interface Props {
   chat: ChatType;
@@ -16,6 +17,8 @@ const ChatHeader = ({ chat, currentUserId }: Props) => {
     chat,
     currentUserId,
   );
+
+  const openChatInfo = () => {};
 
   return (
     <div className="sticky top-0 flex items-center gap-5 border-b border-border bg-card px-2 z-50">
@@ -41,10 +44,13 @@ const ChatHeader = ({ chat, currentUserId }: Props) => {
           </p>
         </div>
       </div>
-      <div>
-        <div className="flex-1 text-center py-4 h-full border-b-2 border-primary font-medium text-primary">
-          Chat
+      <div className="flex flex-row justify-between items-center grow">
+        <div>
+          <div className="flex-1 text-center py-4 h-full border-b-2 border-primary font-medium text-primary">
+            Chat
+          </div>
         </div>
+        <ChatInfoPopover openChatInfo={openChatInfo} />
       </div>
     </div>
   );
