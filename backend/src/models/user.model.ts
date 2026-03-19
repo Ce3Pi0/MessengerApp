@@ -4,6 +4,9 @@ import { UnprocessableEntityException } from "../utils/app-error";
 
 type Providers = "local" | "google" | "merged";
 
+// TODO: Add favorites array with chat ids
+// TODO: Add blocked users with user ids
+
 export interface UserDocument extends Document {
   name: string;
   email: string;

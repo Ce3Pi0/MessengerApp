@@ -4,6 +4,7 @@ import { HTTP_STATUS } from "../config/http.config";
 import { chatIdSchema, createChatSchema } from "../validators/chat.validator";
 import {
   createChatService,
+  deleteChatService,
   getSingleChatService,
   getUserChatService,
 } from "../services/chats.service";
@@ -52,6 +53,19 @@ export const getSingleChatController = asyncHandler(
       chat,
       next,
       messages,
+    });
+  },
+);
+
+export const deleteChatController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    const chatId = req.params.id as string;
+
+    await deleteChatService(userId, chatId);
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "Chat deleted successfully",
     });
   },
 );

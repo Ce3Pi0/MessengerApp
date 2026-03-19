@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   createChatController,
+  deleteChatController,
   getSingleChatController,
   getUserChatsController,
 } from "../controllers/chat.controller";
@@ -10,6 +11,7 @@ const chatRoutes = Router()
   .use(passportAuthenticateJwt)
   .post("/create", createChatController)
   .get("/all", getUserChatsController)
-  .get("/:id", getSingleChatController);
+  .get("/:id", getSingleChatController)
+  .delete("/delete/:id", deleteChatController);
 
 export default chatRoutes;

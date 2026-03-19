@@ -94,32 +94,34 @@ const ChatInfoPopover = ({ openChatInfo }: Props) => {
           <div className="p-2">
             <h5 className="text-zinc-400 text-xs">Participants:</h5>
             <div className="flex flex-col pt-2">
-              {singleChat.chat.participants.map((participant) => {
-                const canKick = participant._id !== user?._id && isGroup; // TODO: and is admin check
-                return (
-                  <div className="flex flex-row justify-start items-center p-1 gap-2">
-                    <AvatarWithBadge
-                      name={participant.name!}
-                      src={participant.avatar}
-                    />
-                    <p>
-                      {participant._id === user?._id
-                        ? "You"
-                        : participant.name!}
-                    </p>
-                    {canKick && (
-                      <div className="flex flex-col items-end grow">
-                        <div
-                          className="hover:bg-white/10 p-2 rounded-md cursor-pointer"
-                          onClick={() => handleKickUser()}
-                        >
-                          <XCircle size={16} />
+              <div className="flex flex-row justify-start items-center p-1 gap-2">
+                <AvatarWithBadge name={user?.name!} src={user?.avatar} />
+                <p>You</p>
+              </div>
+              {singleChat.chat.participants
+                .filter((participant) => participant._id !== user?._id)
+                .map((participant) => {
+                  const canKick = participant._id !== user?._id && isGroup; // TODO: and is admin check
+                  return (
+                    <div className="flex flex-row justify-start items-center p-1 gap-2">
+                      <AvatarWithBadge
+                        name={participant.name!}
+                        src={participant.avatar}
+                      />
+                      <p>{participant.name!}</p>
+                      {canKick && (
+                        <div className="flex flex-col items-end grow">
+                          <div
+                            className="hover:bg-white/10 p-2 rounded-md cursor-pointer"
+                            onClick={() => handleKickUser()}
+                          >
+                            <XCircle size={16} />
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                      )}
+                    </div>
+                  );
+                })}
               {isGroup && ( //TODO: add is admin check
                 <div
                   className="flex flex-row items-center gap-2 hover:bg-white/10 p-2 rounded-md cursor-pointer"

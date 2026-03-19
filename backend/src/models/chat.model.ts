@@ -1,5 +1,9 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+// TODO: Add admins array list of user admin ids
+// TODO: Add bg image field
+// TODO:
+
 export interface ChatDocument extends Document {
   participants: mongoose.Types.ObjectId[];
   lastMessage: mongoose.Types.ObjectId;

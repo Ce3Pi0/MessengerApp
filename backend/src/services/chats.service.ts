@@ -3,9 +3,15 @@
 import { emitNewChatToParticipants } from "../lib/socket";
 import ChatModel from "../models/chat.model";
 import MessageModel from "../models/message.model";
+import ReactionModel from "../models/reaction.model";
 import UserModel from "../models/user.model";
-import { BadRequestException, NotFoundException } from "../utils/app-error";
+import {
+  BadRequestException,
+  NotAllowedException,
+  NotFoundException,
+} from "../utils/app-error";
 import { checkParticipants } from "../utils/checkParticipants";
+import { Types } from "mongoose";
 
 export const createChatService = async (
   userId: string,
@@ -176,4 +182,28 @@ export const validateChatParticipant = async (
   if (!chat) throw new BadRequestException("Chat not found");
 
   return chat;
+};
+
+export const deleteChatService = async (userId: string, chatId: string) => {
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  const chat = await ChatModel.findById(chatId);
+
+  if (!chat) throw new NotFoundException("Chat not found");
+
+  const isUserAdmin = chat.participants.includes(new Types.ObjectId(userId));
+
+  if (!isUserAdmin) throw new NotAllowedException("User is not a group admin");
+
+  await ReactionModel.deleteMany({
+    chatId,
+  });
+  await MessageModel.deleteMany({
+    chatId,
+  });
+  await ChatModel.deleteOne({ _id: chatId });
+
+  //TODO: send immediate update through sockets
 };
