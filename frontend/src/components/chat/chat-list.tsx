@@ -6,7 +6,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import ChatListHeader from "./chat-list-header";
 import { useSocket } from "@/hooks/use-socket";
-import type { ChatType, MessageType } from "@/types/chat.types";
+import type {
+  ChatType,
+  MessageType,
+  ReactionDataType,
+} from "@/types/chat.types";
 
 const ChatList = () => {
   const navigate = useNavigate();
@@ -16,7 +20,7 @@ const ChatList = () => {
     chats,
     isChatLoading,
     addNewChat,
-    updateChatLastMessage,
+    updateChatLastInfo,
     gettingMoreChats,
     fetchExtraChats,
   } = useChat();
@@ -47,7 +51,6 @@ const ChatList = () => {
     if (!socket) return;
 
     const handleNewChat = (newChat: ChatType) => {
-      console.log("Received new chat", newChat);
       addNewChat(newChat);
     };
 
@@ -63,10 +66,10 @@ const ChatList = () => {
 
     const handleChatUpdate = (data: {
       chatId: string;
-      lastMessage: MessageType;
+      lastMessage: MessageType | null;
+      lastReaction: ReactionDataType | null;
     }) => {
-      console.log(`Received update on chat ${data.chatId}`, data.lastMessage);
-      updateChatLastMessage(data.chatId, data.lastMessage);
+      updateChatLastInfo(data.chatId, data.lastMessage, data.lastReaction);
     };
 
     socket.on("chat:update", handleChatUpdate);
@@ -74,7 +77,7 @@ const ChatList = () => {
     return () => {
       socket.off("chat:update", handleChatUpdate);
     };
-  }, [socket, updateChatLastMessage]);
+  }, [socket, updateChatLastInfo]);
 
   const onRoute = (id: string) => {
     navigate(`/chat/${id}`);

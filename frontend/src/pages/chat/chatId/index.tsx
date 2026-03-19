@@ -44,7 +44,7 @@ const SingleChat = () => {
 
   const currentUserId = user?._id || null;
   const chat = singleChat?.chat;
-  const messages = singleChat?.messages || [];
+  const messages = useChat((state) => state.singleChat?.messages) || [];
 
   useEffect(() => {
     if (!chatId) return;

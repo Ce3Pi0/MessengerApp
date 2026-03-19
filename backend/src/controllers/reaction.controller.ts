@@ -19,7 +19,7 @@ export const sendReactionController = asyncHandler(
 
     return res.status(HTTP_STATUS.OK).json({
       message: "Reaction sent successfully",
-      result,
+      ...result,
     });
   },
 );
@@ -33,7 +33,7 @@ export const deleteReactionController = asyncHandler(
 
     return res.status(HTTP_STATUS.OK).json({
       message: "Reaction deleted successfully",
-      result,
+      ...result,
     });
   },
 );

@@ -9,12 +9,13 @@ import {
 } from "../validators/message.validator";
 import {
   emitDeletedMessageToChatRoom,
-  emitLastMessageToParticipant,
+  emitLastUpdateToParticipant,
   emitNewMessageToChatRoom,
   emitUpdatedMessageToChatRoom,
 } from "../lib/socket";
 import { cloudinaryDelete, cloudinaryPost } from "../utils/cloudinary";
 import { getPublicIdFromUrl } from "../utils/get-url";
+import ReactionModel from "../models/reaction.model";
 
 export const sendMessageService = async (
   userId: string,
@@ -75,6 +76,7 @@ export const sendMessageService = async (
     {
       $set: {
         lastMessage: newMessage._id,
+        lastReaction: null,
       },
     },
   );
@@ -82,7 +84,7 @@ export const sendMessageService = async (
   emitNewMessageToChatRoom(userId, chatId, newMessage);
 
   const allParticipantIds = chat.participants.map((id) => id.toString());
-  emitLastMessageToParticipant(allParticipantIds, chatId, newMessage);
+  emitLastUpdateToParticipant(allParticipantIds, chatId, null, newMessage);
 
   return { newMessage, chat: updatedChat };
 };
@@ -119,7 +121,13 @@ export const editMessageService = async (
       content,
     },
     { new: true },
-  );
+  ).populate({
+    path: "reactions",
+    populate: {
+      path: "reactor",
+      select: "name avatar",
+    },
+  });
 
   await newMessage!.populate([
     {
@@ -171,11 +179,47 @@ export const deleteMessageService = async (
     }
   }
 
+  await ReactionModel.deleteMany({
+    _id: { $in: message.reactions },
+  });
+
   await MessageModel.deleteOne({
     _id: messageId,
   });
 
   emitDeletedMessageToChatRoom(userId, chatId, messageId);
+
+  const latestMessage = await MessageModel.findOne({ chatId })
+    .sort({
+      createdAt: -1,
+    })
+    .populate("sender", "name");
+  const latestReaction = await ReactionModel.findOne({ chatId })
+    .sort({
+      createdAt: -1,
+    })
+    .populate("reactor", "name");
+
+  const messageTime = latestMessage?.createdAt?.getTime() || 0;
+  const reactionTime = latestReaction?.createdAt?.getTime() || 0;
+
+  const allParticipantIds = chat.participants.map((id) => id.toString());
+
+  if (messageTime > reactionTime) {
+    await chat.updateOne({
+      $set: {
+        lastMessage: latestMessage,
+      },
+    });
+    emitLastUpdateToParticipant(allParticipantIds, chatId, null, latestMessage);
+  } else {
+    await chat.updateOne({
+      $set: {
+        lastReaction: latestReaction,
+      },
+    });
+    emitLastUpdateToParticipant(allParticipantIds, chatId, latestReaction);
+  }
 
   return { chat };
 };

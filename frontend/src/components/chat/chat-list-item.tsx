@@ -1,4 +1,3 @@
-import { useAuth } from "@/hooks/use-auth";
 import { formatChatTime, getOtherUserAndGroup } from "@/lib/helper";
 import { cn } from "@/lib/utils";
 import type { ChatType } from "@/types/chat.types";
@@ -14,27 +13,35 @@ interface Props {
 const ChatListItem = ({ chat, currentUserId, onClick }: Props) => {
   const { pathname } = useLocation();
 
-  const { lastMessage, createdAt } = chat;
+  const { lastMessage, lastReaction, createdAt } = chat;
 
   const { name, avatar, isOnline, isGroup } = getOtherUserAndGroup(
     chat,
     currentUserId,
   );
 
-  const getLastMessageText = () => {
-    if (!lastMessage)
+  const getLastInfoText = () => {
+    if (!lastMessage && !lastReaction)
       return isGroup
         ? chat.createdBy === currentUserId
           ? "Group created"
           : "You were added"
         : "Send a message";
 
-    if (isGroup && lastMessage.image && lastMessage.sender)
-      return `${lastMessage.sender._id === currentUserId ? "You" : lastMessage.sender.name}: sent a 📷 photo`;
-    if (isGroup && lastMessage.sender)
-      return `${lastMessage.sender._id === currentUserId ? "You" : lastMessage.sender.name}: ${lastMessage.content}`;
+    if (lastMessage) {
+      if (isGroup && lastMessage.image && lastMessage.sender)
+        return `${lastMessage.sender._id === currentUserId ? "You" : lastMessage.sender.name}: sent a 📷 photo`;
+      if (isGroup && lastMessage.sender)
+        return `${lastMessage.sender._id === currentUserId ? "You" : lastMessage.sender.name}: ${lastMessage.content}`;
 
-    return lastMessage.content ? lastMessage.content : "📷 Photo";
+      const res: string = lastMessage.content
+        ? lastMessage.content
+        : "📷 Photo";
+      return lastMessage.sender!._id === currentUserId
+        ? `You: ${res}`
+        : `${lastMessage.sender!.name}: ${res}`;
+    } else if (lastReaction)
+      return `${lastReaction.reactor._id === currentUserId ? "You" : lastReaction.reactor.name} reacted: ${lastReaction.emoji}`;
   };
 
   return (
@@ -56,11 +63,13 @@ const ChatListItem = ({ chat, currentUserId, onClick }: Props) => {
           <h5 className="text-sm font-semibold truncate">{name}</h5>
         </div>
         <span className="text-xs ml-2 shrink-0 text-muted-foreground">
-          {formatChatTime(lastMessage?.updatedAt || createdAt)}
+          {formatChatTime(
+            lastMessage?.createdAt || lastReaction?.createdAt || createdAt,
+          )}
         </span>
       </div>
       <p className="text-xs truncate text-muted-foreground -mt-px">
-        {getLastMessageText()}
+        {getLastInfoText()}
       </p>
     </button>
   );

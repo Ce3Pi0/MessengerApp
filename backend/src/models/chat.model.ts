@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface ChatDocument extends Document {
   participants: mongoose.Types.ObjectId[];
   lastMessage: mongoose.Types.ObjectId;
+  lastReaction: mongoose.Types.ObjectId;
   isGroup: boolean;
   groupName: string;
   createdBy: mongoose.Types.ObjectId;
@@ -16,6 +17,11 @@ const chatSchema = new Schema<ChatDocument>(
       { type: Schema.Types.ObjectId, ref: "User", required: true },
     ],
     lastMessage: { type: Schema.Types.ObjectId, ref: "Message", default: null },
+    lastReaction: {
+      type: Schema.Types.ObjectId,
+      ref: "Reaction",
+      default: null,
+    },
     isGroup: { type: Boolean, default: false },
     groupName: { type: String },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },

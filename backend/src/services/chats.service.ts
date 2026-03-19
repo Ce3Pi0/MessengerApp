@@ -42,7 +42,22 @@ export const createChatService = async (
         $all: allParticipantsIds,
         $size: 2,
       },
-    }).populate("participants", "name avatar");
+    })
+      .populate("participants", "name avatar")
+      .populate({
+        path: "lastMessage",
+        populate: {
+          path: "sender",
+          select: "name avatar",
+        },
+      })
+      .populate({
+        path: "lastReaction",
+        populate: {
+          path: "reactor",
+          select: "name",
+        },
+      });
 
     if (existingChat) return existingChat;
 
@@ -76,6 +91,13 @@ export const getUserChatService = async (
       populate: {
         path: "sender",
         select: "name avatar",
+      },
+    })
+    .populate({
+      path: "lastReaction",
+      populate: {
+        path: "reactor",
+        select: "name",
       },
     })
 
@@ -116,6 +138,13 @@ export const getSingleChatService = async (
       select: "content image sender",
       populate: {
         path: "sender",
+        select: "name avatar",
+      },
+    })
+    .populate({
+      path: "reactions",
+      populate: {
+        path: "reactor",
         select: "name avatar",
       },
     })

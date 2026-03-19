@@ -4,18 +4,27 @@ import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import { Heart } from "lucide-react";
 import { useTheme } from "../theme-provider";
+import { useChat } from "@/hooks/use-chat";
 
 interface Props {
+  messageId: string;
   isPickerOpen: boolean;
   setIsPickerOpen: (isPickerOpen: boolean) => void;
 }
 
-const MessageReaction = ({ isPickerOpen, setIsPickerOpen }: Props) => {
+const MessageReaction = ({
+  isPickerOpen,
+  setIsPickerOpen,
+  messageId,
+}: Props) => {
   const themeData = useTheme();
 
+  const { sendReaction, singleChat } = useChat();
+
   const handleReaction = async (emoji: string) => {
-    // TODO: Send API request to backend
-    console.log("Selected emoji:", emoji);
+    if (!singleChat) return;
+    sendReaction(singleChat.chat._id, messageId, emoji);
+    setIsPickerOpen(false);
   };
 
   return (
@@ -43,10 +52,7 @@ const MessageReaction = ({ isPickerOpen, setIsPickerOpen }: Props) => {
           theme={themeData.theme === "dark" ? Theme.DARK : Theme.LIGHT}
           className="dark: bg-amber-200"
           reactionsDefaultOpen={true}
-          onEmojiClick={(emojiData) => {
-            handleReaction(emojiData.emoji);
-            setIsPickerOpen(false);
-          }}
+          onEmojiClick={(emojiData) => handleReaction(emojiData.emoji)}
           lazyLoadEmojis={true}
         />
       </PopoverContent>

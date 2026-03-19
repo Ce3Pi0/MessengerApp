@@ -10,6 +10,6 @@ import {
 const reactionRoutes = Router()
   .use(passportAuthenticateJwt)
   .post("/send", sendReactionController)
-  .get("/delete", deleteReactionController);
+  .delete("/delete", deleteReactionController);
 
 export default reactionRoutes;

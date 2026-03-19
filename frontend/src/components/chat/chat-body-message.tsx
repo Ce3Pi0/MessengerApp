@@ -1,7 +1,7 @@
 import { CopyToClipboard } from "react-copy-to-clipboard";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import type { MessageType, ReactionDataType } from "@/types/chat.types";
+import type { MessageType } from "@/types/chat.types";
 import AvatarWithBadge from "../avatar-with-badge";
 import { formatChatTime } from "@/lib/helper";
 import { Button } from "../ui/button";
@@ -57,13 +57,6 @@ export const ChatBodyMessage = memo(
 
     const [isPickerOpen, setIsPickerOpen] = useState(false);
 
-    //FIXME: Testing only
-    const reactionsData: ReactionDataType[] = [
-      { reactor: message.sender!, emoji: "😀" },
-      { reactor: message.sender!, emoji: "😃" },
-      { reactor: message.sender!, emoji: "😄" },
-    ];
-
     return (
       <div className={containerClass}>
         {!isCurrentUser && (
@@ -106,7 +99,7 @@ export const ChatBodyMessage = memo(
                 <img
                   src={message?.image || ""}
                   alt=""
-                  className="rounded-lg max-w-xs"
+                  className="w-full h-auto max-w-full block object-cover rounded-md"
                 />
               )}
               {message.content && <p>{message.content}</p>}
@@ -114,6 +107,7 @@ export const ChatBodyMessage = memo(
 
             {/* Emoji Picker icon button */}
             <MessageReaction
+              messageId={message._id}
               isPickerOpen={isPickerOpen}
               setIsPickerOpen={setIsPickerOpen}
             />
@@ -164,17 +158,11 @@ export const ChatBodyMessage = memo(
               </Button>
             )}
           </div>
-          {/* { message.reactions &&  <MessageReactionsInfo
-              isCurrentUser={isCurrentUser}
-              reactionsData={message.reactions}
-            />} */}
-          {/* FIXME: Testing only */}
-          {reactionsData && (
-            <MessageReactionsInfo
-              isCurrentUser={isCurrentUser}
-              reactionsData={reactionsData}
-            />
-          )}
+          <MessageReactionsInfo
+            messageId={message._id}
+            currentUserId={user?._id}
+            isCurrentUser={isCurrentUser}
+          />
 
           {message.status && (
             <span className="block text-[10px] text-gray-400 mt-0.5">

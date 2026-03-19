@@ -15,7 +15,7 @@ const onlineUsers = new Map<string, string>();
 export const initializeSocket = (httpServer: HTTPServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: "http://localhost:5173",
+      origin: Env.FRONTEND_URL,
       methods: ["GET", "POST", "PUT", "DELETE"],
       credentials: true,
     },
@@ -110,7 +110,6 @@ export const emitNewChatToParticipants = (
   const io = getIO();
 
   for (const participantId of participantIds) {
-    console.log(participantId, chat);
     io.to(`user:${participantId}`).emit("chat:new", chat);
   }
 };
@@ -164,13 +163,57 @@ export const emitDeletedMessageToChatRoom = (
   }
 };
 
-export const emitLastMessageToParticipant = (
-  participantIds: string[],
+export const emitUpdatedReactionToChatRoom = (
+  reactionId: string,
+  reactor: any,
   chatId: string,
-  lastMessage: any,
+  messageId: string,
+  emoji: string,
 ) => {
   const io = getIO();
-  const payload = { chatId, lastMessage };
+  const senderSocketId = onlineUsers.get(reactor._id.toString());
+
+  if (senderSocketId) {
+    io.to(`chat:${chatId}`)
+      .except(senderSocketId)
+      .emit("reaction:update", reactionId, messageId, reactor, emoji);
+  } else {
+    io.to(`chat:${chatId}`).emit(
+      "reaction:update",
+      reactionId,
+      messageId,
+      reactor,
+      emoji,
+    );
+  }
+};
+
+export const emitDeletedReactionToChatRoom = (
+  reactorId: string,
+  chatId: string,
+  messageId: string,
+  reactionId: string,
+) => {
+  const io = getIO();
+  const senderSocketId = onlineUsers.get(reactorId.toString());
+
+  if (senderSocketId) {
+    io.to(`chat:${chatId}`)
+      .except(senderSocketId)
+      .emit("reaction:delete", messageId, reactionId);
+  } else {
+    io.to(`chat:${chatId}`).emit("reaction:delete", messageId, reactionId);
+  }
+};
+
+export const emitLastUpdateToParticipant = (
+  participantIds: string[],
+  chatId: string,
+  lastReaction: any = null,
+  lastMessage: any = null,
+) => {
+  const io = getIO();
+  const payload = { chatId, lastMessage, lastReaction };
 
   for (const participantId of participantIds) {
     io.to(`user:${participantId}`).emit("chat:update", payload);

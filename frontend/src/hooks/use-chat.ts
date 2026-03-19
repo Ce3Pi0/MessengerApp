@@ -5,6 +5,7 @@ import type {
   CreateChatType,
   CreateMessageType,
   MessageType,
+  ReactionDataType,
 } from "@/types/chat.types";
 import { toast } from "sonner";
 import { create } from "zustand";
@@ -39,12 +40,36 @@ interface ChatState {
   fetchExtraMessages: (chatId: string) => void;
   addNewChat: (newChat: ChatType) => void;
   editMessage: (chatId: string, message: MessageType) => void;
-  updateChatLastMessage: (chatId: string, lastMessage: MessageType) => void;
+  updateChatLastInfo: (
+    chatId: string,
+    lastMessage: MessageType | null,
+    lastReaction: ReactionDataType | null,
+  ) => void;
   sendMessage: (data: CreateMessageType) => void;
   addNewMessage: (chatId: string, message: MessageType) => void;
   sendEditMessage: (chatId: string, message: MessageType) => void;
   deleteMessage: (chatId: string, messageId: string) => void;
   sendDeleteMessage: (chatId: string, messageId: string) => void;
+
+  addNewReaction: (
+    reactionId: string,
+    chatId: string,
+    messageId: string,
+    reactor: string,
+    emoji: string,
+  ) => void;
+  sendReaction: (chatId: string, messageId: string, emoji: string) => void;
+
+  deleteReaction: (
+    chatId: string,
+    messageId: string,
+    reactionId: string,
+  ) => void;
+  sendDeleteReaction: (
+    chatId: string,
+    messageId: string,
+    reactionId: string,
+  ) => void;
 }
 
 export const useChat = create<ChatState>()((set, get) => ({
@@ -185,24 +210,26 @@ export const useChat = create<ChatState>()((set, get) => ({
         (c) => c._id === newChat._id,
       );
       if (existingChatIndex !== -1)
-        //Move the chat to the top
         return {
           chats: [newChat, ...state.chats.filter((c) => c._id !== newChat._id)],
         };
       else
-        //Create the chat
         return {
           chats: [newChat, ...state.chats],
         };
     });
   },
-  updateChatLastMessage: (chatId: string, lastMessage: MessageType) => {
+  updateChatLastInfo: (
+    chatId: string,
+    lastMessage: MessageType | null,
+    lastReaction: ReactionDataType | null,
+  ) => {
     set((state) => {
       const chat = state.chats.find((c) => c._id === chatId);
       if (!chat) return state;
       return {
         chats: [
-          { ...chat, lastMessage },
+          { ...chat, lastMessage, lastReaction },
           ...state.chats.filter((c) => c._id !== chat._id),
         ],
       };
@@ -266,7 +293,6 @@ export const useChat = create<ChatState>()((set, get) => ({
       toast.error(err?.response?.data?.message || "Failed to edit the message");
     }
   },
-
   deleteMessage: (chatId, messageId) => {
     const data = get().singleChat;
 
@@ -369,6 +395,206 @@ export const useChat = create<ChatState>()((set, get) => ({
       });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to send message");
+    }
+  },
+  addNewReaction: (
+    reactionId: string,
+    chatId: string,
+    messageId: string,
+    reactor: any,
+    emoji: string,
+  ) => {
+    const data = get().singleChat;
+
+    let messageToUpdate = data?.messages.find((msg) => msg._id === messageId);
+    if (!messageToUpdate) return;
+
+    let updatedMessageReactions: ReactionDataType[] = [];
+
+    if (!messageToUpdate.reactions || messageToUpdate.reactions.length <= 0) {
+      updatedMessageReactions.push({
+        _id: reactionId,
+        reactor,
+        emoji,
+      });
+    } else {
+      const userHasReacted = messageToUpdate.reactions.some(
+        (reaction) => reaction.reactor._id === reactor._id,
+      );
+
+      if (userHasReacted) {
+        updatedMessageReactions = messageToUpdate.reactions?.map((reaction) => {
+          if (reaction._id === reactionId) {
+            reaction.emoji = emoji;
+            reaction.reactor = reactor;
+          }
+          return reaction;
+        });
+      } else {
+        updatedMessageReactions = [
+          ...messageToUpdate.reactions,
+          {
+            _id: reactionId,
+            reactor,
+            emoji,
+          },
+        ];
+      }
+    }
+
+    messageToUpdate.reactions = [...updatedMessageReactions];
+
+    const updatedMessages = data?.messages.map((message) =>
+      message._id === messageToUpdate._id ? messageToUpdate : message,
+    );
+
+    if (data?.chat._id === chatId) {
+      set({
+        singleChat: {
+          chat: data.chat,
+          messages: [...(updatedMessages ?? [])],
+          next: data.next,
+        },
+      });
+    }
+  },
+  sendReaction: async (chatId: string, messageId: string, emoji: string) => {
+    try {
+      const { user } = useAuth.getState();
+
+      if (!user) return;
+
+      const tempReaction = {
+        _id: generateUUID(),
+        reactor: user,
+        emoji,
+      };
+
+      let updatedMessages = get().singleChat?.messages?.map((m) => {
+        if (m._id === messageId) {
+          if (m.reactions && m.reactions.length > 0)
+            m.reactions = m.reactions?.map((r) => {
+              if (r.reactor._id !== user._id) return r;
+              return tempReaction;
+            });
+          else m.reactions = [tempReaction];
+        }
+        return m;
+      });
+      set((state) => {
+        if (!state.singleChat) return state;
+        return {
+          singleChat: {
+            ...state.singleChat,
+            messages: [...(updatedMessages ?? [])],
+          },
+        };
+      });
+
+      const { data } = await API.post("/reaction/send", {
+        chatId,
+        messageId,
+        emoji,
+      });
+
+      const { updatedMsg } = data;
+
+      updatedMessages = get().singleChat?.messages?.map((m) => {
+        if (m._id === updatedMsg._id) {
+          m.reactions = updatedMsg.reactions;
+        }
+        return m;
+      });
+
+      set((state) => {
+        if (!state.singleChat) return state;
+        return {
+          singleChat: {
+            ...state.singleChat,
+            messages: [...(updatedMessages ?? [])],
+          },
+        };
+      });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to react to message");
+    }
+  },
+  deleteReaction: (chatId: string, messageId: string, reactionId: string) => {
+    const data = get().singleChat;
+
+    let messageToUpdate = data?.messages.find((msg) => msg._id === messageId);
+    if (!messageToUpdate) return;
+
+    const updatedMessageReactions = messageToUpdate.reactions?.filter(
+      (reaction) => reaction._id !== reactionId,
+    );
+
+    messageToUpdate.reactions = updatedMessageReactions;
+
+    const updatedMessages = data?.messages.map((message) =>
+      message._id === messageToUpdate._id ? messageToUpdate : message,
+    );
+
+    if (data?.chat._id === chatId)
+      set({
+        singleChat: {
+          chat: data.chat,
+          messages: [...(updatedMessages ?? [])],
+          next: data.next,
+        },
+      });
+  },
+  sendDeleteReaction: async (
+    chatId: string,
+    messageId: string,
+    reactionId: string,
+  ) => {
+    try {
+      set((state) => {
+        if (!state.singleChat) return state;
+        return {
+          singleChat: {
+            ...state.singleChat,
+            messages: state.singleChat.messages.map((m) => {
+              if (m._id === messageId) {
+                m.reactions = (m.reactions ?? []).filter(
+                  (r) => r._id !== reactionId,
+                );
+              }
+              return m;
+            }),
+          },
+        };
+      });
+
+      await API.delete("/reaction/delete", {
+        data: {
+          chatId,
+          messageId,
+        },
+      });
+
+      let updatedMessages = get().singleChat?.messages.map((m) => {
+        if (m._id !== messageId) return m;
+        m.reactions = (m.reactions ?? []).filter(
+          (reaction) => reaction._id !== reactionId,
+        );
+        return m;
+      });
+
+      set((state) => {
+        if (!state.singleChat) return state;
+        return {
+          singleChat: {
+            ...state.singleChat,
+            messages: [...(updatedMessages ?? state.singleChat.messages)],
+          },
+        };
+      });
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Failed to delete the reaction",
+      );
     }
   },
 }));
