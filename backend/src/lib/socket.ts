@@ -219,3 +219,23 @@ export const emitLastUpdateToParticipant = (
     io.to(`user:${participantId}`).emit("chat:update", payload);
   }
 };
+
+export const emitChatDeletedToParticipants = (
+  participantIds: string[],
+  chatId: string,
+  userId: string,
+) => {
+  const io = getIO();
+  const userSocketId = onlineUsers.get(userId.toString());
+
+  if (userSocketId)
+    for (const participantId of participantIds) {
+      io.to(`user:${participantId}`)
+        .except(userSocketId)
+        .emit("chat:delete", chatId);
+    }
+  else
+    for (const participantId of participantIds) {
+      io.to(`user:${participantId}`).emit("chat:delete", chatId);
+    }
+};

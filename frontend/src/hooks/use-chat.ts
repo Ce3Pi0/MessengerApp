@@ -29,6 +29,7 @@ interface ChatState {
   isChatLoading: boolean;
   isUsersLoading: boolean;
   isCreatingChat: boolean;
+  isDeletingChat: boolean;
   isSingleChatLoading: boolean;
 
   fetchUsers: () => void;
@@ -39,6 +40,8 @@ interface ChatState {
   fetchSingleChat: (chatId: string) => void;
   fetchExtraMessages: (chatId: string) => void;
   addNewChat: (newChat: ChatType) => void;
+  deleteChat: (chatId: string) => void;
+  sendDeleteChat: (chatId: string) => void;
   editMessage: (chatId: string, message: MessageType) => void;
   updateChatLastInfo: (
     chatId: string,
@@ -85,6 +88,7 @@ export const useChat = create<ChatState>()((set, get) => ({
   isChatLoading: false,
   isUsersLoading: false,
   isCreatingChat: false,
+  isDeletingChat: false,
   isSingleChatLoading: false,
 
   fetchUsers: async () => {
@@ -204,7 +208,7 @@ export const useChat = create<ChatState>()((set, get) => ({
       set({ gettingMoreMessages: false });
     }
   },
-  addNewChat: async (newChat: ChatType) => {
+  addNewChat: (newChat: ChatType) => {
     set((state) => {
       const existingChatIndex = state.chats.findIndex(
         (c) => c._id === newChat._id,
@@ -218,6 +222,29 @@ export const useChat = create<ChatState>()((set, get) => ({
           chats: [newChat, ...state.chats],
         };
     });
+  },
+  deleteChat: (chatId: string) => {
+    set((state) => {
+      const updatedChats = state.chats.filter((chat) => chat._id !== chatId);
+      return {
+        chats: [...updatedChats],
+      };
+    });
+  },
+  sendDeleteChat: async (chatId: string) => {
+    set({ isDeletingChat: true });
+    try {
+      await API.delete(`/chat/delete/${chatId}`);
+      set({ singleChat: null });
+
+      const updatedChats = get().chats.filter((chat) => chat._id !== chatId);
+
+      set({ chats: [...updatedChats] });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to delete the chat");
+    } finally {
+      set({ isDeletingChat: false });
+    }
   },
   updateChatLastInfo: (
     chatId: string,

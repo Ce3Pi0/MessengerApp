@@ -1,6 +1,9 @@
 // TODO: Fetch reactions (populate return values)
 
-import { emitNewChatToParticipants } from "../lib/socket";
+import {
+  emitChatDeletedToParticipants,
+  emitNewChatToParticipants,
+} from "../lib/socket";
 import ChatModel from "../models/chat.model";
 import MessageModel from "../models/message.model";
 import ReactionModel from "../models/reaction.model";
@@ -12,6 +15,8 @@ import {
 } from "../utils/app-error";
 import { checkParticipants } from "../utils/checkParticipants";
 import { Types } from "mongoose";
+import { getPublicIdFromUrl } from "../utils/get-url";
+import { cloudinaryDelete } from "../utils/cloudinary";
 
 export const createChatService = async (
   userId: string,
@@ -200,10 +205,29 @@ export const deleteChatService = async (userId: string, chatId: string) => {
   await ReactionModel.deleteMany({
     chatId,
   });
+
+  //TODO: remove favorite chat from any participant that has it set as favorite
+  const imageList = await MessageModel.distinct("image", {
+    image: { $ne: "" },
+  });
+  for (const image of imageList) {
+    const publicId = getPublicIdFromUrl(image);
+    if (publicId) {
+      await cloudinaryDelete(publicId);
+    }
+  }
+
   await MessageModel.deleteMany({
     chatId,
   });
   await ChatModel.deleteOne({ _id: chatId });
 
-  //TODO: send immediate update through sockets
+  const allParticipantIds = chat.participants.map((id) => id.toString());
+  emitChatDeletedToParticipants(allParticipantIds, chatId, userId);
 };
+
+export const removeUserFromChatService = async (
+  userId: string,
+  userToRemoveId: string,
+  chatId: string,
+) => {};

@@ -12,8 +12,6 @@ export const passportAuthenticateJwt = (
       session: false,
     },
     (err: any, user: Express.User, info: any) => {
-      console.log("HERE");
-
       if (info instanceof Error && info.name === "TokenExpiredError") {
         throw new UnauthorizedException("Token expired");
       }

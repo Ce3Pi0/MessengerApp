@@ -4,6 +4,7 @@ import {
   deleteChatController,
   getSingleChatController,
   getUserChatsController,
+  removeUserFromChatController,
 } from "../controllers/chat.controller";
 import { passportAuthenticateJwt } from "../middlewares/authJwt.middleware";
 
@@ -12,6 +13,7 @@ const chatRoutes = Router()
   .post("/create", createChatController)
   .get("/all", getUserChatsController)
   .get("/:id", getSingleChatController)
-  .delete("/delete/:id", deleteChatController);
+  .delete("/delete/:id", deleteChatController)
+  .delete("/remove-user/", removeUserFromChatController);
 
 export default chatRoutes;

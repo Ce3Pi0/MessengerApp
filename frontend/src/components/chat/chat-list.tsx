@@ -11,6 +11,7 @@ import type {
   MessageType,
   ReactionDataType,
 } from "@/types/chat.types";
+import { OTHER_ROUTES } from "@/routes/routes";
 
 const ChatList = () => {
   const navigate = useNavigate();
@@ -19,7 +20,9 @@ const ChatList = () => {
     fetchChats,
     chats,
     isChatLoading,
+    isDeletingChat,
     addNewChat,
+    deleteChat,
     updateChatLastInfo,
     gettingMoreChats,
     fetchExtraChats,
@@ -60,6 +63,21 @@ const ChatList = () => {
       socket.off("chat:new", handleNewChat);
     };
   }, [addNewChat, socket]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleDeletedChat = (chatId: string) => {
+      deleteChat(chatId);
+      navigate(OTHER_ROUTES.ROOT);
+    };
+
+    socket.on("chat:delete", handleDeletedChat);
+
+    return () => {
+      socket.off("chat:delete", handleDeletedChat);
+    };
+  }, [deleteChat, socket]);
 
   useEffect(() => {
     if (!socket) return;
@@ -112,7 +130,7 @@ const ChatList = () => {
           onScroll={handleScroll}
         >
           <div className="px-2 pb-10 pt-1 space-y-1">
-            {isChatLoading ? (
+            {isChatLoading || isDeletingChat ? (
               <div className="flex items-center justify-center">
                 <Spinner className="w-7 h-7" />
               </div>

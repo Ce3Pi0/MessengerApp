@@ -1,12 +1,17 @@
 import { Request, Response } from "express";
 import { asyncHandler } from "../middlewares/asyncHandler.middleware";
 import { HTTP_STATUS } from "../config/http.config";
-import { chatIdSchema, createChatSchema } from "../validators/chat.validator";
+import {
+  chatIdSchema,
+  createChatSchema,
+  removeUserFromChatSchema,
+} from "../validators/chat.validator";
 import {
   createChatService,
   deleteChatService,
   getSingleChatService,
   getUserChatService,
+  removeUserFromChatService,
 } from "../services/chats.service";
 
 export const createChatController = asyncHandler(
@@ -66,6 +71,19 @@ export const deleteChatController = asyncHandler(
 
     return res.status(HTTP_STATUS.OK).json({
       message: "Chat deleted successfully",
+    });
+  },
+);
+
+export const removeUserFromChatController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    const { userToRemoveId, chatId } = removeUserFromChatSchema.parse(req.body);
+
+    await removeUserFromChatService(userId, userToRemoveId, chatId);
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "User removed successfully",
     });
   },
 );

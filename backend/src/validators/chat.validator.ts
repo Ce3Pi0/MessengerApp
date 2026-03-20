@@ -10,3 +10,8 @@ export const createChatSchema = z.object({
 export const chatIdSchema = z.object({
   id: z.string().trim().min(1),
 });
+
+export const removeUserFromChatSchema = z.object({
+  userToRemoveId: z.string().trim().min(1),
+  chatId: z.string().trim().min(1),
+});
