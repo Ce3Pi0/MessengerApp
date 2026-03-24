@@ -2,8 +2,12 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../middlewares/asyncHandler.middleware";
 import { HTTP_STATUS } from "../config/http.config";
 import {
+  addFavoriteUserService,
+  blockUserService,
   getSingleUserService,
   getUsersService,
+  removeFavoriteUserService,
+  unblockUserService,
   updateUserService,
 } from "../services/user.service";
 import { BadRequestException } from "../utils/app-error";
@@ -18,13 +22,11 @@ export const getUsersController = asyncHandler(
 
     const { users, nextCursor } = await getUsersService(userId, cursor);
 
-    return res
-      .status(HTTP_STATUS.OK)
-      .json({
-        message: "Users retrieved successfully",
-        next: nextCursor,
-        users,
-      });
+    return res.status(HTTP_STATUS.OK).json({
+      message: "Users retrieved successfully",
+      next: nextCursor,
+      users,
+    });
   },
 );
 
@@ -55,6 +57,63 @@ export const updateUserController = asyncHandler(
     return res
       .status(HTTP_STATUS.OK)
       .json({ message: "User updated successfully", user });
+  },
+);
+
+//TODO: rework how chats get sorted when fetched
+export const addFavoriteUserController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    const chatToBeFavoriteId = req.body;
+
+    const user = await addFavoriteUserService(userId, chatToBeFavoriteId);
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "Chat favorited successfully",
+      user,
+    });
+  },
+);
+
+export const removeFavoriteUserController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    const chatToBeUnfavoriteId = req.body;
+
+    const user = await removeFavoriteUserService(userId, chatToBeUnfavoriteId);
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "Chat favorited successfully",
+      user,
+    });
+  },
+);
+
+export const blockUserController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    const userToBeBlockedId = req.body;
+
+    const user = await blockUserService(userId, userToBeBlockedId);
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "User blocked successfully",
+      user,
+    });
+  },
+);
+
+export const unblockUserController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    const userToBeUnblockedId = req.body;
+
+    const user = await unblockUserService(userId, userToBeUnblockedId);
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "User unblocked successfully",
+      user,
+    });
   },
 );
 

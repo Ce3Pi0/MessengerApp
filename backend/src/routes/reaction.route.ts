@@ -1,5 +1,3 @@
-// TODO: Add this to the docs.json
-
 import { Router } from "express";
 import { passportAuthenticateJwt } from "../middlewares/authJwt.middleware";
 import {

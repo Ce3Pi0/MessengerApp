@@ -15,3 +15,20 @@ export const removeUserFromChatSchema = z.object({
   userToRemoveId: z.string().trim().min(1),
   chatId: z.string().trim().min(1),
 });
+
+export const addUserToChatSchema = z.object({
+  chatId: z.string().trim().min(1),
+  participantId: z.string().trim().min(1),
+});
+
+export const updateChatSchema = z
+  .object({
+    chatId: z.string().trim().min(1),
+    groupName: z.string().trim().min(1).optional(),
+    avatar: z.string().trim().min(1).optional(),
+  })
+  .refine((data) => data.groupName || data.avatar, {
+    message: "groupName or img are required",
+  });
+
+export type UpdateChatSchemaType = z.infer<typeof updateChatSchema>;

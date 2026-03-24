@@ -1,6 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import axios from "axios";
 import { accessTokenExpiredError, handleRefresh } from "./helper";
+import { useChat } from "@/hooks/use-chat";
 
 export const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL + "api/v1",
@@ -19,7 +20,10 @@ API.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        const success = await handleRefresh(useAuth.getState().setUser);
+        const success = await handleRefresh(
+          useAuth.getState().setUser,
+          useChat.getState().setChats,
+        );
 
         if (success) {
           return API(originalRequest);

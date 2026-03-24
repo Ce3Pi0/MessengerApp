@@ -33,6 +33,7 @@ import { Env } from "../config/env.config";
 import { sendMail } from "../utils/sendMail";
 import emailValidator, { ValidationResult } from "node-email-verifier";
 import cloudinary from "../config/cloudinary.config";
+import { getUserChatService } from "./chats.service";
 
 export const googleAuthService = async (body: Profile) => {
   const profile: Profile = body;
@@ -245,7 +246,9 @@ export const refreshService = async (refreshToken: string) => {
     { new: true },
   );
 
-  return { user, newAccessToken, newRefreshToken };
+  const { chats, next } = await getUserChatService(user!._id.toString());
+
+  return { user, newAccessToken, newRefreshToken, chats, next };
 };
 
 export const verifyService = async (verifyToken: string) => {

@@ -1,6 +1,13 @@
+import { Types } from "mongoose";
 import cloudinary from "../config/cloudinary.config";
+import { emitChatUpdateToParticipants } from "../lib/socket";
+import ChatModel from "../models/chat.model";
 import UserModel from "../models/user.model";
-import { BadRequestException, NotFoundException } from "../utils/app-error";
+import {
+  BadRequestException,
+  NotAllowedException,
+  NotFoundException,
+} from "../utils/app-error";
 import { cloudinaryDelete, cloudinaryPost } from "../utils/cloudinary";
 import { getPublicIdFromUrl } from "../utils/get-url";
 import { UpdateUserSchemaType } from "../validators/user.validator";
@@ -89,6 +96,183 @@ export const updateUserService = async (
 
   await user.save();
 
+  const chats = await ChatModel.find({ participants: userId })
+    .populate("participants", "name avatar")
+    .populate({
+      path: "lastMessage",
+      populate: {
+        path: "sender",
+        select: "name avatar",
+      },
+    })
+    .populate({
+      path: "lastReaction",
+      populate: {
+        path: "reactor",
+        select: "name",
+      },
+    });
+
+  for (let chat of chats) {
+    const allParticipantIds = chat!.participants.map((p) => p._id.toString());
+    emitChatUpdateToParticipants(userId, allParticipantIds, chat);
+  }
+
+  return user;
+};
+
+//TODO: Update user chat fetching logic
+export const addFavoriteUserService = async (
+  userId: string,
+  chatId: string,
+  MAX_FAVORITE_CHATS: number = 20,
+) => {
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  const chat = await ChatModel.findById(chatId);
+
+  if (!chat) throw new NotFoundException("Chat not found");
+
+  if (!chat.participants.includes(new Types.ObjectId(userId)))
+    throw new NotAllowedException("User is not a member of this chat");
+
+  if (user.favorites.includes(new Types.ObjectId(chatId)))
+    throw new BadRequestException("Chat is already favorited");
+
+  if (user.favorites.length >= MAX_FAVORITE_CHATS)
+    throw new BadRequestException(
+      `Cannot have more than ${MAX_FAVORITE_CHATS} favorite chats`,
+    );
+
+  user.favorites.push(new Types.ObjectId(chatId));
+
+  await user.save();
+
+  const updatedUser = await UserModel.findById(userId).populate({
+    path: "favorites",
+    populate: [
+      {
+        path: "participants",
+        select: "name avatar",
+      },
+      {
+        path: "lastMessage",
+        populate: {
+          path: "sender",
+          select: "name avatar",
+        },
+      },
+      {
+        path: "lastReaction",
+        populate: {
+          path: "reactor",
+          select: "name",
+        },
+      },
+    ],
+    options: { sort: { updatedAt: -1 } },
+  });
+
+  return updatedUser;
+};
+
+export const removeFavoriteUserService = async (
+  userId: string,
+  chatId: string,
+) => {
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  const chat = await ChatModel.findById(chatId);
+
+  if (!chat) throw new NotFoundException("Chat not found");
+
+  if (!chat.participants.includes(new Types.ObjectId(userId)))
+    throw new NotAllowedException("User is not a member of this chat");
+
+  if (!user.favorites.includes(new Types.ObjectId(chatId)))
+    throw new BadRequestException("Chat is not favorited");
+
+  user.favorites = user.favorites.filter((c) => c._id.toString() !== chatId);
+
+  await user.save();
+
+  const updatedUser = await UserModel.findById(userId).populate({
+    path: "favorites",
+    populate: [
+      {
+        path: "participants",
+        select: "name avatar",
+      },
+      {
+        path: "lastMessage",
+        populate: {
+          path: "sender",
+          select: "name avatar",
+        },
+      },
+      {
+        path: "lastReaction",
+        populate: {
+          path: "reactor",
+          select: "name",
+        },
+      },
+    ],
+    options: { sort: { updatedAt: -1 } },
+  });
+
+  return updatedUser;
+};
+
+export const blockUserService = async (
+  userId: string,
+  userToBeBlockedId: string,
+) => {
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  if (userId === userToBeBlockedId)
+    throw new NotAllowedException("Cannot block yourself");
+
+  const userToBeBlocked = await UserModel.findById(userToBeBlockedId);
+
+  if (!userToBeBlocked)
+    throw new NotAllowedException("User to be blocked not found");
+
+  if (user.blocked.includes(userToBeBlocked._id))
+    throw new BadRequestException("User already blocked");
+
+  user.blocked.push(userToBeBlocked._id);
+
+  await user.save();
+
+  return user;
+};
+export const unblockUserService = async (
+  userId: string,
+  userToBeUnblockedId: string,
+) => {
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  const userToBeUnblocked = await UserModel.findById(userToBeUnblockedId);
+
+  if (!userToBeUnblocked)
+    throw new NotAllowedException("User to be unblocked not found");
+
+  if (!user.blocked.includes(userToBeUnblocked._id))
+    throw new BadRequestException("User isn't blocked");
+
+  user.blocked = user.blocked.filter((id) => id !== userToBeUnblocked._id);
+
+  await user.save();
+
   return user;
 };
 
@@ -105,4 +289,5 @@ export const deleteUserService = async (userId: string) => {
   }
 
   await UserModel.deleteOne({ _id: userId });
+  //TODO: ws cast to all participants
 };

@@ -1,11 +1,9 @@
 import mongoose, { Document, Schema } from "mongoose";
 
-// TODO: Add admins array list of user admin ids
-// TODO: Add bg image field
-// TODO:
-
 export interface ChatDocument extends Document {
   participants: mongoose.Types.ObjectId[];
+  administrators: mongoose.Types.ObjectId[];
+  avatar?: string | null;
   lastMessage: mongoose.Types.ObjectId;
   lastReaction: mongoose.Types.ObjectId;
   isGroup: boolean;
@@ -20,6 +18,10 @@ const chatSchema = new Schema<ChatDocument>(
     participants: [
       { type: Schema.Types.ObjectId, ref: "User", required: true },
     ],
+    administrators: [
+      { type: Schema.Types.ObjectId, ref: "User", required: true },
+    ],
+    avatar: { type: String, default: null },
     lastMessage: { type: Schema.Types.ObjectId, ref: "Message", default: null },
     lastReaction: {
       type: Schema.Types.ObjectId,

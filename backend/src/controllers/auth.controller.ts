@@ -230,12 +230,14 @@ export const refreshController = asyncHandler(
 
     if (!refreshToken) throw new UnauthorizedException("Missing refresh token");
 
-    const { user, newAccessToken, newRefreshToken } =
+    const { user, newAccessToken, newRefreshToken, chats, next } =
       await refreshService(refreshToken);
 
     return setJwtAuthCookie(res, newAccessToken, newRefreshToken).json({
       message: "Refreshed",
       user,
+      chats,
+      next,
     });
   },
 );

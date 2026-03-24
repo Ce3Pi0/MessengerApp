@@ -1,4 +1,3 @@
-// TODO: Implement sockets for real-time reaction transmission
 import "../models/reaction.model";
 import ChatModel from "../models/chat.model";
 import MessageModel from "../models/message.model";

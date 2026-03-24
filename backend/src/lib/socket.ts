@@ -220,6 +220,26 @@ export const emitLastUpdateToParticipant = (
   }
 };
 
+export const emitChatUpdateToParticipants = (
+  userId: string,
+  participantIds: string[],
+  chat: any,
+) => {
+  const io = getIO();
+  const userSocketId = onlineUsers.get(userId.toString());
+
+  if (userSocketId)
+    for (const participantId of participantIds) {
+      io.to(`user:${participantId}`)
+        .except(userSocketId)
+        .emit("chat:change", chat);
+    }
+  else
+    for (const participantId of participantIds) {
+      io.to(`user:${participantId}`).emit("chat:change", chat);
+    }
+};
+
 export const emitChatDeletedToParticipants = (
   participantIds: string[],
   chatId: string,
@@ -238,4 +258,58 @@ export const emitChatDeletedToParticipants = (
     for (const participantId of participantIds) {
       io.to(`user:${participantId}`).emit("chat:delete", chatId);
     }
+};
+
+export const emitUserRemovedToParticipants = (
+  userId: string,
+  participantIds: string[],
+  chatName: string,
+  chatId: string,
+  removedUserId: string,
+) => {
+  const io = getIO();
+  const userSocketId = onlineUsers.get(userId.toString());
+
+  if (userSocketId && removedUserId === userId)
+    for (const participantId of participantIds) {
+      io.to(`user:${participantId}`)
+        .except(userSocketId)
+        .emit("user:remove", chatId, chatName, removedUserId);
+    }
+  else
+    for (const participantId of participantIds) {
+      io.to(`user:${participantId}`).emit(
+        "user:remove",
+        chatId,
+        chatName,
+        removedUserId,
+      );
+    }
+};
+
+export const emitUserAddedToParticipants = (
+  userId: string,
+  participantIds: string[],
+  chatId: string,
+  participant: any,
+) => {
+  const io = getIO();
+  const userSocketId = onlineUsers.get(userId.toString());
+
+  if (userSocketId) {
+    for (const participantId of participantIds) {
+      io.to(`user:${participantId}`)
+        .except(userSocketId)
+        .emit("user:add", chatId, participant);
+    }
+  } else {
+    for (const participantId of participantIds) {
+      io.to(`user:${participantId}`).emit("user:add", chatId, participant);
+    }
+  }
+};
+
+export const emitChatToNewParticipant = (participantId: string, chat: any) => {
+  const io = getIO();
+  io.to(`user:${participantId}`).emit("chat:new", chat);
 };

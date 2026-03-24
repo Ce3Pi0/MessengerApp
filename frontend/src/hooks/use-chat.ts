@@ -31,7 +31,13 @@ interface ChatState {
   isCreatingChat: boolean;
   isDeletingChat: boolean;
   isSingleChatLoading: boolean;
+  isUserAdding: boolean;
+  isUserRemoving: boolean;
 
+  setChats: (data: {
+    newChats: ChatType[] | null;
+    newNext: string | null;
+  }) => void;
   fetchUsers: () => void;
   fetchExtraUsers: () => void;
   fetchChats: () => void;
@@ -53,6 +59,7 @@ interface ChatState {
   sendEditMessage: (chatId: string, message: MessageType) => void;
   deleteMessage: (chatId: string, messageId: string) => void;
   sendDeleteMessage: (chatId: string, messageId: string) => void;
+  changeChat: (chat: ChatType) => void;
 
   addNewReaction: (
     reactionId: string,
@@ -73,6 +80,14 @@ interface ChatState {
     messageId: string,
     reactionId: string,
   ) => void;
+  addUser: (chatId: string, participant: UserType) => void;
+  sendAddUser: (chatId: string, participantId: string) => void;
+  removeUser: (
+    chatId: string,
+    chatName: string,
+    removedUserId: string,
+  ) => boolean;
+  sendRemoveUser: (chatId: string, userToRemoveId: string) => void;
 }
 
 export const useChat = create<ChatState>()((set, get) => ({
@@ -90,7 +105,15 @@ export const useChat = create<ChatState>()((set, get) => ({
   isCreatingChat: false,
   isDeletingChat: false,
   isSingleChatLoading: false,
+  isUserAdding: false,
+  isUserRemoving: false,
 
+  setChats: ({ newChats, newNext }) =>
+    set((state) => ({
+      ...state,
+      chats: [...(newChats ?? [])],
+      nextChatsCursor: newNext,
+    })),
   fetchUsers: async () => {
     set({ isUsersLoading: true });
     try {
@@ -424,6 +447,30 @@ export const useChat = create<ChatState>()((set, get) => ({
       toast.error(err?.response?.data?.message || "Failed to send message");
     }
   },
+  changeChat: (chat) => {
+    if (chat._id === get().singleChat?.chat._id) {
+      set((state) => {
+        if (!state.singleChat) return state;
+        return {
+          singleChat: {
+            ...state.singleChat,
+            chat,
+          },
+        };
+      });
+    }
+    set((state) => {
+      if (!state.chats) return state;
+      return {
+        chats: [
+          ...state.chats.map((c) => {
+            if (c._id === chat._id) return chat;
+            return c;
+          }),
+        ],
+      };
+    });
+  },
   addNewReaction: (
     reactionId: string,
     chatId: string,
@@ -622,6 +669,141 @@ export const useChat = create<ChatState>()((set, get) => ({
       toast.error(
         err?.response?.data?.message || "Failed to delete the reaction",
       );
+    }
+  },
+  addUser: (chatId: string, participant: UserType) => {
+    if (chatId === get().singleChat?.chat._id) {
+      set((state) => {
+        if (!state.singleChat) return state;
+        return {
+          singleChat: {
+            chat: {
+              ...state.singleChat.chat,
+              participants: [
+                ...(state.singleChat?.chat.participants ?? []),
+                participant,
+              ],
+            },
+            messages: state.singleChat.messages,
+            next: state.singleChat.next,
+          },
+        };
+      });
+    }
+  },
+  sendAddUser: async (chatId: string, participantId: string) => {
+    set({ isUserAdding: true });
+    try {
+      const res = await API.post("/chat/add-user", {
+        chatId,
+        participantId,
+      });
+
+      set((state) => {
+        if (!state.singleChat) return state;
+        return {
+          singleChat: {
+            chat: {
+              ...state.singleChat.chat,
+              participants: [...(res.data?.updatedChat.participants ?? [])],
+            },
+            messages: state.singleChat.messages,
+            next: state.singleChat.next,
+          },
+        };
+      });
+      toast.success(res?.data?.message || "User added successfully");
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "User couldn't be added to the chat",
+      );
+    } finally {
+      set({ isUserAdding: false });
+    }
+  },
+  removeUser: (chatId, chatName, removedUserId) => {
+    const { user } = useAuth.getState();
+
+    if (chatId !== get().singleChat?.chat._id) {
+      set((state) => {
+        if (!state.chats) return state;
+        return {
+          chats: [...state.chats.filter((chat) => chat._id !== chatId)],
+        };
+      });
+
+      return false;
+    }
+
+    set((state) => {
+      if (!state.singleChat) return state;
+      return {
+        singleChat: {
+          chat: {
+            ...state.singleChat.chat,
+            participants: [
+              ...(state.singleChat?.chat.participants ?? []).filter(
+                (participant) => participant._id !== removedUserId,
+              ),
+            ],
+          },
+          messages: state.singleChat.messages,
+          next: state.singleChat.next,
+        },
+      };
+    });
+
+    if (user?._id !== removedUserId) return false;
+
+    set((state) => {
+      return {
+        chats: [...state.chats.filter((chat) => chat._id !== chatId)],
+      };
+    });
+
+    toast.info(`You have been removed from ${chatName}`);
+
+    return true;
+  },
+  sendRemoveUser: async (chatId, userToRemoveId) => {
+    set({ isUserRemoving: true });
+    try {
+      const res = await API.delete("/chat/remove-user", {
+        data: {
+          chatId,
+          userToRemoveId,
+        },
+      });
+
+      set((state) => {
+        if (!state.singleChat) return state;
+        return {
+          singleChat: {
+            chat: {
+              ...state.singleChat.chat,
+              participants: [
+                ...(state.singleChat?.chat.participants ?? []).filter(
+                  (participant) => participant._id !== userToRemoveId,
+                ),
+              ],
+            },
+            messages: state.singleChat.messages,
+            next: state.singleChat.next,
+          },
+        };
+      });
+
+      const { user } = useAuth.getState();
+
+      if (user?._id !== userToRemoveId)
+        toast.success(res?.data?.message || "User removed successfully");
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message ||
+          "User couldn't be removed from the chat",
+      );
+    } finally {
+      set({ isUserRemoving: false });
     }
   },
 }));

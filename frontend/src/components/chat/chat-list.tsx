@@ -12,11 +12,13 @@ import type {
   ReactionDataType,
 } from "@/types/chat.types";
 import { OTHER_ROUTES } from "@/routes/routes";
+import type { UserType } from "@/types/auth.type";
 
 const ChatList = () => {
   const navigate = useNavigate();
   const { socket } = useSocket();
   const {
+    singleChat,
     fetchChats,
     chats,
     isChatLoading,
@@ -26,6 +28,9 @@ const ChatList = () => {
     updateChatLastInfo,
     gettingMoreChats,
     fetchExtraChats,
+    addUser,
+    removeUser,
+    changeChat,
   } = useChat();
 
   const { user } = useAuth();
@@ -67,9 +72,23 @@ const ChatList = () => {
   useEffect(() => {
     if (!socket) return;
 
+    const handleChangeChat = (chat: any) => {
+      changeChat(chat);
+    };
+
+    socket.on("chat:change", handleChangeChat);
+
+    return () => {
+      socket.off("chat:change", handleChangeChat);
+    };
+  }, [changeChat, socket]);
+
+  useEffect(() => {
+    if (!socket) return;
+
     const handleDeletedChat = (chatId: string) => {
       deleteChat(chatId);
-      navigate(OTHER_ROUTES.ROOT);
+      if (chatId === singleChat?.chat._id) navigate(OTHER_ROUTES.ROOT);
     };
 
     socket.on("chat:delete", handleDeletedChat);
@@ -78,6 +97,39 @@ const ChatList = () => {
       socket.off("chat:delete", handleDeletedChat);
     };
   }, [deleteChat, socket]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleAddUser = (chatId: string, participant: UserType) => {
+      addUser(chatId, participant);
+    };
+
+    socket.on("user:add", handleAddUser);
+
+    return () => {
+      socket.off("user:add", handleAddUser);
+    };
+  }, [addUser, socket]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRemoveUser = (
+      chatId: string,
+      chatName: string,
+      removedUserId: string,
+    ) => {
+      const isCurrentUser = removeUser(chatId, chatName, removedUserId);
+      if (isCurrentUser) navigate(OTHER_ROUTES.ROOT);
+    };
+
+    socket.on("user:remove", handleRemoveUser);
+
+    return () => {
+      socket.off("user:remove", handleRemoveUser);
+    };
+  }, [removeUser, socket]);
 
   useEffect(() => {
     if (!socket) return;

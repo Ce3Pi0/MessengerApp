@@ -1,11 +1,7 @@
-import mongoose, { Document, Schema, UpdateQuery } from "mongoose";
-import { comparePass, compareVal, hashPass, hashToken } from "../utils/bcrypt";
-import { UnprocessableEntityException } from "../utils/app-error";
+import mongoose, { Document, Schema } from "mongoose";
+import { comparePass, hashPass, hashToken } from "../utils/bcrypt";
 
 type Providers = "local" | "google" | "merged";
-
-// TODO: Add favorites array with chat ids
-// TODO: Add blocked users with user ids
 
 export interface UserDocument extends Document {
   name: string;
@@ -19,6 +15,8 @@ export interface UserDocument extends Document {
   avatar?: string | null;
   enabled2fa: boolean;
   secret2fa?: string;
+  favorites: mongoose.Types.ObjectId[];
+  blocked: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 
@@ -48,6 +46,8 @@ const userSchema = new Schema<UserDocument>(
     avatar: { type: String, default: null },
     enabled2fa: { type: Boolean, default: false },
     secret2fa: { type: String },
+    favorites: [{ type: Schema.Types.ObjectId, ref: "Chat", default: [] }],
+    blocked: [{ type: Schema.Types.ObjectId, ref: "User", default: [] }],
   },
   {
     timestamps: true,

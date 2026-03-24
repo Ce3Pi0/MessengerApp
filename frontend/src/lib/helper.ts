@@ -11,14 +11,19 @@ export const isUserOnline = (userId?: string): boolean => {
   return onlineUsers.includes(userId);
 };
 
-export const handleRefresh = async (set: any): Promise<boolean> => {
+export const handleRefresh = async (
+  setUsers: any,
+  setChats: any,
+): Promise<boolean> => {
   try {
     const res = await API.put("/auth/refresh");
-    set(res.data.user);
+    setUsers(res.data.user);
+    setChats({ newChats: res.data.chats, newNext: res.data.next });
     useSocket.getState().connectSocket();
     return true;
   } catch (err: any) {
-    set({ user: null });
+    setUsers({ user: null });
+    setChats({ newChats: [], newNext: null });
     return false;
   }
 };

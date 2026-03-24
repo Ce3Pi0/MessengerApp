@@ -66,18 +66,6 @@
             "body": { "email": "string" }
           }
         },
-        "set-password": {
-          "methods": "POST",
-          "required": {
-            "body": {
-              "password": "string",
-              "confirmPassword": "string"
-            },
-            "cookies": {
-              "accessToken": "string"
-            }
-          }
-        },
         "change-password": {
           "methods": "PUT",
           "required": {
@@ -121,16 +109,20 @@
             }
           }
         },
-        "enable2fa": {
-          "methods": "GET",
+        "set-password": {
+          "methods": "POST",
           "required": {
+            "body": {
+              "password": "string",
+              "confirmPassword": "string"
+            },
             "cookies": {
               "accessToken": "string"
             }
           }
         },
-        "disable2fa": {
-          "methods": "PUT",
+        "enable2fa": {
+          "methods": "GET",
           "required": {
             "cookies": {
               "accessToken": "string"
@@ -145,6 +137,14 @@
             },
             "cookies": {
               "mfaToken": "string"
+            }
+          }
+        },
+        "disable2fa": {
+          "methods": "PUT",
+          "required": {
+            "cookies": {
+              "accessToken": "string"
             }
           }
         },
@@ -192,6 +192,19 @@
           "query": {
             "cursor": "string"
           }
+        },
+        "delete/:id": {
+          "methods": "DELETE",
+          "required": null
+        },
+        "remove-user": {
+          "methods": "DELETE",
+          "required": {
+            "body": {
+              "userToRemoveId": "string",
+              "chatId": "string"
+            }
+          }
         }
       },
       "required": {
@@ -230,6 +243,23 @@
               }
             }
           }
+        },
+        ":id": {
+          "methods": "GET",
+          "required": null
+        },
+        "update": {
+          "methods": "PUT",
+          "required": {
+            "body": {
+              "name": "string | null",
+              "avatar": "string | null"
+            }
+          }
+        },
+        "delete": {
+          "methods": "DELETE",
+          "required": null
         }
       },
       "required": {
@@ -268,6 +298,36 @@
             "body": {
               "chatId": "string",
               "messageId": "string"
+            }
+          }
+        }
+      },
+      "required": {
+        "cookies": {
+          "accessToken": "string",
+          "refreshToken": "string"
+        }
+      }
+    },
+    "reactions": {
+      "routes": {
+        "send": {
+          "methods": "POST",
+          "required": {
+            "body": {
+              "chatId": "string",
+              "messageId": "string",
+              "emoji": "string"
+            }
+          }
+        },
+        "delete": {
+          "methods": "DELETE",
+          "required": {
+            "body": {
+              "chatId": "string",
+              "messageId": "string",
+              "reactionId": "string"
             }
           }
         }

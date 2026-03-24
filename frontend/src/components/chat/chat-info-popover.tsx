@@ -1,3 +1,4 @@
+//TODO: Modularize!
 import {
   BanIcon,
   DoorOpen,
@@ -5,9 +6,11 @@ import {
   Info,
   PencilLineIcon,
   Pin,
-  PlusCircleIcon,
+  Star,
   Trash2,
-  XCircle,
+  UserRoundKeyIcon,
+  UserRoundPlus,
+  UserRoundX,
 } from "lucide-react";
 import {
   Popover,
@@ -32,24 +35,32 @@ import {
 } from "../ui/alert-dialog";
 import { useState } from "react";
 import { Spinner } from "../ui/spinner";
+import type { UserType } from "@/types/auth.type";
+import AddUserPopover from "./add-user-popover";
 
-interface Props {
-  openChatInfo: () => void;
-}
-
-const ChatInfoPopover = ({ openChatInfo }: Props) => {
+const ChatInfoPopover = () => {
   const navigate = useNavigate();
 
+  const [isLeaveGroupAlertOpen, setIsLeaveGroupAlertOpen] = useState(false);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
+  const [isRemoveUserAlertOpen, setIsRemoveUserAlertOpen] = useState(false);
+  const [userToRemove, setUserToRemove] = useState<UserType | null>(null);
+
   const { user } = useAuth();
-  const { singleChat, sendDeleteChat, isDeletingChat } = useChat();
+  const {
+    singleChat,
+    sendDeleteChat,
+    isDeletingChat,
+    sendRemoveUser,
+    isUserRemoving,
+  } = useChat();
 
   const isGroup = singleChat?.chat.isGroup;
 
   if (!singleChat) return null;
 
-  const handlePinChat = () => {};
+  const handleFavoriteChat = () => {};
 
   const handleGroupNameChange = () => {};
 
@@ -62,11 +73,24 @@ const ChatInfoPopover = ({ openChatInfo }: Props) => {
 
   const handleBlockUser = () => {};
 
-  const handleKickUser = () => {};
+  const openKickUserAlert = (userToRemove: UserType) => {
+    setUserToRemove(userToRemove);
+    setIsRemoveUserAlertOpen(true);
+  };
 
-  const handleAddUser = () => {};
+  const openLeaveChatAlert = () => {
+    setUserToRemove(user);
+    setIsLeaveGroupAlertOpen(true);
+  };
+  const handleKickUser = () => {
+    if (!userToRemove) return;
+    sendRemoveUser(singleChat.chat._id, userToRemove._id);
+  };
 
-  const handleLeaveGroup = () => {};
+  const handleLeaveGroup = () => {
+    if (!userToRemove) return;
+    sendRemoveUser(singleChat.chat._id, userToRemove._id);
+  };
 
   return (
     <>
@@ -74,7 +98,7 @@ const ChatInfoPopover = ({ openChatInfo }: Props) => {
         <PopoverTrigger asChild>
           <div>
             <div className="flex-1 text-center py-4 h-full font-medium text-accent-foreground hover:text-primary cursor-pointer">
-              <Info size={24} onClick={() => openChatInfo()} />
+              <Info size={24} />
             </div>
           </div>
         </PopoverTrigger>
@@ -95,7 +119,7 @@ const ChatInfoPopover = ({ openChatInfo }: Props) => {
 
                   <div className="flex flex-row gap-2 items-center">
                     <h1>{singleChat?.chat.groupName}</h1>
-                    {/* TODO: Check if user is group admin */}
+                    {/* FIXME: Check if user is group admin */}
                     <PencilLineIcon
                       size={16}
                       className="hover: cursor-pointer"
@@ -107,10 +131,10 @@ const ChatInfoPopover = ({ openChatInfo }: Props) => {
 
               <div
                 className="text-accent-foreground flex flex-row gap-2 items-center hover:bg-green-200/10 p-2 rounded-md cursor-pointer "
-                onClick={() => handlePinChat()}
+                onClick={() => handleFavoriteChat()}
               >
-                <Pin size={16} />
-                <p>Pin Chat</p>
+                <Star size={16} />
+                <p>Favorite Chat</p>
               </div>
             </div>
             <div className="p-2">
@@ -118,40 +142,51 @@ const ChatInfoPopover = ({ openChatInfo }: Props) => {
               <div className="flex flex-col pt-2">
                 <div className="flex flex-row justify-start items-center p-1 gap-2">
                   <AvatarWithBadge name={user?.name!} src={user?.avatar} />
-                  <p>You</p>
+                  <p className="text-xs">You</p>
                 </div>
                 {singleChat.chat.participants
                   .filter((participant) => participant._id !== user?._id)
                   .map((participant) => {
-                    const canKick = participant._id !== user?._id && isGroup; // TODO: and is admin check
+                    const canKick = participant._id !== user?._id && isGroup; // FIXME: and is admin check
+                    const canPromote = participant._id !== user?._id && isGroup; // FIXME: and is admin check && check if user is already an admin
+
                     return (
-                      <div className="flex flex-row justify-start items-center p-1 gap-2">
+                      <div
+                        className="flex flex-row justify-start items-center p-1 gap-2"
+                        key={participant._id}
+                      >
                         <AvatarWithBadge
                           name={participant.name!}
                           src={participant.avatar}
                         />
-                        <p>{participant.name!}</p>
-                        {canKick && (
-                          <div className="flex flex-col items-end grow">
-                            <div
-                              className="hover:bg-white/10 p-2 rounded-md cursor-pointer"
-                              onClick={() => handleKickUser()}
-                            >
-                              <XCircle size={16} />
+                        <p className="text-xs">{participant.name!}</p>
+                        <div className="flex flex-row items-end justify-end grow">
+                          {canPromote && (
+                            <div className="flex flex-col items-end">
+                              <div
+                                className="hover:bg-white/10 p-2 rounded-md cursor-pointer"
+                                onClick={() => openKickUserAlert(participant)}
+                              >
+                                <UserRoundKeyIcon size={16} />
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
+                          {canKick && (
+                            <div className="flex flex-col items-end">
+                              <div
+                                className="hover:bg-destructive/10 p-2 rounded-md cursor-pointer"
+                                onClick={() => openKickUserAlert(participant)}
+                              >
+                                <UserRoundX size={16} />
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
-                {isGroup && ( //TODO: add is admin check
-                  <div
-                    className="flex flex-row items-center gap-2 hover:bg-white/10 p-2 rounded-md cursor-pointer"
-                    onClick={() => handleAddUser()}
-                  >
-                    <PlusCircleIcon size={16} />
-                    Add a New Member
-                  </div>
+                {isGroup && ( //FIXME: add is admin check
+                  <AddUserPopover />
                 )}
               </div>
             </div>
@@ -165,7 +200,7 @@ const ChatInfoPopover = ({ openChatInfo }: Props) => {
               <div
                 className="flex flex-row items-center gap-2 hover:bg-white/10 p-2 rounded-md cursor-pointer"
                 onClick={() =>
-                  isGroup ? handleLeaveGroup() : handleBlockUser()
+                  isGroup ? openLeaveChatAlert() : handleBlockUser()
                 }
               >
                 {isGroup ? (
@@ -182,7 +217,7 @@ const ChatInfoPopover = ({ openChatInfo }: Props) => {
                 className="text-destructive flex flex-row items-center gap-2 hover:bg-destructive/10 p-2 rounded-md cursor-pointer"
                 onClick={() => setIsDeleteAlertOpen(true)}
               >
-                {/* TODO: Check if user admin or not a group */}
+                {/* FIXME: Check if user admin or not a group */}
                 {
                   <>
                     <Trash2 size={16} /> Delete Chat
@@ -211,6 +246,56 @@ const ChatInfoPopover = ({ openChatInfo }: Props) => {
             >
               {isDeletingChat && <Spinner className="w-6 h-6" />}
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={isRemoveUserAlertOpen}
+        onOpenChange={setIsRemoveUserAlertOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action will kick {userToRemove?.name} from the group.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isUserRemoving}
+              onClick={() => handleLeaveGroup()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isUserRemoving && <Spinner className="w-6 h-6" />}
+              Kick
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={isLeaveGroupAlertOpen}
+        onOpenChange={setIsLeaveGroupAlertOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to leave this group.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isUserRemoving}
+              onClick={() => handleKickUser()}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isUserRemoving && <Spinner className="w-6 h-6" />}
+              Leave
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

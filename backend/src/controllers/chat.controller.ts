@@ -2,16 +2,21 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../middlewares/asyncHandler.middleware";
 import { HTTP_STATUS } from "../config/http.config";
 import {
+  addUserToChatSchema,
   chatIdSchema,
   createChatSchema,
   removeUserFromChatSchema,
+  updateChatSchema,
 } from "../validators/chat.validator";
 import {
+  addAdminChatService,
+  addUserChatService,
   createChatService,
   deleteChatService,
   getSingleChatService,
   getUserChatService,
   removeUserFromChatService,
+  updateChatService,
 } from "../services/chats.service";
 
 export const createChatController = asyncHandler(
@@ -62,6 +67,40 @@ export const getSingleChatController = asyncHandler(
   },
 );
 
+export const updateChatController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    const body = updateChatSchema.parse(req.body);
+
+    const updatedChat = await updateChatService(userId, body);
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "Chat updated successfully",
+      updatedChat,
+    });
+  },
+);
+
+export const addAdminChatController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    const chatId = req.params.id as string;
+
+    const userToBePromotedId = req.body;
+
+    const updatedChat = await addAdminChatService(
+      userId,
+      chatId,
+      userToBePromotedId,
+    );
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "Admin added successfully",
+      updatedChat,
+    });
+  },
+);
+
 export const deleteChatController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?._id;
@@ -84,6 +123,20 @@ export const removeUserFromChatController = asyncHandler(
 
     return res.status(HTTP_STATUS.OK).json({
       message: "User removed successfully",
+    });
+  },
+);
+
+export const addUserChatController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    const { chatId, participantId } = addUserToChatSchema.parse(req.body);
+
+    const updatedChat = await addUserChatService(userId, chatId, participantId);
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "User added successfully",
+      updatedChat,
     });
   },
 );
