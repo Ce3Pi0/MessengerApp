@@ -13,6 +13,8 @@ import type { UserType } from "../../types/auth.type";
 import AvatarWithBadge from "../avatar-with-badge";
 import { Checkbox } from "../ui/checkbox";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
 
 export const NewChatPopover = memo(() => {
   const navigate = useNavigate();
@@ -25,6 +27,8 @@ export const NewChatPopover = memo(() => {
     createChat,
     isCreatingChat,
   } = useChat();
+
+  const { user } = useAuth();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isGroupMode, setIsGroupMode] = useState(false);
@@ -117,6 +121,8 @@ export const NewChatPopover = memo(() => {
     }
   };
 
+  if (!user) return;
+
   return (
     <Popover open={isOpen} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
@@ -183,22 +189,24 @@ export const NewChatPopover = memo(() => {
                 disabled={isCreatingChat}
                 onClick={() => setIsGroupMode(true)}
               />
-              {filteredUsers?.map((user) => (
+              {filteredUsers?.map((otherUser) => (
                 <ChatUserItem
-                  key={user._id}
+                  key={otherUser._id}
                   user={user}
-                  isLoading={loadingUserId === user._id}
+                  otherUser={otherUser}
+                  isLoading={loadingUserId === otherUser._id}
                   disabled={loadingUserId !== null}
                   onClick={handleCreateChat}
                 />
               ))}
             </>
           ) : (
-            users?.map((user) => (
+            users?.map((otherUser) => (
               <GroupUserItem
-                key={user._id}
+                key={otherUser._id}
                 user={user}
-                isSelected={selectedUsers.includes(user._id)}
+                otherUser={otherUser}
+                isSelected={selectedUsers.includes(otherUser._id)}
                 onToggle={toggleUserSelection}
               />
             ))
@@ -232,15 +240,36 @@ export const NewChatPopover = memo(() => {
 });
 NewChatPopover.displayName = "NewChatPopover";
 
-const UserAvatar = memo(({ user }: { user: UserType }) => (
-  <>
-    <AvatarWithBadge name={user.name} src={user.avatar ?? ""} />
-    <div className="flex-1 min-w-0">
-      <h5 className="text-[13.5px] font-medium truncate">{user.name}</h5>
-      <p className="text-xs text-muted-foreground">Hey there! I'm using whop</p>
-    </div>
-  </>
-));
+const UserAvatar = memo(
+  ({ user, otherUser }: { user: UserType; otherUser: UserType }) => {
+    const unblockUser = () => {};
+
+    return (
+      <>
+        <AvatarWithBadge name={otherUser.name} src={otherUser.avatar ?? ""} />
+        <div className="flex-1 min-w-0">
+          <h5 className="text-[13.5px] font-medium truncate">
+            {otherUser.name}
+          </h5>
+          <p className="text-xs text-muted-foreground">
+            Hey there! I'm using whop
+          </p>
+        </div>
+        {/* TODO: Remove ! */}
+        {!user.blocked!.find(
+          (blockedUser) => blockedUser._id === otherUser._id,
+        ) && (
+          <div
+            className="border hover:bg-accent p-1 rounded-sm text-xs"
+            onClick={() => unblockUser()}
+          >
+            Unblock
+          </div>
+        )}
+      </>
+    );
+  },
+);
 
 UserAvatar.displayName = "UserAvatar";
 
@@ -266,28 +295,37 @@ NewGroupItem.displayName = "NewGroupItem";
 
 const ChatUserItem = memo(
   ({
+    otherUser,
     user,
     isLoading,
     disabled,
     onClick,
   }: {
+    otherUser: UserType;
     user: UserType;
     disabled: boolean;
     isLoading: boolean;
     onClick: (id: string) => void;
-  }) => (
-    <button
-      className="
-      relative w-full flex items-center gap-2 p-2
-    rounded-sm hover:bg-accent
-       transition-colors text-left disabled:opacity-50"
-      disabled={isLoading || disabled}
-      onClick={() => onClick(user._id)}
-    >
-      <UserAvatar user={user} />
-      {isLoading && <Spinner className="absolute right-2 w-4 h-4 ml-auto" />}
-    </button>
-  ),
+  }) => {
+    const isBlocked = user.blocked!.find(
+      (blockedUser) => blockedUser._id === otherUser._id,
+    );
+
+    return (
+      <button
+        className={cn(
+          !isBlocked
+            ? "w-full flex items-center gap-2 p-2 rounded-sm text-left"
+            : "w-full flex items-center gap-2 p-2 rounded-sm hover:bg-accent transition-colors text-left disabled:opacity-50",
+        )}
+        disabled={isLoading || disabled}
+        onClick={() => onClick(user._id)}
+      >
+        <UserAvatar user={user} otherUser={otherUser} />
+        {isLoading && <Spinner className="absolute right-2 w-4 h-4 ml-auto" />}
+      </button>
+    );
+  },
 );
 
 ChatUserItem.displayName = "ChatUserItem";
@@ -295,27 +333,39 @@ ChatUserItem.displayName = "ChatUserItem";
 const GroupUserItem = memo(
   ({
     user,
+    otherUser,
     isSelected,
     onToggle,
   }: {
     user: UserType;
+    otherUser: UserType;
     isSelected: boolean;
     onToggle: (id: string) => void;
-  }) => (
-    <label
-      role="button"
-      className="w-full flex items-center gap-2 p-2
-      rounded-sm hover:bg-accent
-       transition-colors text-left
-      "
-    >
-      <UserAvatar user={user} />
-      <Checkbox
-        checked={isSelected}
-        onCheckedChange={() => onToggle(user._id)}
-      />
-    </label>
-  ),
+  }) => {
+    const isBlocked = user.blocked!.find(
+      (blockedUser) => blockedUser._id === otherUser._id,
+    );
+
+    return (
+      <label
+        role="button"
+        className={cn(
+          !isBlocked
+            ? "w-full flex items-center gap-2 p-2 rounded-sm "
+            : "w-full flex items-center gap-2 p-2 rounded-sm hover:bg-accent transition-colors text-left disabled:opacity-50",
+        )}
+      >
+        <UserAvatar otherUser={otherUser} user={user} />
+        {/* TODO: add! */}
+        {isBlocked && (
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => onToggle(otherUser._id)}
+          />
+        )}
+      </label>
+    );
+  },
 );
 
 GroupUserItem.displayName = "GroupUserItem";

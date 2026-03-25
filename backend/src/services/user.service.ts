@@ -11,9 +11,11 @@ import {
 import { cloudinaryDelete, cloudinaryPost } from "../utils/cloudinary";
 import { getPublicIdFromUrl } from "../utils/get-url";
 import { UpdateUserSchemaType } from "../validators/user.validator";
+import { CHAT_POPULATE_CONFIG } from "../config/chat-populate.config";
+import { USER_POPULATE_CONFIG } from "../config/user-populate.config";
 
 export const findByIdUserService = async (userId: string) => {
-  const user = await UserModel.findById(userId);
+  const user = await UserModel.findById(userId).populate(USER_POPULATE_CONFIG);
   if (!user) throw new BadRequestException("User not found");
   return user;
 };
@@ -49,17 +51,19 @@ export const getSingleUserService = async (
   currentUserId: any,
   userId: string,
 ) => {
-  const curUser = await UserModel.findById(currentUserId).select(
-    "-password -refreshToken -forgotPassword -isVerified -secret2fa",
-  );
+  const curUser = await UserModel.findById(currentUserId)
+    .select("-password -refreshToken -forgotPassword -isVerified -secret2fa")
+    .populate(USER_POPULATE_CONFIG);
 
   if (!curUser) throw new NotFoundException("User not found");
 
   if (currentUserId.toString() === userId) return curUser;
 
-  const user = await UserModel.findById(userId).select(
-    "-password -refreshToken -forgotPassword -provider -isVerified -enabled2fa -secret2fa",
-  );
+  const user = await UserModel.findById(userId)
+    .select(
+      "-password -refreshToken -forgotPassword -provider -isVerified -enabled2fa -secret2fa",
+    )
+    .populate(USER_POPULATE_CONFIG);
 
   if (!user) throw new NotFoundException("User not found");
 
@@ -96,32 +100,20 @@ export const updateUserService = async (
 
   await user.save();
 
-  const chats = await ChatModel.find({ participants: userId })
-    .populate("participants", "name avatar")
-    .populate({
-      path: "lastMessage",
-      populate: {
-        path: "sender",
-        select: "name avatar",
-      },
-    })
-    .populate({
-      path: "lastReaction",
-      populate: {
-        path: "reactor",
-        select: "name",
-      },
-    });
+  const chats = await ChatModel.find({ participants: userId }).populate(
+    CHAT_POPULATE_CONFIG,
+  );
 
   for (let chat of chats) {
     const allParticipantIds = chat!.participants.map((p) => p._id.toString());
     emitChatUpdateToParticipants(userId, allParticipantIds, chat);
   }
 
+  await user.populate(USER_POPULATE_CONFIG);
+
   return user;
 };
 
-//TODO: Update user chat fetching logic
 export const addFavoriteUserService = async (
   userId: string,
   chatId: string,
@@ -150,28 +142,9 @@ export const addFavoriteUserService = async (
 
   await user.save();
 
-  const updatedUser = await UserModel.findById(userId).populate({
+  const updatedUser = await user.populate({
     path: "favorites",
-    populate: [
-      {
-        path: "participants",
-        select: "name avatar",
-      },
-      {
-        path: "lastMessage",
-        populate: {
-          path: "sender",
-          select: "name avatar",
-        },
-      },
-      {
-        path: "lastReaction",
-        populate: {
-          path: "reactor",
-          select: "name",
-        },
-      },
-    ],
+    populate: USER_POPULATE_CONFIG,
     options: { sort: { updatedAt: -1 } },
   });
 
@@ -200,28 +173,9 @@ export const removeFavoriteUserService = async (
 
   await user.save();
 
-  const updatedUser = await UserModel.findById(userId).populate({
+  const updatedUser = await user.populate({
     path: "favorites",
-    populate: [
-      {
-        path: "participants",
-        select: "name avatar",
-      },
-      {
-        path: "lastMessage",
-        populate: {
-          path: "sender",
-          select: "name avatar",
-        },
-      },
-      {
-        path: "lastReaction",
-        populate: {
-          path: "reactor",
-          select: "name",
-        },
-      },
-    ],
+    populate: USER_POPULATE_CONFIG,
     options: { sort: { updatedAt: -1 } },
   });
 
@@ -251,6 +205,8 @@ export const blockUserService = async (
 
   await user.save();
 
+  await user.populate(USER_POPULATE_CONFIG);
+
   return user;
 };
 export const unblockUserService = async (
@@ -272,6 +228,8 @@ export const unblockUserService = async (
   user.blocked = user.blocked.filter((id) => id !== userToBeUnblocked._id);
 
   await user.save();
+
+  await user.populate(USER_POPULATE_CONFIG);
 
   return user;
 };

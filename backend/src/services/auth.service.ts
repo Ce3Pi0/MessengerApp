@@ -34,6 +34,7 @@ import { sendMail } from "../utils/sendMail";
 import emailValidator, { ValidationResult } from "node-email-verifier";
 import cloudinary from "../config/cloudinary.config";
 import { getUserChatService } from "./chats.service";
+import { USER_POPULATE_CONFIG } from "../config/user-populate.config";
 
 export const googleAuthService = async (body: Profile) => {
   const profile: Profile = body;
@@ -68,6 +69,8 @@ export const googleAuthService = async (body: Profile) => {
       avatar: profile.photos?.[0]?.value || "",
     });
   }
+
+  await user.populate(USER_POPULATE_CONFIG);
 
   return user;
 };
@@ -203,7 +206,7 @@ export const loginService = async (body: LoginSchemaType) => {
   await UserModel.updateOne(
     { _id: user._id },
     { $set: { refreshToken: hashedRefreshToken } },
-  );
+  ).populate(USER_POPULATE_CONFIG);
 
   return {
     user,
@@ -244,7 +247,7 @@ export const refreshService = async (refreshToken: string) => {
     { _id: user._id },
     { $set: { refreshToken: hashedRefreshToken } },
     { new: true },
-  );
+  ).populate(USER_POPULATE_CONFIG);
 
   const { chats, next } = await getUserChatService(user!._id.toString());
 
@@ -312,7 +315,7 @@ export const setPasswordService = async (
       },
     },
     { new: true },
-  );
+  ).populate(USER_POPULATE_CONFIG);
 
   const newAccessToken = signAccessToken(user);
   const newRefreshToken = signRefreshToken(user);
@@ -509,7 +512,7 @@ export const verify2faService = async (userId: string, token: string) => {
       },
     },
     { new: true },
-  );
+  ).populate(USER_POPULATE_CONFIG);
 
   return { user, accessToken, refreshToken };
 };

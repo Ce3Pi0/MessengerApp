@@ -14,7 +14,7 @@ interface Props {
 
 const ChatBody = ({ chatId, messages, onReply, onEdit, onDelete }: Props) => {
   const { socket } = useSocket();
-  const { addNewMessage, editMessage, deleteMessage } = useChat();
+  const { editMessage, deleteMessage } = useChat();
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   const firstMessageIdRef = useRef<string | null>(
@@ -34,21 +34,6 @@ const ChatBody = ({ chatId, messages, onReply, onEdit, onDelete }: Props) => {
 
     prevMsgCount.current = messages.length;
   }, [messages]);
-
-  useEffect(() => {
-    if (!chatId || !socket) return;
-
-    const handleNewMessage = (msg: MessageType) => {
-      console.log("New message", msg);
-      addNewMessage(chatId, msg);
-    };
-
-    socket.on("message:new", handleNewMessage);
-
-    return () => {
-      socket.off("message:new", handleNewMessage);
-    };
-  }, [socket, chatId, addNewMessage]);
 
   useEffect(() => {
     if (!chatId || !socket) return;

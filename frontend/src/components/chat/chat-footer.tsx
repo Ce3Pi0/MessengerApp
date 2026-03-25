@@ -30,7 +30,7 @@ const ChatFooter = ({
   onCancelReply,
   onCancelEdit,
 }: Props) => {
-  const { sendMessage, sendEditMessage } = useChat();
+  const { sendMessage, sendEditMessage, singleChat } = useChat();
 
   const [image, setImage] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -101,6 +101,23 @@ const ChatFooter = ({
   useEffect(() => {
     if (editMessage?.content) setText(editMessage.content);
   }, [editMessage?.content]);
+
+  if (!singleChat?.chat.isGroup) {
+    const otherUser = singleChat?.chat.participants.find(
+      (user) => user._id !== currentUserId,
+    );
+
+    // FIXME: Remove !
+    if (!otherUser?.blocked?.find((user) => user._id === currentUserId)) {
+      return (
+        <div className="sticky bottom-0 inset-x-0 z-999 bg-card border-t border-border py-4">
+          <div className="flex flex-col items-center">
+            You have been blocked by this user
+          </div>
+        </div>
+      );
+    }
+  }
 
   return (
     <>

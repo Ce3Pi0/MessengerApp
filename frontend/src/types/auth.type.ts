@@ -1,3 +1,5 @@
+import type { ChatType } from "./chat.types";
+
 export type RegisterType = {
   name: string;
   email: string;
@@ -17,6 +19,8 @@ export interface UserType {
   name: string;
   email: string;
   avatar?: string;
+  favorites?: ChatType[];
+  blocked?: UserType[];
   provider: Provider;
   enabled2fa: boolean;
   createdAt: Date;

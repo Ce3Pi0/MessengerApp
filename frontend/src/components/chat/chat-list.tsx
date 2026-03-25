@@ -73,6 +73,7 @@ const ChatList = () => {
     if (!socket) return;
 
     const handleChangeChat = (chat: any) => {
+      console.log("Change chat", chat);
       changeChat(chat);
     };
 
@@ -96,7 +97,7 @@ const ChatList = () => {
     return () => {
       socket.off("chat:delete", handleDeletedChat);
     };
-  }, [deleteChat, socket]);
+  }, [deleteChat, socket, singleChat]);
 
   useEffect(() => {
     if (!socket) return;

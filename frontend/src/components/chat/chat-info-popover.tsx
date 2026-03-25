@@ -5,11 +5,9 @@ import {
   Image,
   Info,
   PencilLineIcon,
-  Pin,
   Star,
   Trash2,
   UserRoundKeyIcon,
-  UserRoundPlus,
   UserRoundX,
 } from "lucide-react";
 import {
@@ -54,6 +52,7 @@ const ChatInfoPopover = () => {
     isDeletingChat,
     sendRemoveUser,
     isUserRemoving,
+    sendPromoteUser,
   } = useChat();
 
   const isGroup = singleChat?.chat.isGroup;
@@ -92,6 +91,10 @@ const ChatInfoPopover = () => {
     sendRemoveUser(singleChat.chat._id, userToRemove._id);
   };
 
+  const isUserAdmin = singleChat.chat.administrators?.find(
+    (a) => a._id === user?._id,
+  );
+
   return (
     <>
       <Popover>
@@ -119,12 +122,13 @@ const ChatInfoPopover = () => {
 
                   <div className="flex flex-row gap-2 items-center">
                     <h1>{singleChat?.chat.groupName}</h1>
-                    {/* FIXME: Check if user is group admin */}
-                    <PencilLineIcon
-                      size={16}
-                      className="hover: cursor-pointer"
-                      onClick={() => handleGroupNameChange}
-                    />
+                    {isUserAdmin && (
+                      <PencilLineIcon
+                        size={16}
+                        className="hover: cursor-pointer"
+                        onClick={() => handleGroupNameChange}
+                      />
+                    )}
                   </div>
                 </div>
               )}
@@ -142,13 +146,25 @@ const ChatInfoPopover = () => {
               <div className="flex flex-col pt-2">
                 <div className="flex flex-row justify-start items-center p-1 gap-2">
                   <AvatarWithBadge name={user?.name!} src={user?.avatar} />
-                  <p className="text-xs">You</p>
+                  <div>
+                    <p className="text-xs">You</p>
+                    <p className="text-[0.6rem] text-gray-500">
+                      {isUserAdmin && "Admin"}
+                    </p>
+                  </div>
                 </div>
                 {singleChat.chat.participants
                   .filter((participant) => participant._id !== user?._id)
                   .map((participant) => {
-                    const canKick = participant._id !== user?._id && isGroup; // FIXME: and is admin check
-                    const canPromote = participant._id !== user?._id && isGroup; // FIXME: and is admin check && check if user is already an admin
+                    const canKick =
+                      participant._id !== user?._id && isGroup && isUserAdmin;
+                    const canPromote =
+                      participant._id !== user?._id &&
+                      isGroup &&
+                      isUserAdmin &&
+                      !singleChat.chat.administrators?.find(
+                        (a) => a._id === participant?._id,
+                      );
 
                     return (
                       <div
@@ -159,13 +175,25 @@ const ChatInfoPopover = () => {
                           name={participant.name!}
                           src={participant.avatar}
                         />
-                        <p className="text-xs">{participant.name!}</p>
+                        <div>
+                          <p className="text-xs">{participant.name!}</p>
+                          <p className="text-[0.6rem] text-gray-500">
+                            {singleChat.chat.administrators?.find(
+                              (a) => a._id === participant?._id,
+                            ) && "Admin"}
+                          </p>
+                        </div>
                         <div className="flex flex-row items-end justify-end grow">
                           {canPromote && (
                             <div className="flex flex-col items-end">
                               <div
                                 className="hover:bg-white/10 p-2 rounded-md cursor-pointer"
-                                onClick={() => openKickUserAlert(participant)}
+                                onClick={() =>
+                                  sendPromoteUser(
+                                    singleChat.chat._id,
+                                    participant._id,
+                                  )
+                                }
                               >
                                 <UserRoundKeyIcon size={16} />
                               </div>
@@ -185,18 +213,18 @@ const ChatInfoPopover = () => {
                       </div>
                     );
                   })}
-                {isGroup && ( //FIXME: add is admin check
-                  <AddUserPopover />
-                )}
+                {isGroup && isUserAdmin && <AddUserPopover />}
               </div>
             </div>
             <div className="p-2">
-              <div
-                className="flex flex-row items-center gap-2 hover:bg-white/10 p-2 rounded-md cursor-pointer"
-                onClick={() => handleGroupChangeBg()}
-              >
-                <Image size={16} /> Change Background
-              </div>
+              {isGroup && isUserAdmin && (
+                <div
+                  className="flex flex-row items-center gap-2 hover:bg-white/10 p-2 rounded-md cursor-pointer"
+                  onClick={() => handleGroupChangeBg()}
+                >
+                  <Image size={16} /> Change Group Avatar
+                </div>
+              )}
               <div
                 className="flex flex-row items-center gap-2 hover:bg-white/10 p-2 rounded-md cursor-pointer"
                 onClick={() =>
@@ -213,17 +241,19 @@ const ChatInfoPopover = () => {
                   </>
                 )}
               </div>
-              <div
-                className="text-destructive flex flex-row items-center gap-2 hover:bg-destructive/10 p-2 rounded-md cursor-pointer"
-                onClick={() => setIsDeleteAlertOpen(true)}
-              >
-                {/* FIXME: Check if user admin or not a group */}
-                {
-                  <>
-                    <Trash2 size={16} /> Delete Chat
-                  </>
-                }
-              </div>
+              {!isGroup ||
+                (isUserAdmin && (
+                  <div
+                    className="text-destructive flex flex-row items-center gap-2 hover:bg-destructive/10 p-2 rounded-md cursor-pointer"
+                    onClick={() => setIsDeleteAlertOpen(true)}
+                  >
+                    {
+                      <>
+                        <Trash2 size={16} /> Delete Chat
+                      </>
+                    }
+                  </div>
+                ))}
             </div>
           </>
         </PopoverContent>

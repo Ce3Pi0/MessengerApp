@@ -68,6 +68,7 @@ export const initializeSocket = (httpServer: HTTPServer) => {
       async (chatId: string, callback?: (err?: string) => void) => {
         try {
           await validateChatParticipant(chatId, userId);
+          console.log(`User ${userId} joined room chat: ${chatId}`);
           socket.join(`chat:${chatId}`);
           callback?.();
         } catch (err) {
@@ -108,7 +109,6 @@ export const emitNewChatToParticipants = (
   chat: any,
 ) => {
   const io = getIO();
-
   for (const participantId of participantIds) {
     io.to(`user:${participantId}`).emit("chat:new", chat);
   }

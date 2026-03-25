@@ -5,6 +5,7 @@ import {
   addUserToChatSchema,
   chatIdSchema,
   createChatSchema,
+  promoteUserSchema,
   removeUserFromChatSchema,
   updateChatSchema,
 } from "../validators/chat.validator";
@@ -86,7 +87,7 @@ export const addAdminChatController = asyncHandler(
     const userId = req.user?._id;
     const chatId = req.params.id as string;
 
-    const userToBePromotedId = req.body;
+    const { userToBePromotedId } = promoteUserSchema.parse(req.body);
 
     const updatedChat = await addAdminChatService(
       userId,

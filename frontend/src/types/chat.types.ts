@@ -8,6 +8,7 @@ export type ChatType = {
   isGroup: boolean;
   createdBy: string;
   groupName?: string;
+  administrators?: UserType[];
   createdAt: string;
   updatedAt: string;
 };

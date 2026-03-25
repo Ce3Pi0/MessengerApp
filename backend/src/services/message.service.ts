@@ -16,6 +16,12 @@ import {
 import { cloudinaryDelete, cloudinaryPost } from "../utils/cloudinary";
 import { getPublicIdFromUrl } from "../utils/get-url";
 import ReactionModel from "../models/reaction.model";
+import {
+  MESSAGE_POPULATE_CONFIG,
+  NEW_MESSAGE_POPULATE_CONFIG,
+} from "../config/message-populate.config";
+import { checkIfBlocked } from "../utils/is-user-blocked";
+import UserModel from "../models/user.model";
 
 export const sendMessageService = async (
   userId: string,
@@ -23,14 +29,20 @@ export const sendMessageService = async (
 ) => {
   const { chatId, content, image, replyToId } = body;
 
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
   const chat = await ChatModel.findOne({
     _id: chatId,
     participants: {
-      $in: [userId],
+      $in: [user._id],
     },
   });
 
   if (!chat) throw new BadRequestException("Chat not found");
+
+  await checkIfBlocked(chat, user);
 
   if (replyToId) {
     const replyMessage = await MessageModel.findOne({
@@ -48,26 +60,13 @@ export const sendMessageService = async (
 
   const newMessage = await MessageModel.create({
     chatId,
-    sender: userId,
+    sender: user._id,
     content,
     image: imageUrl,
     replyTo: replyToId || null,
   });
 
-  await newMessage.populate([
-    {
-      path: "sender",
-      select: "name avatar",
-    },
-    {
-      path: "replyTo",
-      select: "content image sender",
-      populate: {
-        path: "sender",
-        select: "name avatar",
-      },
-    },
-  ]);
+  await newMessage.populate(NEW_MESSAGE_POPULATE_CONFIG);
 
   const updatedChat = await ChatModel.updateOne(
     {
@@ -81,7 +80,7 @@ export const sendMessageService = async (
     },
   );
 
-  emitNewMessageToChatRoom(userId, chatId, newMessage);
+  emitNewMessageToChatRoom(user._id.toString(), chatId, newMessage);
 
   const allParticipantIds = chat.participants.map((id) => id.toString());
   emitLastUpdateToParticipant(allParticipantIds, chatId, null, newMessage);
@@ -95,19 +94,25 @@ export const editMessageService = async (
 ) => {
   const { messageId, chatId, content } = body;
 
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
   const chat = await ChatModel.findOne({
     _id: chatId,
     participants: {
-      $in: [userId],
+      $in: [user._id],
     },
   });
 
   if (!chat) throw new BadRequestException("Chat not found");
 
+  await checkIfBlocked(chat, user);
+
   const oldMessage = await MessageModel.findOne({
     _id: messageId,
     chatId,
-    sender: userId,
+    sender: user._id,
   });
 
   if (!oldMessage) throw new NotFoundException("Message not found");
@@ -121,30 +126,9 @@ export const editMessageService = async (
       content,
     },
     { new: true },
-  ).populate({
-    path: "reactions",
-    populate: {
-      path: "reactor",
-      select: "name avatar",
-    },
-  });
+  ).populate(MESSAGE_POPULATE_CONFIG);
 
-  await newMessage!.populate([
-    {
-      path: "sender",
-      select: "name avatar",
-    },
-    {
-      path: "replyTo",
-      select: "contents image sender",
-      populate: {
-        path: "sender",
-        select: "name avatar",
-      },
-    },
-  ]);
-
-  emitUpdatedMessageToChatRoom(userId, chatId, newMessage);
+  emitUpdatedMessageToChatRoom(user._id.toString(), chatId, newMessage);
 
   return { newMessage, chat };
 };
@@ -155,19 +139,25 @@ export const deleteMessageService = async (
 ) => {
   const { chatId, messageId } = body;
 
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
   const chat = await ChatModel.findOne({
     _id: chatId,
     participants: {
-      $in: [userId],
+      $in: [user._id],
     },
   });
 
   if (!chat) throw new BadRequestException("Chat not found");
 
+  await checkIfBlocked(chat, user);
+
   const message = await MessageModel.findOne({
     _id: messageId,
     chatId,
-    sender: userId,
+    sender: user._id,
   });
 
   if (!message) throw new NotFoundException("Message not found");
@@ -187,7 +177,7 @@ export const deleteMessageService = async (
     _id: messageId,
   });
 
-  emitDeletedMessageToChatRoom(userId, chatId, messageId);
+  emitDeletedMessageToChatRoom(user._id.toString(), chatId, messageId);
 
   const latestMessage = await MessageModel.findOne({ chatId })
     .sort({

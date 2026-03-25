@@ -29,6 +29,7 @@ const SingleChat = () => {
     gettingMoreMessages,
     fetchExtraMessages,
     sendDeleteMessage,
+    addNewMessage,
   } = useChat();
   const { socket } = useSocket();
   const { user } = useAuth();
@@ -54,12 +55,32 @@ const SingleChat = () => {
   useEffect(() => {
     if (!chatId || !socket) return;
 
-    socket.emit("chat:join", chatId);
+    socket.emit("chat:join", chatId, (err?: string) => {
+      if (err) {
+        console.error("Failed to join chat:", err);
+      } else {
+        console.log("Joined chat room:", chatId);
+      }
+    });
 
     return () => {
       socket.emit("chat:leave", chatId);
     };
   }, [chatId, socket]);
+
+  useEffect(() => {
+    if (!chatId || !socket) return;
+
+    const handleNewMessage = (msg: MessageType) => {
+      addNewMessage(chatId, msg);
+    };
+
+    socket.on("message:new", handleNewMessage);
+
+    return () => {
+      socket.off("message:new", handleNewMessage);
+    };
+  }, [socket, chatId, addNewMessage]);
 
   const handleScroll = async (e: React.UIEvent<HTMLDivElement>) => {
     const container = e.currentTarget;

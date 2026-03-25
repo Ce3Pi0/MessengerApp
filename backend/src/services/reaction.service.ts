@@ -1,7 +1,7 @@
 import "../models/reaction.model";
 import ChatModel from "../models/chat.model";
 import MessageModel from "../models/message.model";
-import { BadRequestException } from "../utils/app-error";
+import { BadRequestException, NotFoundException } from "../utils/app-error";
 import { isParticipant } from "../utils/isParticipant";
 import {
   DeleteReactionSchemaType,
@@ -14,6 +14,9 @@ import {
   emitUpdatedReactionToChatRoom,
 } from "../lib/socket";
 import { findExistingReaction } from "../utils/findExistingReaction";
+import { REACTED_MESSAGE_POPULATE_CONFIG } from "../config/message-populate.config";
+import UserModel from "../models/user.model";
+import { checkIfBlocked } from "../utils/is-user-blocked";
 
 export const sendReactionService = async (
   userId: string,
@@ -21,17 +24,23 @@ export const sendReactionService = async (
 ) => {
   const { chatId, messageId, emoji } = body;
 
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
   const chat = await ChatModel.findById(chatId);
 
-  if (!chat) throw new BadRequestException("Chat not found");
+  if (!chat) throw new NotFoundException("Chat not found");
 
   if (
     !isParticipant(
-      userId.toString(),
+      user._id.toString(),
       chat.participants.map((id) => id.toString()),
     )
   )
     throw new BadRequestException("User is not participant of the chat");
+
+  await checkIfBlocked(chat, user);
 
   const msg = await MessageModel.findById(messageId).populate("reactions");
 
@@ -40,14 +49,14 @@ export const sendReactionService = async (
   if (msg.chatId.toString() !== chat._id.toString())
     throw new BadRequestException("Message/Chat mismatch");
 
-  let reaction = findExistingReaction(msg, userId.toString());
+  let reaction = findExistingReaction(msg, user._id.toString());
 
   if (reaction) {
     await ReactionModel.updateOne({ _id: reaction._id }, { emoji });
   } else {
     reaction = await ReactionModel.create({
       chatId,
-      reactor: userId,
+      reactor: user._id,
       emoji,
     });
 
@@ -57,13 +66,9 @@ export const sendReactionService = async (
     );
   }
 
-  const updatedMsg = (await MessageModel.findById(messageId).populate({
-    path: "reactions",
-    populate: {
-      path: "reactor",
-      select: "name avatar",
-    },
-  })) as any;
+  const updatedMsg = (await MessageModel.findById(messageId).populate(
+    REACTED_MESSAGE_POPULATE_CONFIG,
+  )) as any;
 
   if (!updatedMsg) throw new BadRequestException("No message was updated");
 
@@ -118,17 +123,23 @@ export const deleteReactionService = async (
 ) => {
   const { chatId, messageId } = body;
 
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
   const chat = await ChatModel.findById(chatId);
 
-  if (!chat) throw new BadRequestException("Chat not found");
+  if (!chat) throw new NotFoundException("Chat not found");
 
   if (
     !isParticipant(
-      userId.toString(),
+      user._id.toString(),
       chat.participants.map((id) => id.toString()),
     )
   )
     throw new BadRequestException("User is not participant of the chat");
+
+  await checkIfBlocked(chat, user);
 
   const msg = await MessageModel.findById(messageId).populate("reactions");
 
@@ -137,7 +148,7 @@ export const deleteReactionService = async (
   if (msg.chatId.toString() !== chat._id.toString())
     throw new BadRequestException("Message/Chat mismatch");
 
-  const existingReaction = findExistingReaction(msg, userId.toString());
+  const existingReaction = findExistingReaction(msg, user._id.toString());
 
   if (!existingReaction)
     throw new BadRequestException("User hasn't reacted to this message");
@@ -150,15 +161,16 @@ export const deleteReactionService = async (
     { $pull: { reactions: reactionId } },
   );
 
-  const updatedMsg = await MessageModel.findById(messageId).populate({
-    path: "reactions",
-    populate: {
-      path: "reactor",
-      select: "name avatar",
-    },
-  });
+  const updatedMsg = await MessageModel.findById(messageId).populate(
+    REACTED_MESSAGE_POPULATE_CONFIG,
+  );
 
-  emitDeletedReactionToChatRoom(userId, chatId, updatedMsg?.id, reactionId);
+  emitDeletedReactionToChatRoom(
+    user._id.toString(),
+    chatId,
+    updatedMsg?.id,
+    reactionId,
+  );
 
   const latestMessage = await MessageModel.findOne({ chatId })
     .sort({

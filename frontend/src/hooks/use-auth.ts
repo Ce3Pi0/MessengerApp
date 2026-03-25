@@ -118,7 +118,6 @@ export const useAuth = create<AuthState>()(
       logout: async () => {
         try {
           await API.post("/auth/logout");
-
           set({ user: null });
           useSocket.getState().disconnectSocket();
           toast.success("Logout successful!");

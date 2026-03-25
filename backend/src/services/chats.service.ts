@@ -1,5 +1,3 @@
-// TODO: Fetch reactions (populate return values)
-
 import {
   emitChatDeletedToParticipants,
   emitChatToNewParticipant,
@@ -22,6 +20,11 @@ import { Types } from "mongoose";
 import { getPublicIdFromUrl } from "../utils/get-url";
 import { cloudinaryDelete, cloudinaryPost } from "../utils/cloudinary";
 import { UpdateChatSchemaType } from "../validators/chat.validator";
+import {
+  CHAT_POPULATE_CONFIG,
+  SINGLE_CHAT_POPULATE_CONFIG,
+} from "../config/chat-populate.config";
+import { MESSAGE_POPULATE_CONFIG } from "../config/message-populate.config";
 
 export const createChatService = async (
   userId: string,
@@ -52,6 +55,9 @@ export const createChatService = async (
     const otherUser = await UserModel.findById(participantId);
     if (!otherUser) throw new NotFoundException("User not found");
 
+    if (otherUser && otherUser.blocked.includes(new Types.ObjectId(userId)))
+      throw new BadRequestException("The user has blocked you");
+
     allParticipantsIds = [userId, participantId];
 
     const existingChat = await ChatModel.findOne({
@@ -59,22 +65,7 @@ export const createChatService = async (
         $all: allParticipantsIds,
         $size: 2,
       },
-    })
-      .populate("participants", "name avatar")
-      .populate({
-        path: "lastMessage",
-        populate: {
-          path: "sender",
-          select: "name avatar",
-        },
-      })
-      .populate({
-        path: "lastReaction",
-        populate: {
-          path: "reactor",
-          select: "name",
-        },
-      });
+    }).populate(CHAT_POPULATE_CONFIG);
 
     if (existingChat) return existingChat;
 
@@ -83,7 +74,7 @@ export const createChatService = async (
       createdBy: userId,
     });
   }
-  const populatedChat = await chat?.populate("participants", "name avatar");
+  const populatedChat = await chat?.populate(CHAT_POPULATE_CONFIG);
 
   emitNewChatToParticipants(allParticipantsIds, populatedChat);
 
@@ -95,28 +86,26 @@ export const getUserChatService = async (
   cursor?: string,
   limit: number = 10,
 ) => {
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
   const query: any = { participants: { $in: [userId] } };
 
   if (cursor) {
     query.updatedAt = { $lt: cursor };
   }
 
+  query.$or = [
+    { isGroup: true },
+    {
+      isGroup: false,
+      participants: { $nin: user.blocked },
+    },
+  ];
+
   const chats = await ChatModel.find(query)
-    .populate("participants", "name avatar")
-    .populate({
-      path: "lastMessage",
-      populate: {
-        path: "sender",
-        select: "name avatar",
-      },
-    })
-    .populate({
-      path: "lastReaction",
-      populate: {
-        path: "reactor",
-        select: "name",
-      },
-    })
+    .populate(CHAT_POPULATE_CONFIG)
     .sort({ updatedAt: -1 })
     .limit(limit);
 
@@ -137,7 +126,7 @@ export const getSingleChatService = async (
     participants: {
       $in: [userId],
     },
-  }).populate("participants", "name avatar");
+  }).populate(SINGLE_CHAT_POPULATE_CONFIG);
 
   if (!chat) throw new BadRequestException("Chat not found");
 
@@ -148,22 +137,7 @@ export const getSingleChatService = async (
   }
 
   const messages = await MessageModel.find(query)
-    .populate("sender", "name avatar")
-    .populate({
-      path: "replyTo",
-      select: "content image sender",
-      populate: {
-        path: "sender",
-        select: "name avatar",
-      },
-    })
-    .populate({
-      path: "reactions",
-      populate: {
-        path: "reactor",
-        select: "name avatar",
-      },
-    })
+    .populate(MESSAGE_POPULATE_CONFIG)
     .sort({ createdAt: -1 })
     .limit(limit);
 
@@ -238,7 +212,6 @@ export const updateChatService = async (
   const allParticipantIds = chat!.participants.map((id) => id.toString());
   emitChatUpdateToParticipants(userId, allParticipantIds, chat);
 };
-//TODO: Implement logic
 export const addAdminChatService = async (
   userId: string,
   chatId: string,
@@ -270,7 +243,7 @@ export const addAdminChatService = async (
       "User to be promoted is not a member of this group",
     );
 
-  if (!chat.administrators.includes(userToBePromoted._id))
+  if (chat.administrators.includes(userToBePromoted._id))
     throw new BadRequestException(
       "User to be promoted is already an administrator",
     );
@@ -278,8 +251,13 @@ export const addAdminChatService = async (
   chat.administrators.push(userToBePromoted._id);
 
   await chat.save();
+  await chat.populate(SINGLE_CHAT_POPULATE_CONFIG);
 
-  //TODO: ws emit to all participants
+  const allParticipantIds = chat.participants.map((p: any) =>
+    p._id ? p._id.toString() : p.toString(),
+  );
+
+  emitChatUpdateToParticipants(userId, allParticipantIds, chat);
 
   return chat;
 };
@@ -301,7 +279,15 @@ export const deleteChatService = async (userId: string, chatId: string) => {
     chatId,
   });
 
-  //FIXME: remove favorite chat from any participant that has it set as favorite
+  await UserModel.updateMany(
+    { favorites: chatId },
+    {
+      $pull: {
+        favorites: chatId,
+      },
+    },
+  );
+
   const imageList = await MessageModel.distinct("image", {
     image: { $ne: "" },
   });
@@ -317,8 +303,16 @@ export const deleteChatService = async (userId: string, chatId: string) => {
   });
   await ChatModel.deleteOne({ _id: chatId });
 
+  if (!chat.isGroup) {
+    const otherUserId = chat.participants.filter((p) => p._id === user._id)[0];
+
+    const otherUser = await UserModel.findById(otherUserId);
+
+    if (otherUser && otherUser.blocked.includes(user._id)) return;
+  }
   const allParticipantIds = chat.participants.map((id) => id.toString());
-  emitChatDeletedToParticipants(allParticipantIds, chatId, userId);
+
+  emitChatDeletedToParticipants(allParticipantIds, chatId, userId.toString());
 };
 
 export const removeUserFromChatService = async (
@@ -361,7 +355,7 @@ export const removeUserFromChatService = async (
       _id: chatId,
     },
     {
-      $pull: { participants: new Types.ObjectId(userToRemoveId) },
+      $pull: { participants: userToRemoveId },
     },
   );
 
@@ -408,11 +402,11 @@ export const addUserChatService = async (
     },
     {
       $push: {
-        participants: new Types.ObjectId(participantId),
+        participants: participantId,
       },
     },
     { new: true },
-  ).populate("participants", "name avatar");
+  ).populate(SINGLE_CHAT_POPULATE_CONFIG);
 
   emitChatToNewParticipant(participantId, updatedChat);
   emitUserAddedToParticipants(userId, allParticipantIds, chatId, participant);

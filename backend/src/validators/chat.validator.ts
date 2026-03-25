@@ -31,4 +31,8 @@ export const updateChatSchema = z
     message: "groupName or img are required",
   });
 
+export const promoteUserSchema = z.object({
+  userToBePromotedId: z.string().trim().min(1),
+});
+
 export type UpdateChatSchemaType = z.infer<typeof updateChatSchema>;

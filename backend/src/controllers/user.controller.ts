@@ -60,7 +60,6 @@ export const updateUserController = asyncHandler(
   },
 );
 
-//TODO: rework how chats get sorted when fetched
 export const addFavoriteUserController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?._id;

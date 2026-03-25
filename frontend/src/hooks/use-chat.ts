@@ -59,6 +59,13 @@ interface ChatState {
   sendEditMessage: (chatId: string, message: MessageType) => void;
   deleteMessage: (chatId: string, messageId: string) => void;
   sendDeleteMessage: (chatId: string, messageId: string) => void;
+
+  sendUpdateChatName: (chatId: string, groupName: string) => void;
+  sendUpdateChatAvatar: (chatId: string, chatAvatar: string) => void;
+  sendPromoteUser: (chatId: string, userToBePromotedId: string) => void;
+  sendFavoriteChat: (chatId: string) => void;
+  sendUnfavoriteChat: (chatId: string) => void;
+
   changeChat: (chat: ChatType) => void;
 
   addNewReaction: (
@@ -447,6 +454,33 @@ export const useChat = create<ChatState>()((set, get) => ({
       toast.error(err?.response?.data?.message || "Failed to send message");
     }
   },
+  // TODO: Implement logic
+  sendUpdateChatName: async (chatId, groupName) => {},
+  // TODO: Implement logic
+  sendUpdateChatAvatar: async (chatId, chatAvatar) => {},
+  // TODO: Implement logic
+  sendPromoteUser: async (chatId, userToBePromotedId) => {
+    try {
+      const { data } = await API.put(`/chat/add-admin/${chatId}`, {
+        userToBePromotedId,
+      });
+      set((state) => {
+        if (!state.singleChat) return state;
+        return {
+          singleChat: {
+            ...state.singleChat,
+            chat: data.updatedChat,
+          },
+        };
+      });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to promote user");
+    }
+  },
+  // TODO: Implement logic
+  sendFavoriteChat: async (chatId) => {},
+  // TODO: Implement logic
+  sendUnfavoriteChat: async (chatId) => {},
   changeChat: (chat) => {
     if (chat._id === get().singleChat?.chat._id) {
       set((state) => {
