@@ -53,6 +53,8 @@ const ChatInfoPopover = () => {
     sendRemoveUser,
     isUserRemoving,
     sendPromoteUser,
+    sendBlockUser,
+    sendUnblockUser,
   } = useChat();
 
   const isGroup = singleChat?.chat.isGroup;
@@ -70,7 +72,30 @@ const ChatInfoPopover = () => {
     navigate(OTHER_ROUTES.ROOT);
   };
 
-  const handleBlockUser = () => {};
+  const handleBlockUser = () => {
+    if (!user) return;
+
+    const otherUser = singleChat.chat.participants.find(
+      (p) => p._id !== user._id,
+    );
+
+    if (!otherUser) return;
+
+    sendBlockUser(otherUser?._id);
+    navigate(OTHER_ROUTES.ROOT);
+  };
+
+  const handleUnblockUser = () => {
+    if (!user) return;
+
+    const otherUser = singleChat.chat.participants.find(
+      (p) => p._id !== user._id,
+    );
+
+    if (!otherUser) return;
+
+    sendUnblockUser(otherUser?._id);
+  };
 
   const openKickUserAlert = (userToRemove: UserType) => {
     setUserToRemove(userToRemove);
@@ -94,6 +119,11 @@ const ChatInfoPopover = () => {
   const isUserAdmin = singleChat.chat.administrators?.find(
     (a) => a._id === user?._id,
   );
+
+  const otherUser = singleChat.chat.participants.find(
+    (p) => p._id !== user?._id,
+  );
+  const isBlocked = user?.blocked?.includes(otherUser?._id ?? "");
 
   return (
     <>
@@ -133,13 +163,15 @@ const ChatInfoPopover = () => {
                 </div>
               )}
 
-              <div
-                className="text-accent-foreground flex flex-row gap-2 items-center hover:bg-green-200/10 p-2 rounded-md cursor-pointer "
-                onClick={() => handleFavoriteChat()}
-              >
-                <Star size={16} />
-                <p>Favorite Chat</p>
-              </div>
+              {!isBlocked && (
+                <div
+                  className="text-accent-foreground flex flex-row gap-2 items-center hover:bg-green-200/10 p-2 rounded-md cursor-pointer "
+                  onClick={() => handleFavoriteChat()}
+                >
+                  <Star size={16} />
+                  <p>Favorite Chat</p>
+                </div>
+              )}
             </div>
             <div className="p-2">
               <h5 className="text-zinc-400 text-xs">Participants:</h5>
@@ -228,17 +260,23 @@ const ChatInfoPopover = () => {
               <div
                 className="flex flex-row items-center gap-2 hover:bg-white/10 p-2 rounded-md cursor-pointer"
                 onClick={() =>
-                  isGroup ? openLeaveChatAlert() : handleBlockUser()
+                  isGroup
+                    ? openLeaveChatAlert()
+                    : isBlocked
+                      ? handleUnblockUser()
+                      : handleBlockUser()
                 }
               >
                 {isGroup ? (
                   <>
                     <DoorOpen size={16} /> Leave Group
                   </>
-                ) : (
+                ) : !isBlocked ? (
                   <>
                     <BanIcon size={16} /> Block User
                   </>
+                ) : (
+                  <>Unblock User</>
                 )}
               </div>
               {!isGroup ||

@@ -9,7 +9,6 @@ const AppLayout = () => {
   return (
     <AppWrapper>
       <div className="h-full">
-        {/* Chat List */}
         <div className={cn(chatId ? "hidden lg:block" : "block")}>
           <ChatList />
         </div>

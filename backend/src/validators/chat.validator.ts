@@ -23,7 +23,6 @@ export const addUserToChatSchema = z.object({
 
 export const updateChatSchema = z
   .object({
-    chatId: z.string().trim().min(1),
     groupName: z.string().trim().min(1).optional(),
     avatar: z.string().trim().min(1).optional(),
   })

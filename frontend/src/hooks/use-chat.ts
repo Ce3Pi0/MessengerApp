@@ -95,6 +95,11 @@ interface ChatState {
     removedUserId: string,
   ) => boolean;
   sendRemoveUser: (chatId: string, userToRemoveId: string) => void;
+
+  sendBlockUser: (userToBeBlockedId: string) => void;
+  blockUser: (blockedById: string) => void;
+  sendUnblockUser: (userToBeUnblockedId: string) => void;
+  unblockUser: (unblockedBy: UserType) => void;
 }
 
 export const useChat = create<ChatState>()((set, get) => ({
@@ -780,6 +785,11 @@ export const useChat = create<ChatState>()((set, get) => ({
                 (participant) => participant._id !== removedUserId,
               ),
             ],
+            administrators: [
+              ...(state.singleChat?.chat.administrators ?? []).filter(
+                (administrator) => administrator._id !== removedUserId,
+              ),
+            ],
           },
           messages: state.singleChat.messages,
           next: state.singleChat.next,
@@ -838,6 +848,120 @@ export const useChat = create<ChatState>()((set, get) => ({
       );
     } finally {
       set({ isUserRemoving: false });
+    }
+  },
+  sendBlockUser: async (userToBeBlockedId) => {
+    try {
+      const res = await API.put("/users/block-user", { userToBeBlockedId });
+
+      useAuth.getState().blockUser(userToBeBlockedId);
+
+      set((state) => {
+        if (!state.chats) return state;
+        return {
+          singleChat: null,
+          chats:
+            state.chats?.filter(
+              (chat) =>
+                chat.isGroup ||
+                !chat.participants.find((p) => p._id === userToBeBlockedId),
+            ) || [],
+        };
+      });
+
+      toast.success(res?.data?.message || "User blocked successfully!");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "User could not be blocked");
+    }
+  },
+  blockUser: (blockedById) => {
+    const { user } = useAuth.getState();
+
+    if (!user) return;
+
+    if (
+      !get().singleChat?.chat.isGroup &&
+      get().singleChat?.chat.participants.find((p) => p._id === blockedById)
+    ) {
+      set((state) => {
+        if (!state.singleChat || !state.users) return state;
+
+        return {
+          ...state,
+          singleChat: {
+            ...state.singleChat,
+            chat: {
+              ...state.singleChat.chat,
+              participants: state.singleChat.chat.participants.map((p) => {
+                if (p._id === blockedById) {
+                  return {
+                    ...p,
+                    blocked: p.blocked ? [...p.blocked, user._id] : [user._id],
+                  };
+                }
+                return p;
+              }),
+            },
+          },
+          users: state.users.filter((u) => u._id !== blockedById),
+        };
+      });
+
+      console.log(get().singleChat?.chat);
+    }
+  },
+  sendUnblockUser: async (userToBeUnblockedId) => {
+    try {
+      const res = await API.put("/users/unblock-user", { userToBeUnblockedId });
+
+      useAuth.getState().unblockUser(userToBeUnblockedId);
+
+      set((state) => {
+        if (!state.chats) return state;
+        return {
+          singleChat: null,
+          chats: [res.data?.chat, ...state.chats],
+        };
+      });
+
+      toast.success(res?.data?.message || "User unblocked successfully!");
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "User could not be unblocked",
+      );
+    }
+  },
+  unblockUser: (unblockedBy) => {
+    const { user } = useAuth.getState();
+    if (!user || !get().singleChat) return;
+
+    if (
+      !get().singleChat?.chat.isGroup &&
+      get().singleChat?.chat.participants.find((p) => p._id === unblockedBy._id)
+    ) {
+      set((state) => {
+        if (!state.singleChat) return state;
+
+        return {
+          ...state,
+          singleChat: {
+            ...state.singleChat,
+            chat: {
+              ...state.singleChat.chat,
+              participants: state.singleChat.chat.participants.map((p) => {
+                if (p._id === unblockedBy._id) {
+                  return {
+                    ...p,
+                    blocked: p.blocked?.filter((b) => b !== user._id) || [],
+                  };
+                }
+                return p;
+              }),
+            },
+          },
+          users: [unblockedBy, ...state.users],
+        };
+      });
     }
   },
 }));

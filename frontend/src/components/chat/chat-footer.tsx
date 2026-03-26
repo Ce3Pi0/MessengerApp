@@ -12,6 +12,7 @@ import ChatReplyBar from "./chat-reply-bar";
 import { useChat } from "@/hooks/use-chat";
 import EditMessageBar from "./edit-message-bar";
 import EmojiSelection from "./emoji-selection";
+import { useAuth } from "@/hooks/use-auth";
 
 interface Props {
   replyTo: MessageType | null;
@@ -30,6 +31,7 @@ const ChatFooter = ({
   onCancelReply,
   onCancelEdit,
 }: Props) => {
+  const { user } = useAuth();
   const { sendMessage, sendEditMessage, singleChat } = useChat();
 
   const [image, setImage] = useState<string | null>(null);
@@ -107,12 +109,28 @@ const ChatFooter = ({
       (user) => user._id !== currentUserId,
     );
 
-    // FIXME: Remove !
-    if (!otherUser?.blocked?.find((user) => user._id === currentUserId)) {
+    if (
+      otherUser?.blocked?.find(
+        (blockedUserId) => blockedUserId === currentUserId,
+      )
+    ) {
       return (
         <div className="sticky bottom-0 inset-x-0 z-999 bg-card border-t border-border py-4">
           <div className="flex flex-col items-center">
             You have been blocked by this user
+          </div>
+        </div>
+      );
+    }
+
+    if (
+      otherUser &&
+      user?.blocked?.find((blockedUserId) => blockedUserId === otherUser._id)
+    ) {
+      return (
+        <div className="sticky bottom-0 inset-x-0 z-999 bg-card border-t border-border py-4">
+          <div className="flex flex-col items-center">
+            You have blocked this user
           </div>
         </div>
       );

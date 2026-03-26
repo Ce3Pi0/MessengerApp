@@ -30,6 +30,8 @@ export const NewChatPopover = memo(() => {
 
   const { user } = useAuth();
 
+  console.log("POPOVER USER", user);
+
   const [isOpen, setIsOpen] = useState(false);
   const [isGroupMode, setIsGroupMode] = useState(false);
   const [groupName, setGroupName] = useState("");
@@ -189,16 +191,25 @@ export const NewChatPopover = memo(() => {
                 disabled={isCreatingChat}
                 onClick={() => setIsGroupMode(true)}
               />
-              {filteredUsers?.map((otherUser) => (
-                <ChatUserItem
-                  key={otherUser._id}
-                  user={user}
-                  otherUser={otherUser}
-                  isLoading={loadingUserId === otherUser._id}
-                  disabled={loadingUserId !== null}
-                  onClick={handleCreateChat}
-                />
-              ))}
+              {filteredUsers?.map((otherUser) => {
+                if (user.blocked?.length ?? 0 > 0)
+                  console.log(
+                    user.blocked?.includes(otherUser._id),
+                    user.blocked,
+                    otherUser,
+                  );
+                return (
+                  <ChatUserItem
+                    key={otherUser._id}
+                    user={user}
+                    otherUser={otherUser}
+                    isBlocked={user.blocked?.includes(otherUser._id) ?? false}
+                    isLoading={loadingUserId === otherUser._id}
+                    disabled={loadingUserId !== null}
+                    onClick={handleCreateChat}
+                  />
+                );
+              })}
             </>
           ) : (
             users?.map((otherUser) => (
@@ -206,6 +217,7 @@ export const NewChatPopover = memo(() => {
                 key={otherUser._id}
                 user={user}
                 otherUser={otherUser}
+                isBlocked={user.blocked?.includes(otherUser._id) ?? false}
                 isSelected={selectedUsers.includes(otherUser._id)}
                 onToggle={toggleUserSelection}
               />
@@ -242,7 +254,14 @@ NewChatPopover.displayName = "NewChatPopover";
 
 const UserAvatar = memo(
   ({ user, otherUser }: { user: UserType; otherUser: UserType }) => {
-    const unblockUser = () => {};
+    const { sendUnblockUser } = useChat();
+
+    const unblockUser = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      sendUnblockUser(otherUser._id);
+    };
 
     return (
       <>
@@ -255,13 +274,10 @@ const UserAvatar = memo(
             Hey there! I'm using whop
           </p>
         </div>
-        {/* TODO: Remove ! */}
-        {!user.blocked!.find(
-          (blockedUser) => blockedUser._id === otherUser._id,
-        ) && (
+        {user.blocked!.includes(otherUser._id) && (
           <div
             className="border hover:bg-accent p-1 rounded-sm text-xs"
-            onClick={() => unblockUser()}
+            onClick={unblockUser}
           >
             Unblock
           </div>
@@ -295,31 +311,34 @@ NewGroupItem.displayName = "NewGroupItem";
 
 const ChatUserItem = memo(
   ({
+    isBlocked,
     otherUser,
     user,
     isLoading,
     disabled,
     onClick,
   }: {
+    isBlocked: boolean;
     otherUser: UserType;
     user: UserType;
     disabled: boolean;
     isLoading: boolean;
     onClick: (id: string) => void;
   }) => {
-    const isBlocked = user.blocked!.find(
-      (blockedUser) => blockedUser._id === otherUser._id,
-    );
+    const handleClick = () => {
+      if (isBlocked) return;
+      onClick(otherUser._id);
+    };
 
     return (
       <button
         className={cn(
-          !isBlocked
+          isBlocked
             ? "w-full flex items-center gap-2 p-2 rounded-sm text-left"
             : "w-full flex items-center gap-2 p-2 rounded-sm hover:bg-accent transition-colors text-left disabled:opacity-50",
         )}
         disabled={isLoading || disabled}
-        onClick={() => onClick(user._id)}
+        onClick={handleClick}
       >
         <UserAvatar user={user} otherUser={otherUser} />
         {isLoading && <Spinner className="absolute right-2 w-4 h-4 ml-auto" />}
@@ -334,30 +353,27 @@ const GroupUserItem = memo(
   ({
     user,
     otherUser,
+    isBlocked,
     isSelected,
     onToggle,
   }: {
     user: UserType;
     otherUser: UserType;
+    isBlocked: boolean;
     isSelected: boolean;
     onToggle: (id: string) => void;
   }) => {
-    const isBlocked = user.blocked!.find(
-      (blockedUser) => blockedUser._id === otherUser._id,
-    );
-
     return (
       <label
         role="button"
         className={cn(
-          !isBlocked
+          isBlocked
             ? "w-full flex items-center gap-2 p-2 rounded-sm "
             : "w-full flex items-center gap-2 p-2 rounded-sm hover:bg-accent transition-colors text-left disabled:opacity-50",
         )}
       >
         <UserAvatar otherUser={otherUser} user={user} />
-        {/* TODO: add! */}
-        {isBlocked && (
+        {!isBlocked && (
           <Checkbox
             checked={isSelected}
             onCheckedChange={() => onToggle(otherUser._id)}

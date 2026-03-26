@@ -11,6 +11,6 @@ export const CHAT_POPULATE_CONFIG = [
 ];
 
 export const SINGLE_CHAT_POPULATE_CONFIG = [
-  { path: "participants", select: "name avatar" },
+  { path: "participants", select: "name avatar blocked" },
   { path: "administrators", select: "name avatar" },
 ];

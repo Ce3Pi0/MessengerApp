@@ -1,6 +1,10 @@
 import { Types } from "mongoose";
 import cloudinary from "../config/cloudinary.config";
-import { emitChatUpdateToParticipants } from "../lib/socket";
+import {
+  emitBlockedToUser,
+  emitChatUpdateToParticipants,
+  emitUnblockedToUser,
+} from "../lib/socket";
 import ChatModel from "../models/chat.model";
 import UserModel from "../models/user.model";
 import {
@@ -11,7 +15,10 @@ import {
 import { cloudinaryDelete, cloudinaryPost } from "../utils/cloudinary";
 import { getPublicIdFromUrl } from "../utils/get-url";
 import { UpdateUserSchemaType } from "../validators/user.validator";
-import { CHAT_POPULATE_CONFIG } from "../config/chat-populate.config";
+import {
+  CHAT_POPULATE_CONFIG,
+  SINGLE_CHAT_POPULATE_CONFIG,
+} from "../config/chat-populate.config";
 import { USER_POPULATE_CONFIG } from "../config/user-populate.config";
 
 export const findByIdUserService = async (userId: string) => {
@@ -25,11 +32,15 @@ export const getUsersService = async (
   cursor: string | undefined,
   limit: number = 10,
 ) => {
-  const query: any = { _id: { $ne: userId } };
+  const query: any = {};
 
   if (cursor) {
-    query._id = { ...query._id, $gt: cursor };
+    query._id = { $gt: cursor, $ne: userId };
+  } else {
+    query._id = { $ne: userId };
   }
+
+  query.blocked = { $ne: userId };
 
   const users = await UserModel.find(query)
     .select(
@@ -186,6 +197,8 @@ export const blockUserService = async (
   userId: string,
   userToBeBlockedId: string,
 ) => {
+  console.log(userId, userToBeBlockedId);
+
   const user = await UserModel.findById(userId);
 
   if (!user) throw new NotFoundException("User not found");
@@ -207,7 +220,7 @@ export const blockUserService = async (
 
   await user.populate(USER_POPULATE_CONFIG);
 
-  return user;
+  emitBlockedToUser(userId, userToBeBlockedId);
 };
 export const unblockUserService = async (
   userId: string,
@@ -225,13 +238,21 @@ export const unblockUserService = async (
   if (!user.blocked.includes(userToBeUnblocked._id))
     throw new BadRequestException("User isn't blocked");
 
-  user.blocked = user.blocked.filter((id) => id !== userToBeUnblocked._id);
+  const updatedUser = await UserModel.findByIdAndUpdate(
+    userId,
+    { $pull: { blocked: userToBeUnblockedId } },
+    { new: true },
+  ).populate(USER_POPULATE_CONFIG);
 
-  await user.save();
+  if (!updatedUser) throw new BadRequestException("Something went wrong");
 
-  await user.populate(USER_POPULATE_CONFIG);
+  emitUnblockedToUser(user, userToBeUnblockedId);
 
-  return user;
+  const chat = await ChatModel.findOne({
+    participants: { $all: [userId] },
+  }).populate(CHAT_POPULATE_CONFIG);
+
+  return chat;
 };
 
 export const deleteUserService = async (userId: string) => {

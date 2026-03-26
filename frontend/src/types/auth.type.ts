@@ -20,7 +20,7 @@ export interface UserType {
   email: string;
   avatar?: string;
   favorites?: ChatType[];
-  blocked?: UserType[];
+  blocked?: string[];
   provider: Provider;
   enabled2fa: boolean;
   createdAt: Date;

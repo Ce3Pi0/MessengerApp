@@ -313,3 +313,13 @@ export const emitChatToNewParticipant = (participantId: string, chat: any) => {
   const io = getIO();
   io.to(`user:${participantId}`).emit("chat:new", chat);
 };
+
+export const emitBlockedToUser = (userId: string, participantId: string) => {
+  const io = getIO();
+  io.to(`user:${participantId}`).emit("user:blocked", userId);
+};
+
+export const emitUnblockedToUser = (user: any, participantId: string) => {
+  const io = getIO();
+  io.to(`user:${participantId}`).emit("user:unblocked", user);
+};

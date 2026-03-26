@@ -42,6 +42,9 @@ interface AuthState {
   isAuthStatus: () => void;
   updateAccount: (data: UpdateUserType) => Promise<boolean>;
   deleteAccount: () => Promise<boolean>;
+
+  blockUser: (userToBeBlockedId: string) => void;
+  unblockUser: (userToBeUnblockedId: string) => void;
 }
 
 export const useAuth = create<AuthState>()(
@@ -281,6 +284,34 @@ export const useAuth = create<AuthState>()(
         } finally {
           set({ isLoading: false });
         }
+      },
+      blockUser: (userToBeBlockedId) => {
+        set((state) => {
+          if (!state.user) return state;
+          return {
+            ...state,
+            user: {
+              ...state.user,
+              blocked: [...(state.user.blocked ?? []), userToBeBlockedId],
+            },
+          };
+        });
+      },
+      unblockUser: (userToBeBlockedId) => {
+        set((state) => {
+          if (!state.user) return state;
+          return {
+            ...state,
+            user: {
+              ...state.user,
+              blocked: [
+                ...(state.user.blocked?.filter(
+                  (u) => u !== userToBeBlockedId,
+                ) ?? []),
+              ],
+            },
+          };
+        });
       },
     }),
     {

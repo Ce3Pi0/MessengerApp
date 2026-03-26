@@ -197,6 +197,32 @@
           "methods": "DELETE",
           "required": null
         },
+        "update": {
+          "methods": "PUT",
+          "required": {
+            "body": {
+              "groupName": "string | null",
+              "avatar": "string | null"
+            }
+          }
+        },
+        "add-admin/:id": {
+          "methods": "PUT",
+          "required": {
+            "body": {
+              "userToPromoteId": "string"
+            }
+          }
+        },
+        "add-user": {
+          "methods": "POST",
+          "required": {
+            "body": {
+              "chatId": "string",
+              "participantId": "string"
+            }
+          }
+        },
         "remove-user": {
           "methods": "DELETE",
           "required": {
@@ -254,6 +280,38 @@
             "body": {
               "name": "string | null",
               "avatar": "string | null"
+            }
+          }
+        },
+        "add-favorite": {
+          "methods": "PUT",
+          "required": {
+            "body": {
+              "chatToBeFavoriteId": "string"
+            }
+          }
+        },
+        "remove-favorite": {
+          "methods": "DELETE",
+          "required": {
+            "body": {
+              "chatToBeUnfavoriteId": "string"
+            }
+          }
+        },
+        "block-user": {
+          "methods": "PUT",
+          "required": {
+            "body": {
+              "userToBeBlockedId": "string"
+            }
+          }
+        },
+        "unblock-user": {
+          "methods": "DELETE",
+          "required": {
+            "body": {
+              "userToBeUnblockedId": "string"
             }
           }
         },

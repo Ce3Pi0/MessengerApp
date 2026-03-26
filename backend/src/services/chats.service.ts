@@ -170,13 +170,14 @@ export const validateChatParticipant = async (
 
 export const updateChatService = async (
   userId: string,
+  chatId: string,
   body: UpdateChatSchemaType,
 ) => {
   const user = await UserModel.findById(userId);
 
   if (!user) throw new NotFoundException("User not found");
 
-  const { chatId, groupName, avatar } = body;
+  const { groupName, avatar } = body;
 
   const chat = await ChatModel.findById(chatId);
 
@@ -355,7 +356,7 @@ export const removeUserFromChatService = async (
       _id: chatId,
     },
     {
-      $pull: { participants: userToRemoveId },
+      $pull: { participants: userToRemoveId, administrators: userToRemoveId },
     },
   );
 

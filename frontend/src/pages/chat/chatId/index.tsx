@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useChat } from "@/hooks/use-chat";
 import useChatId from "@/hooks/use-chat-id";
 import { useSocket } from "@/hooks/use-socket";
+import type { UserType } from "@/types/auth.type";
 import type { MessageType } from "@/types/chat.types";
 import { useEffect, useRef, useState } from "react";
 
@@ -30,6 +31,8 @@ const SingleChat = () => {
     fetchExtraMessages,
     sendDeleteMessage,
     addNewMessage,
+    blockUser,
+    unblockUser,
   } = useChat();
   const { socket } = useSocket();
   const { user } = useAuth();
@@ -81,6 +84,34 @@ const SingleChat = () => {
       socket.off("message:new", handleNewMessage);
     };
   }, [socket, chatId, addNewMessage]);
+
+  useEffect(() => {
+    if (!chatId || !socket) return;
+
+    const handleBlockUser = (userId: string) => {
+      blockUser(userId);
+    };
+
+    socket.on("user:blocked", handleBlockUser);
+
+    return () => {
+      socket.off("user:blocked", handleBlockUser);
+    };
+  }, [socket, chatId, blockUser]);
+
+  useEffect(() => {
+    if (!chatId || !socket) return;
+
+    const handleUnblockUser = (user: UserType) => {
+      unblockUser(user);
+    };
+
+    socket.on("user:unblocked", handleUnblockUser);
+
+    return () => {
+      socket.off("user:unblocked", handleUnblockUser);
+    };
+  }, [socket, chatId, blockUser]);
 
   const handleScroll = async (e: React.UIEvent<HTMLDivElement>) => {
     const container = e.currentTarget;

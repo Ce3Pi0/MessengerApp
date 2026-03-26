@@ -91,13 +91,12 @@ export const removeFavoriteUserController = asyncHandler(
 export const blockUserController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?._id;
-    const userToBeBlockedId = req.body;
+    const { userToBeBlockedId } = req.body;
 
-    const user = await blockUserService(userId, userToBeBlockedId);
+    await blockUserService(userId, userToBeBlockedId);
 
     return res.status(HTTP_STATUS.OK).json({
       message: "User blocked successfully",
-      user,
     });
   },
 );
@@ -105,13 +104,13 @@ export const blockUserController = asyncHandler(
 export const unblockUserController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?._id;
-    const userToBeUnblockedId = req.body;
+    const { userToBeUnblockedId } = req.body;
 
-    const user = await unblockUserService(userId, userToBeUnblockedId);
+    const chat = await unblockUserService(userId, userToBeUnblockedId);
 
     return res.status(HTTP_STATUS.OK).json({
       message: "User unblocked successfully",
-      user,
+      chat,
     });
   },
 );

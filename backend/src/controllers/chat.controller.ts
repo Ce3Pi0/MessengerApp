@@ -71,9 +71,10 @@ export const getSingleChatController = asyncHandler(
 export const updateChatController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?._id;
+    const chatId = req.params.id as string;
     const body = updateChatSchema.parse(req.body);
 
-    const updatedChat = await updateChatService(userId, body);
+    const updatedChat = await updateChatService(userId, chatId, body);
 
     return res.status(HTTP_STATUS.OK).json({
       message: "Chat updated successfully",
