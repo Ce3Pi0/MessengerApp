@@ -30,8 +30,6 @@ export const NewChatPopover = memo(() => {
 
   const { user } = useAuth();
 
-  console.log("POPOVER USER", user);
-
   const [isOpen, setIsOpen] = useState(false);
   const [isGroupMode, setIsGroupMode] = useState(false);
   const [groupName, setGroupName] = useState("");

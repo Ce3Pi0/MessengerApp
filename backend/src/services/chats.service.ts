@@ -210,8 +210,14 @@ export const updateChatService = async (
 
   await chat.save();
 
-  const allParticipantIds = chat!.participants.map((id) => id.toString());
+  await chat.populate(SINGLE_CHAT_POPULATE_CONFIG);
+
+  const allParticipantIds = chat.participants.map((p: any) =>
+    p._id ? p._id.toString() : p.toString(),
+  );
   emitChatUpdateToParticipants(userId, allParticipantIds, chat);
+
+  return chat;
 };
 export const addAdminChatService = async (
   userId: string,

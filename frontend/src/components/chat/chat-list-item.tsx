@@ -3,14 +3,16 @@ import { cn } from "@/lib/utils";
 import type { ChatType } from "@/types/chat.types";
 import { useLocation } from "react-router-dom";
 import AvatarWithBadge from "../avatar-with-badge";
+import { Star } from "lucide-react";
 
 interface Props {
+  isFavorite: boolean;
   chat: ChatType;
   currentUserId: string | null;
   onClick?: () => void;
 }
 
-const ChatListItem = ({ chat, currentUserId, onClick }: Props) => {
+const ChatListItem = ({ isFavorite, chat, currentUserId, onClick }: Props) => {
   const { pathname } = useLocation();
 
   const { lastMessage, lastReaction, createdAt } = chat;
@@ -68,6 +70,7 @@ const ChatListItem = ({ chat, currentUserId, onClick }: Props) => {
           )}
         </span>
       </div>
+      {isFavorite && <Star size={12} className="text-primary" />}
       <p className="text-xs truncate text-muted-foreground -mt-px">
         {getLastInfoText()}
       </p>

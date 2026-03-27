@@ -1,14 +1,18 @@
 //TODO: Modularize!
 import {
   BanIcon,
+  Check,
   DoorOpen,
   Image,
   Info,
   PencilLineIcon,
   Star,
+  StarOffIcon,
   Trash2,
   UserRoundKeyIcon,
   UserRoundX,
+  Users2,
+  X,
 } from "lucide-react";
 import {
   Popover,
@@ -35,6 +39,7 @@ import { useState } from "react";
 import { Spinner } from "../ui/spinner";
 import type { UserType } from "@/types/auth.type";
 import AddUserPopover from "./add-user-popover";
+import { toast } from "sonner";
 
 const ChatInfoPopover = () => {
   const navigate = useNavigate();
@@ -53,19 +58,53 @@ const ChatInfoPopover = () => {
     sendRemoveUser,
     isUserRemoving,
     sendPromoteUser,
+    sendFavoriteChat,
+    sendUnfavoriteChat,
     sendBlockUser,
     sendUnblockUser,
+    sendUpdateChatName,
   } = useChat();
 
   const isGroup = singleChat?.chat.isGroup;
 
   if (!singleChat) return null;
 
-  const handleFavoriteChat = () => {};
+  const [isGroupNameChanging, setIsGroupNameChanging] = useState(false);
+  const [groupName, setGroupName] = useState(singleChat.chat.groupName);
 
-  const handleGroupNameChange = () => {};
+  const handleFavoriteChat = () => {
+    if (!user || !user.favorites) return;
+
+    user.favorites.find((f) => f._id === singleChat.chat._id)
+      ? sendUnfavoriteChat(singleChat.chat._id)
+      : sendFavoriteChat(singleChat.chat._id);
+  };
+
+  const handleGroupNameChange = (e: React.SubmitEvent) => {
+    if (e) e.preventDefault();
+
+    if (groupName?.trim() === singleChat?.chat.groupName) {
+      toast.error("Group name must be different");
+      return;
+    }
+
+    if (!groupName?.trim()) {
+      toast.error("Group name cannot be empty");
+      return;
+    }
+
+    sendUpdateChatName(singleChat.chat._id, groupName);
+    setIsGroupNameChanging(false);
+  };
+
+  const resetGroupNameChange = () => {
+    setGroupName(singleChat?.chat.groupName);
+    setIsGroupNameChanging(false);
+  };
 
   const handleGroupChangeBg = () => {};
+
+  const handleGroupChangeAvatar = () => {};
 
   const handleDeleteChat = () => {
     sendDeleteChat(singleChat.chat._id);
@@ -124,10 +163,13 @@ const ChatInfoPopover = () => {
     (p) => p._id !== user?._id,
   );
   const isBlocked = user?.blocked?.includes(otherUser?._id ?? "");
+  const isFavoriteChat = user?.favorites?.find(
+    (c) => c._id === singleChat.chat._id,
+  );
 
   return (
     <>
-      <Popover>
+      <Popover onOpenChange={() => resetGroupNameChange()}>
         <PopoverTrigger asChild>
           <div>
             <div className="flex-1 text-center py-4 h-full font-medium text-accent-foreground hover:text-primary cursor-pointer">
@@ -151,25 +193,62 @@ const ChatInfoPopover = () => {
                   <h5 className="text-zinc-400 text-xs">Group name:</h5>
 
                   <div className="flex flex-row gap-2 items-center">
-                    <h1>{singleChat?.chat.groupName}</h1>
-                    {isUserAdmin && (
+                    {!isGroupNameChanging && (
+                      <h1>{singleChat?.chat.groupName}</h1>
+                    )}
+                    {isGroupNameChanging && (
+                      <form
+                        className="flex items-center gap-1"
+                        onSubmit={(e) => handleGroupNameChange(e)}
+                      >
+                        <input
+                          autoFocus
+                          className="mt-1 pt-1 pb-1 rounded-md"
+                          value={groupName}
+                          onChange={(e) => setGroupName(e.target.value)}
+                        />
+                        <div className="flex gap-1">
+                          <button
+                            className="p-1 text-success rounded-md hover:bg-success/30 cursor-pointer"
+                            type="submit"
+                          >
+                            <Check size={18} />
+                          </button>
+                          <button
+                            className="p-1 text-destructive rounded-md hover:bg-destructive/30 cursor-pointer"
+                            onClick={() => resetGroupNameChange()}
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                    {isUserAdmin && !isGroupNameChanging && (
                       <PencilLineIcon
                         size={16}
                         className="hover: cursor-pointer"
-                        onClick={() => handleGroupNameChange}
+                        onClick={() => setIsGroupNameChanging(true)}
                       />
                     )}
                   </div>
                 </div>
               )}
-
               {!isBlocked && (
                 <div
                   className="text-accent-foreground flex flex-row gap-2 items-center hover:bg-green-200/10 p-2 rounded-md cursor-pointer "
                   onClick={() => handleFavoriteChat()}
                 >
-                  <Star size={16} />
-                  <p>Favorite Chat</p>
+                  {isFavoriteChat ? (
+                    <>
+                      <StarOffIcon size={16} />
+                      <p>Unfavorite Chat</p>
+                    </>
+                  ) : (
+                    <>
+                      <Star size={16} />
+                      <p>Favorite Chat</p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -252,9 +331,17 @@ const ChatInfoPopover = () => {
               {isGroup && isUserAdmin && (
                 <div
                   className="flex flex-row items-center gap-2 hover:bg-white/10 p-2 rounded-md cursor-pointer"
+                  onClick={() => handleGroupChangeAvatar()}
+                >
+                  <Users2 size={16} /> Change Group Avatar
+                </div>
+              )}
+              {isGroup && isUserAdmin && (
+                <div
+                  className="flex flex-row items-center gap-2 hover:bg-white/10 p-2 rounded-md cursor-pointer"
                   onClick={() => handleGroupChangeBg()}
                 >
-                  <Image size={16} /> Change Group Avatar
+                  <Image size={16} /> Change Group Background
                 </div>
               )}
               <div

@@ -275,6 +275,8 @@ export const useChat = create<ChatState>()((set, get) => ({
       const updatedChats = get().chats.filter((chat) => chat._id !== chatId);
 
       set({ chats: [...updatedChats] });
+
+      useAuth.getState().checkChatDeletion(chatId);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to delete the chat");
     } finally {
@@ -460,10 +462,34 @@ export const useChat = create<ChatState>()((set, get) => ({
     }
   },
   // TODO: Implement logic
-  sendUpdateChatName: async (chatId, groupName) => {},
+  sendUpdateChatName: async (chatId, groupName) => {
+    try {
+      const { data } = await API.put(`/chat/update/${chatId}`, {
+        groupName,
+      });
+
+      set((state) => {
+        if (!state.singleChat || !state.chats) return state;
+
+        return {
+          chats: state.chats.map((chat) => {
+            if (chat._id === chatId) return data.updatedChat;
+            return chat;
+          }),
+          singleChat: {
+            ...state.singleChat,
+            chat: data.updatedChat,
+          },
+        };
+      });
+
+      toast.success(data.message || "Chat name updated successfully!");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to update chat name");
+    }
+  },
   // TODO: Implement logic
   sendUpdateChatAvatar: async (chatId, chatAvatar) => {},
-  // TODO: Implement logic
   sendPromoteUser: async (chatId, userToBePromotedId) => {
     try {
       const { data } = await API.put(`/chat/add-admin/${chatId}`, {
@@ -482,10 +508,28 @@ export const useChat = create<ChatState>()((set, get) => ({
       toast.error(err?.response?.data?.message || "Failed to promote user");
     }
   },
-  // TODO: Implement logic
-  sendFavoriteChat: async (chatId) => {},
-  // TODO: Implement logic
-  sendUnfavoriteChat: async (chatId) => {},
+  sendFavoriteChat: async (chatId) => {
+    try {
+      const { data } = await API.put("/users/add-favorite", {
+        chatToBeFavoriteId: chatId,
+      });
+      useAuth.getState().setFavoriteChats(data.favorites);
+      toast.success(data.message || "Chat favorited!");
+    } catch (err: any) {
+      toast.error(err.response.data.message || "Chat couldn't be favorited");
+    }
+  },
+  sendUnfavoriteChat: async (chatId) => {
+    try {
+      const { data } = await API.put("/users/remove-favorite", {
+        chatToBeUnfavoriteId: chatId,
+      });
+      useAuth.getState().setFavoriteChats(data.favorites);
+      toast.success(data.message || "Chat removed from favorites!");
+    } catch (err: any) {
+      toast.error(err.response.data.message || "Chat couldn't be favorited");
+    }
+  },
   changeChat: (chat) => {
     if (chat._id === get().singleChat?.chat._id) {
       set((state) => {

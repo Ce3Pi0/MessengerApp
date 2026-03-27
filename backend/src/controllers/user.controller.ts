@@ -63,13 +63,13 @@ export const updateUserController = asyncHandler(
 export const addFavoriteUserController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?._id;
-    const chatToBeFavoriteId = req.body;
+    const { chatToBeFavoriteId } = req.body;
 
-    const user = await addFavoriteUserService(userId, chatToBeFavoriteId);
+    const favorites = await addFavoriteUserService(userId, chatToBeFavoriteId);
 
     return res.status(HTTP_STATUS.OK).json({
       message: "Chat favorited successfully",
-      user,
+      favorites,
     });
   },
 );
@@ -77,13 +77,16 @@ export const addFavoriteUserController = asyncHandler(
 export const removeFavoriteUserController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?._id;
-    const chatToBeUnfavoriteId = req.body;
+    const { chatToBeUnfavoriteId } = req.body;
 
-    const user = await removeFavoriteUserService(userId, chatToBeUnfavoriteId);
+    const favorites = await removeFavoriteUserService(
+      userId,
+      chatToBeUnfavoriteId,
+    );
 
     return res.status(HTTP_STATUS.OK).json({
       message: "Chat favorited successfully",
-      user,
+      favorites,
     });
   },
 );

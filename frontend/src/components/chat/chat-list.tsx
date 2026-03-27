@@ -41,7 +41,15 @@ const ChatList = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [scrollHeight, setScrollHeight] = useState(0);
 
-  const filterChats = chats?.filter(
+  const allChats = [
+    ...new Map(
+      [...(user?.favorites ?? []), ...chats].map((chat) => [
+        chat._id.toString(),
+        chat,
+      ]),
+    ).values(),
+  ];
+  const filterChats = allChats?.filter(
     (chat) =>
       chat.groupName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       chat.participants?.some(
@@ -50,6 +58,9 @@ const ChatList = () => {
           p.name.toLowerCase().includes(searchQuery.toLocaleLowerCase()),
       ),
   );
+
+  const isFavorite = (chatId: string) =>
+    user?.favorites?.find((c) => c._id === chatId) !== undefined;
 
   useEffect(() => {
     fetchChats();
@@ -82,7 +93,7 @@ const ChatList = () => {
     return () => {
       socket.off("chat:change", handleChangeChat);
     };
-  }, [changeChat, socket]);
+  }, [changeChat, socket, singleChat, chats]);
 
   useEffect(() => {
     if (!socket) return;
@@ -194,6 +205,7 @@ const ChatList = () => {
             ) : (
               filterChats?.map((chat) => (
                 <ChatListItem
+                  isFavorite={isFavorite(chat._id)}
                   key={chat._id}
                   chat={chat}
                   currentUserId={currentUserId}

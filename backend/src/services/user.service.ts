@@ -153,13 +153,11 @@ export const addFavoriteUserService = async (
 
   await user.save();
 
-  const updatedUser = await user.populate({
-    path: "favorites",
-    populate: USER_POPULATE_CONFIG,
-    options: { sort: { updatedAt: -1 } },
-  });
+  const favorites = await ChatModel.find({ _id: user.favorites }).populate(
+    SINGLE_CHAT_POPULATE_CONFIG,
+  );
 
-  return updatedUser;
+  return favorites;
 };
 
 export const removeFavoriteUserService = async (
@@ -184,13 +182,11 @@ export const removeFavoriteUserService = async (
 
   await user.save();
 
-  const updatedUser = await user.populate({
-    path: "favorites",
-    populate: USER_POPULATE_CONFIG,
-    options: { sort: { updatedAt: -1 } },
-  });
+  const favorites = await ChatModel.find({ _id: user.favorites }).populate(
+    SINGLE_CHAT_POPULATE_CONFIG,
+  );
 
-  return updatedUser;
+  return favorites;
 };
 
 export const blockUserService = async (

@@ -16,6 +16,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { useSocket } from "./use-socket";
 import { accessTokenExpiredError, isUserOnline } from "@/lib/helper";
+import type { ChatType } from "@/types/chat.types";
 
 interface AuthState {
   user: UserType | null;
@@ -42,6 +43,9 @@ interface AuthState {
   isAuthStatus: () => void;
   updateAccount: (data: UpdateUserType) => Promise<boolean>;
   deleteAccount: () => Promise<boolean>;
+
+  setFavoriteChats: (favorites: ChatType[]) => void;
+  checkChatDeletion: (chatId: string) => void;
 
   blockUser: (userToBeBlockedId: string) => void;
   unblockUser: (userToBeUnblockedId: string) => void;
@@ -284,6 +288,31 @@ export const useAuth = create<AuthState>()(
         } finally {
           set({ isLoading: false });
         }
+      },
+      setFavoriteChats: (favorites) => {
+        set((state) => {
+          if (!state.user) return state;
+          return {
+            ...state,
+            user: {
+              ...state.user,
+              favorites: [...favorites],
+            },
+          };
+        });
+      },
+      checkChatDeletion: (chatId) => {
+        set((state) => {
+          if (!state.user) return state;
+          return {
+            ...state,
+            user: {
+              ...state.user,
+              favorites:
+                state.user.favorites?.filter((f) => f._id !== chatId) ?? [],
+            },
+          };
+        });
       },
       blockUser: (userToBeBlockedId) => {
         set((state) => {
