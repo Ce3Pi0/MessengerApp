@@ -19,7 +19,7 @@ const AvatarWithBadge = ({
   isGroup = false,
   className,
 }: Props) => {
-  const avatar = isGroup ? groupImg : src || "";
+  const avatar = isGroup ? src || groupImg : src || "";
   return (
     <div className="relative shrink-0">
       <Avatar className={size}>

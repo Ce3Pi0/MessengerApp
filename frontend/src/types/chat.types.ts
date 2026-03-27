@@ -2,6 +2,7 @@ import type { UserType } from "./auth.type";
 
 export type ChatType = {
   _id: string;
+  avatar?: string;
   lastMessage: MessageType | null;
   lastReaction: ReactionDataType | null;
   participants: UserType[];

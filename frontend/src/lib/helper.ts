@@ -53,7 +53,7 @@ export const getOtherUserAndGroup = (
     return {
       name: chat.groupName || "Unnamed Group",
       subheading: `${chat.participants.length} members`,
-      avatar: "",
+      avatar: chat.avatar || "",
       isGroup,
     };
   }

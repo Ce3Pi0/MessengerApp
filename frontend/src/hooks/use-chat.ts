@@ -265,6 +265,8 @@ export const useChat = create<ChatState>()((set, get) => ({
         chats: [...updatedChats],
       };
     });
+
+    useAuth.getState().checkChatDeletion(chatId);
   },
   sendDeleteChat: async (chatId: string) => {
     set({ isDeletingChat: true });
