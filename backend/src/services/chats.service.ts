@@ -205,7 +205,7 @@ export const updateChatService = async (
       }
     }
     const uploadRes = await cloudinaryPost(avatar, "chat_avatars");
-    user.avatar = uploadRes.secure_url;
+    chat.avatar = uploadRes.secure_url;
   }
 
   await chat.save();

@@ -203,13 +203,13 @@ export const loginService = async (body: LoginSchemaType) => {
   const refreshToken = signRefreshToken(user);
 
   const hashedRefreshToken: string = await hashToken(refreshToken);
-  await UserModel.updateOne(
+  const populatedUser = await UserModel.findOneAndUpdate(
     { _id: user._id },
     { $set: { refreshToken: hashedRefreshToken } },
   ).populate(USER_POPULATE_CONFIG);
 
   return {
-    user,
+    user: populatedUser,
     accessToken,
     refreshToken,
     mfaRequired: false,

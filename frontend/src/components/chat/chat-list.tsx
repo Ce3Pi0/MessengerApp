@@ -41,6 +41,9 @@ const ChatList = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [scrollHeight, setScrollHeight] = useState(0);
 
+  console.log("chats", chats);
+  console.log("favorite chats", user?.favorites);
+
   const allChats = [
     ...new Map(
       [...(user?.favorites ?? []), ...chats].map((chat) => [

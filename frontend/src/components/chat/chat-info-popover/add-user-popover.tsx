@@ -1,15 +1,15 @@
 import { useChat } from "@/hooks/use-chat";
 import { memo, useEffect, useRef, useState } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
 import { Search, UserRoundPlus } from "lucide-react";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
-} from "../ui/input-group";
-import { Spinner } from "../ui/spinner";
+} from "../../ui/input-group";
+import { Spinner } from "../../ui/spinner";
 import type { UserType } from "@/types/auth.type";
-import AvatarWithBadge from "../avatar-with-badge";
+import AvatarWithBadge from "../../avatar-with-badge";
 
 const AddUserPopover = memo(() => {
   const {

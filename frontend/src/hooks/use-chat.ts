@@ -33,6 +33,7 @@ interface ChatState {
   isSingleChatLoading: boolean;
   isUserAdding: boolean;
   isUserRemoving: boolean;
+  updatingChatAvatar: boolean;
 
   setChats: (data: {
     newChats: ChatType[] | null;
@@ -61,7 +62,10 @@ interface ChatState {
   sendDeleteMessage: (chatId: string, messageId: string) => void;
 
   sendUpdateChatName: (chatId: string, groupName: string) => void;
-  sendUpdateChatAvatar: (chatId: string, chatAvatar: string) => void;
+  sendUpdateChatAvatar: (
+    chatId: string,
+    chatAvatar: string,
+  ) => Promise<boolean>;
   sendPromoteUser: (chatId: string, userToBePromotedId: string) => void;
   sendFavoriteChat: (chatId: string) => void;
   sendUnfavoriteChat: (chatId: string) => void;
@@ -119,6 +123,7 @@ export const useChat = create<ChatState>()((set, get) => ({
   isSingleChatLoading: false,
   isUserAdding: false,
   isUserRemoving: false,
+  updatingChatAvatar: false,
 
   setChats: ({ newChats, newNext }) =>
     set((state) => ({
@@ -490,8 +495,38 @@ export const useChat = create<ChatState>()((set, get) => ({
       toast.error(err?.response?.data?.message || "Failed to update chat name");
     }
   },
-  // TODO: Implement logic
-  sendUpdateChatAvatar: async (chatId, chatAvatar) => {},
+  sendUpdateChatAvatar: async (chatId, chatAvatar) => {
+    set({ updatingChatAvatar: true });
+    try {
+      const { data } = await API.put(`/chat/update/${chatId}`, {
+        avatar: chatAvatar,
+      });
+
+      set((state) => {
+        if (!state.singleChat || !state.chats) return state;
+        return {
+          singleChat: {
+            ...state.singleChat,
+            chat: data.updatedChat,
+          },
+          chats: state.chats.map((chat) => {
+            if (chat._id === chatId) return data.updatedChat;
+            return chat;
+          }),
+        };
+      });
+
+      toast.success(data.message || "Chat avatar updated successfully!");
+      return true;
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Failed to update chat avatar",
+      );
+      return false;
+    } finally {
+      set({ updatingChatAvatar: false });
+    }
+  },
   sendPromoteUser: async (chatId, userToBePromotedId) => {
     try {
       const { data } = await API.put(`/chat/add-admin/${chatId}`, {

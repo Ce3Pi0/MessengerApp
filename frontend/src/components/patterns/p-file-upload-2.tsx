@@ -1,25 +1,21 @@
-"use client"
+"use client";
 
 import {
   formatBytes,
   useFileUpload,
   type FileWithPreview,
-} from "@/hooks/use-file-upload"
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/reui/alert"
+} from "@/hooks/use-file-upload";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { UserIcon, XIcon, CircleAlertIcon } from "lucide-react"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { UserIcon, XIcon, CircleAlertIcon } from "lucide-react";
 
 interface AvatarUploadProps {
-  maxSize?: number
-  className?: string
-  onFileChange?: (file: FileWithPreview | null) => void
-  defaultAvatar?: string
+  maxSize?: number;
+  className?: string;
+  onFileChange?: (file: FileWithPreview | null) => void;
+  defaultAvatar?: string;
 }
 
 export function Pattern({
@@ -45,18 +41,18 @@ export function Pattern({
     accept: "image/*",
     multiple: false,
     onFilesChange: (files) => {
-      onFileChange?.(files[0] || null)
+      onFileChange?.(files[0] || null);
     },
-  })
+  });
 
-  const currentFile = files[0]
-  const previewUrl = currentFile?.preview || defaultAvatar
+  const currentFile = files[0];
+  const previewUrl = currentFile?.preview || defaultAvatar;
 
   const handleRemove = () => {
     if (currentFile) {
-      removeFile(currentFile.id)
+      removeFile(currentFile.id);
     }
-  }
+  };
 
   return (
     <div className={cn("flex flex-col items-center gap-4", className)}>
@@ -68,7 +64,7 @@ export function Pattern({
             isDragging
               ? "border-primary bg-primary/5"
               : "border-muted-foreground/25 hover:border-muted-foreground/20",
-            previewUrl && "border-solid"
+            previewUrl && "border-solid",
           )}
           onDragEnter={handleDragEnter}
           onDragLeave={handleDragLeave}
@@ -118,8 +114,7 @@ export function Pattern({
       {/* Error Messages */}
       {errors.length > 0 && (
         <Alert variant="destructive" className="mt-5">
-          <CircleAlertIcon
-          />
+          <CircleAlertIcon />
           <AlertTitle>File upload error(s)</AlertTitle>
           <AlertDescription>
             {errors.map((error, index) => (
@@ -131,5 +126,5 @@ export function Pattern({
         </Alert>
       )}
     </div>
-  )
+  );
 }
