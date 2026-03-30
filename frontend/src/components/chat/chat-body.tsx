@@ -1,8 +1,11 @@
 import { useChat } from "@/hooks/use-chat";
 import { useSocket } from "@/hooks/use-socket";
 import type { MessageType } from "@/types/chat.types";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import ChatBodyMessage from "./message/chat-body-message";
+import type { UserType } from "@/types/auth.type";
+import TypingIndicator from "./typing-indicator";
+import AvatarWithBadge from "../avatar-with-badge";
 
 interface Props {
   chatId: string | null;
@@ -20,6 +23,10 @@ const ChatBody = ({ chatId, messages, onReply, onEdit, onDelete }: Props) => {
     messages[messages.length - 1]?._id || null,
   );
 
+  const [typingUsers, setTypingUsers] = useState<UserType[]>([]);
+  const visibleTypingUsers = typingUsers.slice(0, 3);
+  const hiddenTypingUsersCount = typingUsers.length - visibleTypingUsers.length;
+
   useEffect(() => {
     const currentLastMessageId = messages[messages.length - 1]?._id || null;
 
@@ -31,10 +38,48 @@ const ChatBody = ({ chatId, messages, onReply, onEdit, onDelete }: Props) => {
       setTimeout(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 0);
+
+      setTypingUsers([]);
     }
 
     prevLastMessageIdRef.current = currentLastMessageId;
   }, [messages]);
+
+  useEffect(() => {
+    if (!chatId || !socket) return;
+
+    const handleUserTyping = (user: UserType) => {
+      setTypingUsers((prevTypingUsers) => {
+        if (prevTypingUsers.some((u) => u._id === user._id)) {
+          return prevTypingUsers;
+        }
+
+        return [...prevTypingUsers, user];
+      });
+    };
+
+    socket.on("typing", handleUserTyping);
+
+    return () => {
+      socket.off("typing", handleUserTyping);
+    };
+  }, [socket, chatId]);
+
+  useEffect(() => {
+    if (!chatId || !socket) return;
+
+    const handleUserStoppedTyping = (user: UserType) => {
+      setTypingUsers((prevTypingUsers) =>
+        prevTypingUsers.filter((u) => u._id !== user._id),
+      );
+    };
+
+    socket.on("stopped-typing", handleUserStoppedTyping);
+
+    return () => {
+      socket.off("stopped-typing", handleUserStoppedTyping);
+    };
+  }, [socket, chatId]);
 
   useEffect(() => {
     if (!chatId || !socket) return;
@@ -77,6 +122,28 @@ const ChatBody = ({ chatId, messages, onReply, onEdit, onDelete }: Props) => {
               onDelete={onDelete}
             />
           ))}
+
+          {typingUsers.length > 0 && (
+            <div className="flex items-center gap-3 px-4">
+              <div className="flex items-center -space-x-3">
+                {visibleTypingUsers.map((u, index) => (
+                  <div
+                    className="rounded-full"
+                    key={u._id}
+                    style={{ zIndex: visibleTypingUsers.length - index }}
+                  >
+                    <AvatarWithBadge name={u.name} src={u.avatar} />
+                  </div>
+                ))}
+                {hiddenTypingUsersCount > 0 && (
+                  <div className="z-0 flex h-9 w-9 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                    +{hiddenTypingUsersCount}
+                  </div>
+                )}
+              </div>
+              <TypingIndicator />
+            </div>
+          )}
         </div>
         <br />
 

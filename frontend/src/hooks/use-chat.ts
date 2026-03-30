@@ -14,6 +14,7 @@ import { generateUUID } from "@/lib/helper";
 
 interface ChatState {
   chats: ChatType[];
+  unseenMessages: MessageType[];
   nextChatsCursor: string | null;
   nextUsersCursor: string | null;
   users: UserType[];
@@ -116,6 +117,7 @@ interface ChatState {
 
 export const useChat = create<ChatState>()((set, get) => ({
   chats: [],
+  unseenMessages: [],
   nextChatsCursor: null,
   nextUsersCursor: null,
   users: [],
@@ -179,6 +181,7 @@ export const useChat = create<ChatState>()((set, get) => ({
       const { data } = await API.get("/chat/all");
       set({ chats: data.chats });
       set({ nextChatsCursor: data.next });
+      set({ unseenMessages: data.unseenMessages });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to fetch chats");
     } finally {
@@ -223,6 +226,19 @@ export const useChat = create<ChatState>()((set, get) => ({
     try {
       const { data } = await API.get(`/chat/${chatId}`);
       set({ singleChat: data });
+      const unseenMessages = get().unseenMessages.filter(
+        (unseenMessage) =>
+          !get().singleChat?.messages.some(
+            (message) => message._id === unseenMessage._id,
+          ),
+      );
+
+      set((state) => {
+        if (!state.singleChat) return state;
+        return {
+          unseenMessages: [...unseenMessages],
+        };
+      });
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to fetch the chat");
     } finally {
@@ -247,6 +263,20 @@ export const useChat = create<ChatState>()((set, get) => ({
             messages: [...data.messages, ...state.singleChat.messages],
             next: data.next,
           },
+        };
+      });
+
+      const unseenMessages = get().unseenMessages.filter(
+        (unseenMessage) =>
+          !data.messages.some(
+            (message: MessageType) => message._id === unseenMessage._id,
+          ),
+      );
+
+      set((state) => {
+        if (!state.singleChat) return state;
+        return {
+          unseenMessages: [...unseenMessages],
         };
       });
     } catch (err: any) {
@@ -312,6 +342,23 @@ export const useChat = create<ChatState>()((set, get) => ({
           { ...chat, lastMessage, lastReaction },
           ...state.chats.filter((c) => c._id !== chat._id),
         ],
+      };
+    });
+
+    set((state) => {
+      const chat = state.chats.find((c) => c._id === chatId);
+      if (!chat) return state;
+      if (get().singleChat && chat._id === get().singleChat?.chat._id)
+        return state;
+
+      return {
+        chats: [
+          { ...chat, lastMessage, lastReaction },
+          ...state.chats.filter((c) => c._id !== chat._id),
+        ],
+        unseenMessages: lastMessage
+          ? [lastMessage, ...state.unseenMessages]
+          : [...state.unseenMessages],
       };
     });
   },

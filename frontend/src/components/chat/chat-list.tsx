@@ -33,6 +33,7 @@ const ChatList = () => {
     changeChat,
     readMessage,
     readMessages,
+    unseenMessages,
   } = useChat();
 
   const { user } = useAuth();
@@ -239,6 +240,9 @@ const ChatList = () => {
             ) : (
               filterChats?.map((chat) => (
                 <ChatListItem
+                  unseenMessageCount={
+                    unseenMessages.filter((m) => m.chatId === chat._id).length
+                  }
                   isFavorite={isFavorite(chat._id)}
                   key={chat._id}
                   chat={chat}

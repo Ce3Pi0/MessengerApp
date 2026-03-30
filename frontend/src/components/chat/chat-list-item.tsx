@@ -6,13 +6,20 @@ import AvatarWithBadge from "../avatar-with-badge";
 import { Star } from "lucide-react";
 
 interface Props {
+  unseenMessageCount: number;
   isFavorite: boolean;
   chat: ChatType;
   currentUserId: string | null;
   onClick?: () => void;
 }
 
-const ChatListItem = ({ isFavorite, chat, currentUserId, onClick }: Props) => {
+const ChatListItem = ({
+  isFavorite,
+  chat,
+  currentUserId,
+  onClick,
+  unseenMessageCount,
+}: Props) => {
   const { pathname } = useLocation();
 
   const { lastMessage, lastReaction, createdAt } = chat;
@@ -53,6 +60,7 @@ const ChatListItem = ({ isFavorite, chat, currentUserId, onClick }: Props) => {
       className={cn(
         `w-full flex items-center gap-2 p-2 rounded-sm hover:bg-sidebar-accent transition-colors text-left`,
         pathname.includes(chat._id) && "bg-sidebar-accent!",
+        unseenMessageCount > 0 && "font-bold",
       )}
     >
       <AvatarWithBadge
@@ -65,14 +73,31 @@ const ChatListItem = ({ isFavorite, chat, currentUserId, onClick }: Props) => {
         <div className="flex items-center justify-between mb-0.5">
           <h5 className="text-sm font-semibold truncate">{name}</h5>
         </div>
-        <span className="text-xs shrink-0 text-muted-foreground">
+        <span
+          className={cn(
+            "text-xs shrink-0 text-muted-foreground",
+            unseenMessageCount > 0 && "text-white",
+          )}
+        >
           {formatChatTime(
             lastMessage?.createdAt || lastReaction?.createdAt || createdAt,
           )}
         </span>
       </div>
+      {unseenMessageCount > 0 && (
+        <div className="h-5 w-5 rounded-full bg-primary/30 flex flex-row items-center justify-center text-center">
+          <p className="text-[0.6rem] font-bold text-white text-center p-1">
+            {unseenMessageCount > 1 ? "99+" : unseenMessageCount}
+          </p>
+        </div>
+      )}
       {isFavorite && <Star size={12} className="text-primary" />}
-      <p className="text-xs truncate text-muted-foreground -mt-px max-w-[60%]">
+      <p
+        className={cn(
+          "text-xs truncate text-muted-foreground -mt-px max-w-[60%]",
+          unseenMessageCount > 0 && "text-white",
+        )}
+      >
         {getLastInfoText()}
       </p>
     </button>

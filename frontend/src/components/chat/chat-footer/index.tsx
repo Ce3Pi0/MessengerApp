@@ -1,7 +1,7 @@
 import type { MessageType } from "@/types/chat.types";
 import { messageSchema } from "@/validators/message.validators";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "../../ui/button";
@@ -13,6 +13,7 @@ import { useChat } from "@/hooks/use-chat";
 import EditMessageBar from "./edit-message-bar";
 import EmojiSelection from "./emoji-selection";
 import { useAuth } from "@/hooks/use-auth";
+import { useSocket } from "@/hooks/use-socket";
 
 interface Props {
   replyTo: MessageType | null;
@@ -32,6 +33,8 @@ const ChatFooter = ({
   onCancelEdit,
 }: Props) => {
   const { user } = useAuth();
+  const { socket } = useSocket();
+
   const { sendMessage, sendEditMessage, singleChat } = useChat();
 
   const [image, setImage] = useState<string | null>(null);
@@ -73,6 +76,8 @@ const ChatFooter = ({
 
     if (!chatId) return;
 
+    socket?.emit("stopped-typing", chatId, user);
+
     if (editMessage) {
       editMessage.content = text;
       sendEditMessage(chatId, editMessage);
@@ -89,6 +94,7 @@ const ChatFooter = ({
     handleRemoveImage();
     form.reset();
     setText("");
+    socket?.emit("stopped-typing", chatId, user);
   };
 
   const cancelEditAndClearField = () => {
@@ -100,6 +106,47 @@ const ChatFooter = ({
     if (!emoji) return;
     setText((prevText) => prevText + emoji);
   };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setText(e.currentTarget.value);
+    if (e.currentTarget.value) socket?.emit("typing", chatId, user);
+  };
+
+  useEffect(() => {
+    return () => {
+      socket?.emit("stopped-typing", chatId, user);
+    };
+  }, [socket, chatId, user]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      socket?.emit("stopped-typing", chatId, user);
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [chatId, socket, user]);
+
+  useEffect(() => {
+    let typingTimer: number | undefined;
+
+    if (!chatId || !socket) return;
+
+    if (!text) {
+      socket.emit("stopped-typing", chatId, user);
+      return;
+    }
+
+    typingTimer = window.setTimeout(() => {
+      socket.emit("stopped-typing", chatId, user);
+    }, 2000);
+
+    return () => window.clearTimeout(typingTimer);
+  }, [text, chatId, socket, user]);
+
   useEffect(() => {
     if (editMessage?.content) setText(editMessage.content);
   }, [editMessage?.content]);
@@ -195,7 +242,7 @@ const ChatFooter = ({
                     autoComplete="off"
                     placeholder="Type new message"
                     className="min-h-10 bg-background"
-                    onChangeCapture={(e) => setText(e.currentTarget.value)}
+                    onChangeCapture={(e) => handleInputChange(e)}
                   />
                 </FormItem>
               )}

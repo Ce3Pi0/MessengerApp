@@ -112,10 +112,15 @@ export const getUserChatService = async (
     .sort({ updatedAt: -1 })
     .limit(limit);
 
+  const unseenMessages = await MessageModel.find({
+    chatId: { $in: chats.map((chat) => chat._id) },
+    readBy: { $nin: [userId] },
+  });
+
   const next =
     chats.length === limit ? chats[chats.length - 1].updatedAt : null;
 
-  return { chats, next };
+  return { chats, next, unseenMessages };
 };
 
 export const getSingleChatService = async (

@@ -39,11 +39,19 @@ export const getUserChatsController = asyncHandler(
     const userId = req.user?._id;
     const cursor = req.query.cursor as string | undefined;
 
-    const { chats, next } = await getUserChatService(userId, cursor);
+    const { chats, unseenMessages, next } = await getUserChatService(
+      userId,
+      cursor,
+    );
 
     return res
       .status(HTTP_STATUS.OK)
-      .json({ message: "Chats retrieved successfully", chats, next });
+      .json({
+        message: "Chats retrieved successfully",
+        chats,
+        next,
+        unseenMessages,
+      });
   },
 );
 

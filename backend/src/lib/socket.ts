@@ -77,6 +77,26 @@ export const initializeSocket = (httpServer: HTTPServer) => {
       },
     );
 
+    socket.on("typing", async (chatId: string, user: any) => {
+      const io = getIO();
+      const senderSocketId = onlineUsers.get(user._id.toString());
+
+      if (senderSocketId)
+        io?.to(`chat:${chatId}`).except(senderSocketId).emit("typing", user);
+      else io?.to(`chat:${chatId}`).emit("typing", user);
+    });
+
+    socket.on("stopped-typing", async (chatId: string, user: any) => {
+      const io = getIO();
+      const senderSocketId = onlineUsers.get(user._id.toString());
+
+      if (senderSocketId)
+        io?.to(`chat:${chatId}`)
+          .except(senderSocketId)
+          .emit("stopped-typing", user);
+      else io?.to(`chat:${chatId}`).emit("stopped-typing", user);
+    });
+
     socket.on("chat:leave", (chatId: string) => {
       if (chatId) {
         socket.leave(`chat:${chatId}`);
