@@ -2,7 +2,7 @@ import { useChat } from "@/hooks/use-chat";
 import { useSocket } from "@/hooks/use-socket";
 import type { MessageType } from "@/types/chat.types";
 import { useEffect, useRef } from "react";
-import { ChatBodyMessage } from "./chat-body-message";
+import ChatBodyMessage from "./message/chat-body-message";
 
 interface Props {
   chatId: string | null;
@@ -16,23 +16,24 @@ const ChatBody = ({ chatId, messages, onReply, onEdit, onDelete }: Props) => {
   const { socket } = useSocket();
   const { editMessage, deleteMessage } = useChat();
   const bottomRef = useRef<HTMLDivElement | null>(null);
-
-  const firstMessageIdRef = useRef<string | null>(
+  const prevLastMessageIdRef = useRef<string | null>(
     messages[messages.length - 1]?._id || null,
   );
-  const prevMsgCount = useRef(messages.length);
 
   useEffect(() => {
+    const currentLastMessageId = messages[messages.length - 1]?._id || null;
+
     if (
-      messages.length > prevMsgCount.current &&
-      messages[messages.length - 1]._id !== firstMessageIdRef.current
+      currentLastMessageId &&
+      prevLastMessageIdRef.current &&
+      currentLastMessageId !== prevLastMessageIdRef.current
     ) {
       setTimeout(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
       }, 0);
     }
 
-    prevMsgCount.current = messages.length;
+    prevLastMessageIdRef.current = currentLastMessageId;
   }, [messages]);
 
   useEffect(() => {

@@ -71,7 +71,7 @@ const GroupName = ({
             </div>
           </form>
         )}
-        {isGroupNameChanging && (
+        {!isGroupNameChanging && (
           <PencilLineIcon
             size={16}
             className="hover: cursor-pointer"

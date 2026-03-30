@@ -34,6 +34,7 @@ interface ChatState {
   isUserAdding: boolean;
   isUserRemoving: boolean;
   updatingChatAvatar: boolean;
+  updatingChatBackground: boolean;
 
   setChats: (data: {
     newChats: ChatType[] | null;
@@ -57,6 +58,9 @@ interface ChatState {
   ) => void;
   sendMessage: (data: CreateMessageType) => void;
   addNewMessage: (chatId: string, message: MessageType) => void;
+  sendReadNewMessage: (chatId: string, messageId: string) => void;
+  readMessage: (user: UserType, messageId: string) => void;
+  readMessages: (user: UserType, messageIds: string[]) => void;
   sendEditMessage: (chatId: string, message: MessageType) => void;
   deleteMessage: (chatId: string, messageId: string) => void;
   sendDeleteMessage: (chatId: string, messageId: string) => void;
@@ -65,6 +69,10 @@ interface ChatState {
   sendUpdateChatAvatar: (
     chatId: string,
     chatAvatar: string,
+  ) => Promise<boolean>;
+  sendUpdateChatBackground: (
+    chatId: string,
+    chatBackground: string,
   ) => Promise<boolean>;
   sendPromoteUser: (chatId: string, userToBePromotedId: string) => void;
   sendFavoriteChat: (chatId: string) => void;
@@ -124,6 +132,7 @@ export const useChat = create<ChatState>()((set, get) => ({
   isUserAdding: false,
   isUserRemoving: false,
   updatingChatAvatar: false,
+  updatingChatBackground: false,
 
   setChats: ({ newChats, newNext }) =>
     set((state) => ({
@@ -317,6 +326,41 @@ export const useChat = create<ChatState>()((set, get) => ({
         },
       });
   },
+  sendReadNewMessage: async (chatId, messageId) => {
+    try {
+      await API.put("/message/read", { chatId, messageId });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to read the message");
+    }
+  },
+  readMessage: (user, messageId) => {
+    set((state) => {
+      if (!state.singleChat) return state;
+      return {
+        singleChat: {
+          ...state.singleChat,
+          messages: state.singleChat.messages.map((m) => {
+            if (m._id === messageId) m.readBy.push(user);
+            return m;
+          }),
+        },
+      };
+    });
+  },
+  readMessages: (user, messageIds) => {
+    set((state) => {
+      if (!state.singleChat) return state;
+      return {
+        singleChat: {
+          ...state.singleChat,
+          messages: state.singleChat.messages.map((m) => {
+            if (messageIds.includes(m._id)) m.readBy.push(user);
+            return m;
+          }),
+        },
+      };
+    });
+  },
   editMessage: (chatId, message) => {
     const data = get().singleChat;
 
@@ -418,17 +462,25 @@ export const useChat = create<ChatState>()((set, get) => ({
     const { chatId, replyTo, content, image } = data;
     const { user } = useAuth.getState();
 
+    const SYSTEM_ID = import.meta.env.VITE_SYSTEM_USER_ID;
+
     if (!chatId || !user?._id) return;
 
     const tempMsgId = generateUUID();
 
-    const tempMessage = {
+    if (replyTo && replyTo.sender?._id === SYSTEM_ID) {
+      toast.error("You can't reply to system messages");
+      return;
+    }
+
+    const tempMessage: MessageType = {
       _id: tempMsgId,
       chatId,
       content: content || "",
       image: image || null,
       sender: user,
       replyTo: replyTo || null,
+      readBy: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       status: "sending",
@@ -453,6 +505,8 @@ export const useChat = create<ChatState>()((set, get) => ({
 
       const { newMessage } = data;
 
+      newMessage.status = "sent";
+
       set((state) => {
         if (!state.singleChat) return state;
         return {
@@ -468,9 +522,22 @@ export const useChat = create<ChatState>()((set, get) => ({
       toast.error(err?.response?.data?.message || "Failed to send message");
     }
   },
-  // TODO: Implement logic
   sendUpdateChatName: async (chatId, groupName) => {
     try {
+      set((state) => {
+        if (!state.singleChat || !state.chats) return state;
+        return {
+          singleChat: {
+            ...state.singleChat,
+            chat: { ...state.singleChat.chat, groupName },
+          },
+          chats: state.chats.map((chat) => {
+            if (chat._id === chatId) return { ...chat, groupName };
+            return chat;
+          }),
+        };
+      });
+
       const { data } = await API.put(`/chat/update/${chatId}`, {
         groupName,
       });
@@ -525,6 +592,39 @@ export const useChat = create<ChatState>()((set, get) => ({
       return false;
     } finally {
       set({ updatingChatAvatar: false });
+    }
+  },
+  sendUpdateChatBackground: async (chatId, chatBackground) => {
+    set({ updatingChatBackground: true });
+    try {
+      const { data } = await API.put(`/chat/update/${chatId}`, {
+        background: chatBackground,
+      });
+
+      set((state) => {
+        if (!state.singleChat || !state.chats) return state;
+        return {
+          singleChat: {
+            ...state.singleChat,
+            chat: data.updatedChat,
+          },
+          chats: state.chats.map((chat) => {
+            if (chat._id === chatId) return data.updatedChat;
+            return chat;
+          }),
+        };
+      });
+
+      toast.success(data.message || "Chat background updated successfully!");
+
+      return true;
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Failed to update chat avatar",
+      );
+      return false;
+    } finally {
+      set({ updatingChatBackground: false });
     }
   },
   sendPromoteUser: async (chatId, userToBePromotedId) => {
@@ -656,6 +756,8 @@ export const useChat = create<ChatState>()((set, get) => ({
     try {
       const { user } = useAuth.getState();
 
+      const SYSTEM_ID = import.meta.env.VITE_SYSTEM_USER_ID;
+
       if (!user) return;
 
       const tempReaction = {
@@ -663,6 +765,13 @@ export const useChat = create<ChatState>()((set, get) => ({
         reactor: user,
         emoji,
       };
+
+      const msg = get().singleChat?.messages?.find((m) => m._id === messageId);
+
+      if (msg?.sender?._id === SYSTEM_ID) {
+        toast.error("You can't react to system messages");
+        return;
+      }
 
       let updatedMessages = get().singleChat?.messages?.map((m) => {
         if (m._id === messageId) {
@@ -987,8 +1096,6 @@ export const useChat = create<ChatState>()((set, get) => ({
           users: state.users.filter((u) => u._id !== blockedById),
         };
       });
-
-      console.log(get().singleChat?.chat);
     }
   },
   sendUnblockUser: async (userToBeUnblockedId) => {

@@ -5,8 +5,8 @@ import {
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "../ui/popover";
-import AvatarWithBadge from "../avatar-with-badge";
+} from "../../ui/popover";
+import AvatarWithBadge from "../../avatar-with-badge";
 import type { ReactionDataType } from "@/types/chat.types";
 import { useEffect, useState } from "react";
 import { useChat } from "@/hooks/use-chat";

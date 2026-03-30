@@ -35,6 +35,7 @@ import emailValidator, { ValidationResult } from "node-email-verifier";
 import cloudinary from "../config/cloudinary.config";
 import { getUserChatService } from "./chats.service";
 import { USER_POPULATE_CONFIG } from "../config/user-populate.config";
+import { getEnv } from "../utils/get-env";
 
 export const googleAuthService = async (body: Profile) => {
   const profile: Profile = body;
@@ -43,8 +44,11 @@ export const googleAuthService = async (body: Profile) => {
     googleId: profile.id,
   });
 
+  const systemId = getEnv("SYSTEM_USER_ID");
+
   const otherUser = await UserModel.findOne({
     email: profile.emails?.[0]?.value,
+    _id: { $ne: systemId },
   });
 
   if (otherUser && otherUser.provider !== "google") {
@@ -172,7 +176,9 @@ export const registerService = async (body: RegisterSchemaType) => {
 export const loginService = async (body: LoginSchemaType) => {
   const { email, password } = body;
 
-  const user = await UserModel.findOne({ email });
+  const systemId = getEnv("SYSTEM_USER_ID");
+
+  const user = await UserModel.findOne({ email, _id: { $ne: systemId } });
 
   if (!user) throw new NotFoundException("User email not found");
 
@@ -275,7 +281,12 @@ export const verifyService = async (verifyToken: string) => {
 };
 
 export const resendVerifyService = async (userEmail: EmailSchemaType) => {
-  const user = await UserModel.findOne({ email: userEmail });
+  const systemId = getEnv("SYSTEM_USER_ID");
+
+  const user = await UserModel.findOne({
+    email: userEmail,
+    _id: { $ne: systemId },
+  });
 
   if (!user) throw new NotFoundException("User not found");
 
@@ -324,7 +335,12 @@ export const setPasswordService = async (
 };
 
 export const sendForgotPasswordService = async (userEmail: EmailSchemaType) => {
-  const user = await UserModel.findOne({ email: userEmail });
+  const systemId = getEnv("SYSTEM_USER_ID");
+
+  const user = await UserModel.findOne({
+    email: userEmail,
+    _id: { $ne: systemId },
+  });
 
   if (!user) throw new NotFoundException("User not found");
 
@@ -402,9 +418,9 @@ export const updatePasswordService = async (
 
 export const changePasswordService = async (
   body: ChangePasswordSchema,
-  id: string,
+  _id: string,
 ) => {
-  const user = await UserModel.findOne({ _id: id });
+  const user = await UserModel.findOne({ _id });
 
   if (!user) throw new NotFoundException("User not found");
 

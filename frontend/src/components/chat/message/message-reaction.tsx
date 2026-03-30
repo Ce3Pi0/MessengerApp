@@ -1,9 +1,9 @@
 import EmojiPicker, { Theme } from "emoji-picker-react";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Button } from "../ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
+import { Button } from "../../ui/button";
 import { cn } from "@/lib/utils";
 import { Heart } from "lucide-react";
-import { useTheme } from "../theme-provider";
+import { useTheme } from "../../theme-provider";
 import { useChat } from "@/hooks/use-chat";
 
 interface Props {

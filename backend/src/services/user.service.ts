@@ -20,6 +20,7 @@ import {
   SINGLE_CHAT_POPULATE_CONFIG,
 } from "../config/chat-populate.config";
 import { USER_POPULATE_CONFIG } from "../config/user-populate.config";
+import { getEnv } from "../utils/get-env";
 
 export const findByIdUserService = async (userId: string) => {
   const user = await UserModel.findById(userId).populate(USER_POPULATE_CONFIG);
@@ -34,10 +35,14 @@ export const getUsersService = async (
 ) => {
   const query: any = {};
 
+  const systemId = getEnv("SYSTEM_USER_ID");
+
   if (cursor) {
-    query._id = { $gt: cursor, $ne: userId };
+    query._id = { $gt: cursor, $nin: [userId, systemId] };
   } else {
-    query._id = { $ne: userId };
+    query._id = {
+      $nin: [userId, systemId],
+    };
   }
 
   query.blocked = { $ne: userId };
@@ -193,8 +198,6 @@ export const blockUserService = async (
   userId: string,
   userToBeBlockedId: string,
 ) => {
-  console.log(userId, userToBeBlockedId);
-
   const user = await UserModel.findById(userId);
 
   if (!user) throw new NotFoundException("User not found");

@@ -25,9 +25,10 @@ export const updateChatSchema = z
   .object({
     groupName: z.string().trim().min(1).optional(),
     avatar: z.string().trim().min(1).optional(),
+    background: z.string().trim().min(1).optional(),
   })
-  .refine((data) => data.groupName || data.avatar, {
-    message: "groupName or img are required",
+  .refine((data) => data.groupName || data.avatar || data.background, {
+    message: "groupName, avatar, or background are required",
   });
 
 export const promoteUserSchema = z.object({

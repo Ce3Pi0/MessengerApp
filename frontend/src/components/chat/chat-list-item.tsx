@@ -39,6 +39,7 @@ const ChatListItem = ({ isFavorite, chat, currentUserId, onClick }: Props) => {
       const res: string = lastMessage.content
         ? lastMessage.content
         : "📷 Photo";
+
       return lastMessage.sender!._id === currentUserId
         ? `You: ${res}`
         : `${lastMessage.sender!.name}: ${res}`;
@@ -64,14 +65,14 @@ const ChatListItem = ({ isFavorite, chat, currentUserId, onClick }: Props) => {
         <div className="flex items-center justify-between mb-0.5">
           <h5 className="text-sm font-semibold truncate">{name}</h5>
         </div>
-        <span className="text-xs ml-2 shrink-0 text-muted-foreground">
+        <span className="text-xs shrink-0 text-muted-foreground">
           {formatChatTime(
             lastMessage?.createdAt || lastReaction?.createdAt || createdAt,
           )}
         </span>
       </div>
       {isFavorite && <Star size={12} className="text-primary" />}
-      <p className="text-xs truncate text-muted-foreground -mt-px">
+      <p className="text-xs truncate text-muted-foreground -mt-px max-w-[60%]">
         {getLastInfoText()}
       </p>
     </button>

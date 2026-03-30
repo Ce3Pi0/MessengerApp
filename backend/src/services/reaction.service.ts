@@ -17,6 +17,7 @@ import { findExistingReaction } from "../utils/findExistingReaction";
 import { REACTED_MESSAGE_POPULATE_CONFIG } from "../config/message-populate.config";
 import UserModel from "../models/user.model";
 import { checkIfBlocked } from "../utils/is-user-blocked";
+import { getEnv } from "../utils/get-env";
 
 export const sendReactionService = async (
   userId: string,
@@ -45,6 +46,9 @@ export const sendReactionService = async (
   const msg = await MessageModel.findById(messageId).populate("reactions");
 
   if (!msg) throw new BadRequestException("Message not found");
+
+  if (msg.sender.toString() === getEnv("SYSTEM_USER_ID"))
+    throw new BadRequestException("System user messages cannot be reacted to");
 
   if (msg.chatId.toString() !== chat._id.toString())
     throw new BadRequestException("Message/Chat mismatch");

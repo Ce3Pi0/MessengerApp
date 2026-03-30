@@ -1,5 +1,5 @@
+import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { Button } from "../ui/button";
 
 interface Props {
   onCancel: () => void;

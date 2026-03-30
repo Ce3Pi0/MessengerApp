@@ -12,9 +12,11 @@ import { isUserOnline } from "@/lib/helper";
 import LogoType from "./logo-type";
 import { PROTECTED_ROUTES } from "@/routes/routes";
 import { PencilLineIcon, Trash2Icon } from "lucide-react";
+import { useTheme } from "./theme-provider";
 
 const UserDropdown = () => {
   const navigate = useNavigate();
+  const themeData = useTheme();
 
   const BASE_URL =
     import.meta.env.MODE === "development" ? import.meta.env.VITE_API_URL : "/";
@@ -40,7 +42,7 @@ const UserDropdown = () => {
             name={user?.name || "unknown"}
             src={user?.avatar || ""}
             isOnline={isOnline}
-            className="bg-white"
+            className={themeData.theme === "dark" ? "bg-accent" : "bg-white"}
           />
         </div>
       </DropdownMenuTrigger>

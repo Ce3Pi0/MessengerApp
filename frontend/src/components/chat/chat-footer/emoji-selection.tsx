@@ -1,8 +1,8 @@
 import { Smile } from "lucide-react";
-import { Button } from "../ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Button } from "../../ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
 import EmojiPicker, { Theme } from "emoji-picker-react";
-import { useTheme } from "../theme-provider";
+import { useTheme } from "../../theme-provider";
 
 interface Props {
   addEmoji: (emoji: string) => void;

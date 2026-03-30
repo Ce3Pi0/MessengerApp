@@ -4,12 +4,14 @@ import {
   sendMessageSchema,
   editMessageSchema,
   deleteMessageSchema,
+  readMessageSchema,
 } from "../validators/message.validator";
 import { HTTP_STATUS } from "../config/http.config";
 import {
   sendMessageService,
   editMessageService,
   deleteMessageService,
+  readMessageService,
 } from "../services/message.service";
 
 export const sendMessageController = asyncHandler(
@@ -36,6 +38,19 @@ export const editMessageController = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       message: "Message edited successfully",
       ...result,
+    });
+  },
+);
+
+export const readMessageController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId: string = req.user?._id;
+    const { chatId, messageId } = readMessageSchema.parse(req.body);
+
+    await readMessageService(userId, chatId, messageId);
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "Message read successfully",
     });
   },
 );

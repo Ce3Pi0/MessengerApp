@@ -3,6 +3,7 @@ import {
   emitChatToNewParticipant,
   emitChatUpdateToParticipants,
   emitNewChatToParticipants,
+  emitReadMessagesToParticipants,
   emitUserAddedToParticipants,
   emitUserRemovedToParticipants,
 } from "../lib/socket";
@@ -25,6 +26,8 @@ import {
   SINGLE_CHAT_POPULATE_CONFIG,
 } from "../config/chat-populate.config";
 import { MESSAGE_POPULATE_CONFIG } from "../config/message-populate.config";
+import { sendSystemMessage } from "./message.service";
+import { getEnv } from "../utils/get-env";
 
 export const createChatService = async (
   userId: string,
@@ -121,6 +124,11 @@ export const getSingleChatService = async (
   cursor?: string,
   limit: number = 10,
 ) => {
+  const systemUserId = getEnv("SYSTEM_USER_ID");
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
   const chat = await ChatModel.findOne({
     _id: chatId,
     participants: {
@@ -140,6 +148,36 @@ export const getSingleChatService = async (
     .populate(MESSAGE_POPULATE_CONFIG)
     .sort({ createdAt: -1 })
     .limit(limit);
+
+  query.readBy = { $nin: [userId] };
+
+  const unseenMessage = await MessageModel.find(query)
+    .sort({ createdAt: -1 })
+    .limit(limit);
+
+  let seenMessages: string[] = [];
+
+  for (const message of unseenMessage) {
+    const senderId =
+      typeof message.sender === "string"
+        ? message.sender
+        : message.sender?._id?.toString?.() || message.sender?.toString?.();
+
+    if (senderId !== userId) {
+      await MessageModel.updateOne(
+        { _id: message._id },
+        { $addToSet: { readBy: new Types.ObjectId(userId) } },
+      );
+      seenMessages.push(message._id.toString());
+    }
+  }
+
+  if (seenMessages.length > 0) {
+    const allParticipantIds = chat.participants.map((p: any) =>
+      p._id ? p._id.toString() : p.toString(),
+    );
+    emitReadMessagesToParticipants(user, allParticipantIds, seenMessages);
+  }
 
   const next =
     messages.length === limit ? messages[messages.length - 1].createdAt : null;
@@ -168,6 +206,7 @@ export const validateChatParticipant = async (
   return chat;
 };
 
+// TODO: Refactor
 export const updateChatService = async (
   userId: string,
   chatId: string,
@@ -177,7 +216,7 @@ export const updateChatService = async (
 
   if (!user) throw new NotFoundException("User not found");
 
-  const { groupName, avatar } = body;
+  const { groupName, avatar, background } = body;
 
   const chat = await ChatModel.findById(chatId);
 
@@ -189,10 +228,10 @@ export const updateChatService = async (
 
   if (!isUserAdmin) throw new NotAllowedException("User is not a group admin");
 
-  if (groupName && !chat.isGroup)
+  if ((groupName || avatar || background) && !chat.isGroup)
     throw new BadRequestException("Chat is not a group");
 
-  if (groupName === chat.groupName && !avatar)
+  if (groupName === chat.groupName && !avatar && !background)
     throw new BadRequestException(`Group name is already ${groupName}`);
 
   if (groupName) chat.groupName = groupName;
@@ -207,6 +246,19 @@ export const updateChatService = async (
     const uploadRes = await cloudinaryPost(avatar, "chat_avatars");
     chat.avatar = uploadRes.secure_url;
   }
+  if (background) {
+    background && chat.background !== background;
+    if (chat.background) {
+      const publicId = getPublicIdFromUrl(chat.background);
+      if (publicId) {
+        await cloudinaryDelete(publicId);
+      }
+    }
+    if (background !== "RESET") {
+      const uploadRes = await cloudinaryPost(background, "chat_backgrounds");
+      chat.background = uploadRes.secure_url;
+    } else chat.background = null;
+  }
 
   await chat.save();
 
@@ -214,6 +266,11 @@ export const updateChatService = async (
 
   const allParticipantIds = chat.participants.map((p: any) =>
     p._id ? p._id.toString() : p.toString(),
+  );
+
+  await sendSystemMessage(
+    chatId,
+    `${user.name} changed the group ${groupName ? "name" : avatar ? "avatar" : "background"}`,
   );
   emitChatUpdateToParticipants(userId, allParticipantIds, chat);
 
@@ -264,6 +321,10 @@ export const addAdminChatService = async (
     p._id ? p._id.toString() : p.toString(),
   );
 
+  await sendSystemMessage(
+    chatId,
+    `${user.name} promoted ${userToBePromoted.name} to administrator`,
+  );
   emitChatUpdateToParticipants(userId, allParticipantIds, chat);
 
   return chat;
@@ -366,6 +427,10 @@ export const removeUserFromChatService = async (
     },
   );
 
+  await sendSystemMessage(
+    chatId,
+    `${currentUser.name} removed ${userToDelete.name} from the group chat`,
+  );
   emitUserRemovedToParticipants(
     userId,
     allParticipantIds,
@@ -415,6 +480,10 @@ export const addUserChatService = async (
     { new: true },
   ).populate(SINGLE_CHAT_POPULATE_CONFIG);
 
+  await sendSystemMessage(
+    chatId,
+    `${user.name} added ${participant.name} to the group chat`,
+  );
   emitChatToNewParticipant(participantId, updatedChat);
   emitUserAddedToParticipants(userId, allParticipantIds, chatId, participant);
 

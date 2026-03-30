@@ -39,9 +39,11 @@ const Participants = ({
           <AvatarWithBadge name={user?.name!} src={user?.avatar} />
           <div>
             <p className="text-xs">You</p>
-            <p className="text-[0.6rem] text-gray-500">
-              {isUserAdmin && "Admin"}
-            </p>
+            {isUserAdmin && (
+              <p className="text-[0.6rem] text-gray-200 bg-primary/40 rounded-sm p-0.5 mt-1 w-fit">
+                Group Admin
+              </p>
+            )}
           </div>
         </div>
         {chat.participants
@@ -66,11 +68,14 @@ const Participants = ({
                 />
                 <div>
                   <p className="text-xs">{participant.name!}</p>
-                  <p className="text-[0.6rem] text-gray-500">
-                    {chat.administrators?.find(
-                      (a) => a._id === participant?._id,
-                    ) && "Admin"}
-                  </p>
+
+                  {chat.administrators?.find(
+                    (a) => a._id === participant?._id,
+                  ) && (
+                    <p className="text-[0.6rem] text-gray-200 bg-primary/40 rounded-sm p-0.5 mt-1 w-fit">
+                      Group Admin
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-row items-end justify-end grow">
                   {canPromote && (

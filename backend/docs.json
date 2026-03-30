@@ -350,6 +350,15 @@
             }
           }
         },
+        "read": {
+          "methods": "PUT",
+          "required": {
+            "body": {
+              "chatId": "string",
+              "messageId": "string"
+            }
+          }
+        },
         "delete": {
           "methods": "DELETE",
           "required": {

@@ -31,6 +31,8 @@ const ChatList = () => {
     addUser,
     removeUser,
     changeChat,
+    readMessage,
+    readMessages,
   } = useChat();
 
   const { user } = useAuth();
@@ -40,9 +42,6 @@ const ChatList = () => {
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [scrollHeight, setScrollHeight] = useState(0);
-
-  console.log("chats", chats);
-  console.log("favorite chats", user?.favorites);
 
   const allChats = [
     ...new Map(
@@ -163,6 +162,38 @@ const ChatList = () => {
       socket.off("chat:update", handleChatUpdate);
     };
   }, [socket, updateChatLastInfo]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleReadMessage = (data: { user: UserType; messageId: string }) => {
+      readMessage(data.user, data.messageId);
+    };
+    socket.on("message:seen", handleReadMessage);
+
+    return () => {
+      socket.off("message:seen", handleReadMessage);
+    };
+  }, [socket, readMessage]);
+
+  // Read Messages
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleReadMessages = (data: {
+      user: UserType;
+      seenMessages: string[];
+    }) => {
+      console.log("Read messages", data);
+      readMessages(data.user, data.seenMessages);
+    };
+
+    socket.on("messages:seen", handleReadMessages);
+
+    return () => {
+      socket.off("messages:seen", handleReadMessages);
+    };
+  }, [socket, readMessages]);
 
   const onRoute = (id: string) => {
     navigate(`/chat/${id}`);

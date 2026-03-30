@@ -3,6 +3,7 @@ import type { UserType } from "./auth.type";
 export type ChatType = {
   _id: string;
   avatar?: string;
+  background?: string | null;
   lastMessage: MessageType | null;
   lastReaction: ReactionDataType | null;
   participants: UserType[];
@@ -28,6 +29,7 @@ export type MessageType = {
   sender: UserType | null;
   replyTo: MessageType | null;
   reactions?: ReactionDataType[];
+  readBy: UserType[];
   chatId: string;
   createdAt: string;
   updatedAt: string;

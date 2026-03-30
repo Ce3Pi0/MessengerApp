@@ -190,12 +190,6 @@ export const NewChatPopover = memo(() => {
                 onClick={() => setIsGroupMode(true)}
               />
               {filteredUsers?.map((otherUser) => {
-                if (user.blocked?.length ?? 0 > 0)
-                  console.log(
-                    user.blocked?.includes(otherUser._id),
-                    user.blocked,
-                    otherUser,
-                  );
                 return (
                   <ChatUserItem
                     key={otherUser._id}

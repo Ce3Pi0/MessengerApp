@@ -3,6 +3,7 @@ import { Env } from "./env.config";
 import UserModel from "../models/user.model";
 import { sendMail } from "../utils/sendMail";
 import ChatModel from "../models/chat.model";
+import { getEnv } from "../utils/get-env";
 
 const connectDatabase = async () => {
   try {
@@ -23,6 +24,7 @@ const cleanupTask = async () => {
     const staleUsers = await UserModel.find({
       isVerified: false,
       createdAt: { $lt: GRACE_PERIOD },
+      _id: { $ne: getEnv("SYSTEM_USER_ID") },
     });
 
     if (staleUsers.length > 0) {

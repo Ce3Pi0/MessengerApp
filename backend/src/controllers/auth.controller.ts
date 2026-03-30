@@ -134,11 +134,12 @@ export const resendVerifyController = asyncHandler(
 
 export const setPasswordController = asyncHandler(
   async (req: Request, res: Response) => {
+    const userId = req.user!._id;
     const body = setPasswordSchema.parse(req.body);
 
     const { user, newAccessToken, newRefreshToken } = await setPasswordService(
       body,
-      req.user!._id,
+      userId,
     );
 
     return setJwtAuthCookie(res, newAccessToken, newRefreshToken)

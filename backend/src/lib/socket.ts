@@ -314,6 +314,50 @@ export const emitChatToNewParticipant = (participantId: string, chat: any) => {
   io.to(`user:${participantId}`).emit("chat:new", chat);
 };
 
+export const emitReadMessageToParticipants = (
+  user: any,
+  participantIds: string[],
+  messageId: string,
+) => {
+  const io = getIO();
+  const userSocketId = onlineUsers.get(user._id.toString());
+  const payload = { user, messageId };
+
+  if (userSocketId) {
+    for (const participantId of participantIds) {
+      io.to(`user:${participantId}`)
+        .except(userSocketId)
+        .emit("message:seen", payload);
+    }
+  } else {
+    for (const participantId of participantIds) {
+      io.to(`user:${participantId}`).emit("message:seen", payload);
+    }
+  }
+};
+
+export const emitReadMessagesToParticipants = (
+  user: any,
+  participantIds: string[],
+  seenMessages: string[],
+) => {
+  const io = getIO();
+  const userSocketId = onlineUsers.get(user._id.toString());
+  const payload = { user, seenMessages };
+
+  if (userSocketId) {
+    for (const participantId of participantIds) {
+      io.to(`user:${participantId}`)
+        .except(userSocketId)
+        .emit("messages:seen", payload);
+    }
+  } else {
+    for (const participantId of participantIds) {
+      io.to(`user:${participantId}`).emit("messages:seen", payload);
+    }
+  }
+};
+
 export const emitBlockedToUser = (userId: string, participantId: string) => {
   const io = getIO();
   io.to(`user:${participantId}`).emit("user:blocked", userId);

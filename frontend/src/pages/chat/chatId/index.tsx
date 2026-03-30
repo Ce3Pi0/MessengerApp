@@ -1,6 +1,9 @@
+//TODO: Modularize
+
 import ChatBody from "@/components/chat/chat-body";
 import ChatFooter from "@/components/chat/chat-footer";
 import ChatHeader from "@/components/chat/chat-header";
+import { useTheme } from "@/components/theme-provider";
 import EmptyState from "@/components/empty-state";
 import {
   AlertDialog,
@@ -20,6 +23,8 @@ import { useSocket } from "@/hooks/use-socket";
 import type { UserType } from "@/types/auth.type";
 import type { MessageType } from "@/types/chat.types";
 import { useEffect, useRef, useState } from "react";
+import wpDark from "@/assets/wp.png";
+import wpLight from "@/assets/wp-white.png";
 
 const SingleChat = () => {
   const chatId = useChatId();
@@ -31,11 +36,13 @@ const SingleChat = () => {
     fetchExtraMessages,
     sendDeleteMessage,
     addNewMessage,
+    sendReadNewMessage,
     blockUser,
     unblockUser,
   } = useChat();
   const { socket } = useSocket();
   const { user } = useAuth();
+  const { theme } = useTheme();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -49,6 +56,11 @@ const SingleChat = () => {
   const currentUserId = user?._id || null;
   const chat = singleChat?.chat;
   const messages = useChat((state) => state.singleChat?.messages) || [];
+  const isDarkMode =
+    theme === "dark" ||
+    (theme === "system" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches);
+  const backgroundImage = chat?.background || (isDarkMode ? wpDark : wpLight);
 
   useEffect(() => {
     if (!chatId) return;
@@ -76,6 +88,7 @@ const SingleChat = () => {
 
     const handleNewMessage = (msg: MessageType) => {
       addNewMessage(chatId, msg);
+      sendReadNewMessage(chatId, msg._id);
     };
 
     socket.on("message:new", handleNewMessage);
@@ -163,7 +176,8 @@ const SingleChat = () => {
       <ChatHeader chat={chat} currentUserId={currentUserId} />
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto bg-[url(../src/assets/wp-white.png)] dark:bg-[url(../src/assets/wp.png)] bg-contain bg-center"
+        className="flex-1 overflow-y-auto bg-cover bg-center"
+        style={{ backgroundImage: `url(${backgroundImage})` }}
         onScroll={handleScroll}
       >
         {gettingMoreMessages && (

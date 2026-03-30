@@ -1,4 +1,3 @@
-import cloudinary from "../config/cloudinary.config";
 import ChatModel from "../models/chat.model";
 import MessageModel from "../models/message.model";
 import { BadRequestException, NotFoundException } from "../utils/app-error";
@@ -11,6 +10,7 @@ import {
   emitDeletedMessageToChatRoom,
   emitLastUpdateToParticipant,
   emitNewMessageToChatRoom,
+  emitReadMessageToParticipants,
   emitUpdatedMessageToChatRoom,
 } from "../lib/socket";
 import { cloudinaryDelete, cloudinaryPost } from "../utils/cloudinary";
@@ -22,6 +22,27 @@ import {
 } from "../config/message-populate.config";
 import { checkIfBlocked } from "../utils/is-user-blocked";
 import UserModel from "../models/user.model";
+import { getEnv } from "../utils/get-env";
+
+export const sendSystemMessage = async (chatId: string, content: string) => {
+  const chat = await ChatModel.findById(chatId);
+
+  if (!chat) throw new NotFoundException("Chat not found");
+
+  const systemId = getEnv("SYSTEM_USER_ID");
+
+  const newMessage = await MessageModel.create({
+    chatId,
+    sender: systemId,
+    content,
+    image: null,
+    replyTo: null,
+  });
+
+  await newMessage.populate(MESSAGE_POPULATE_CONFIG);
+
+  emitNewMessageToChatRoom(systemId, chatId, newMessage);
+};
 
 export const sendMessageService = async (
   userId: string,
@@ -50,6 +71,10 @@ export const sendMessageService = async (
       chatId,
     });
     if (!replyMessage) throw new NotFoundException("Reply message not found");
+    if (replyMessage.sender.toString() === getEnv("SYSTEM_USER_ID"))
+      throw new BadRequestException(
+        "System user messages cannot be replied to",
+      );
   }
 
   let imageUrl;
@@ -131,6 +156,56 @@ export const editMessageService = async (
   emitUpdatedMessageToChatRoom(user._id.toString(), chatId, newMessage);
 
   return { newMessage, chat };
+};
+
+export const readMessageService = async (
+  userId: string,
+  chatId: string,
+  messageId: string,
+) => {
+  const user = await UserModel.findById(userId);
+
+  if (!user) throw new NotFoundException("User not found");
+
+  const chat = await ChatModel.findOne({
+    _id: chatId,
+    participants: {
+      $in: [user._id],
+    },
+  });
+
+  if (!chat) throw new BadRequestException("Chat not found");
+
+  await checkIfBlocked(chat, user);
+
+  const message = await MessageModel.findOne({
+    _id: messageId,
+    chatId,
+  });
+
+  if (!message) throw new NotFoundException("Message not found");
+
+  if (message.sender.toString() === getEnv("SYSTEM_USER_ID"))
+    throw new BadRequestException("System user messages cannot be read");
+
+  if (message.sender.toString() === userId)
+    throw new BadRequestException("You cannot mark your own message as read");
+
+  if (message.readBy.includes(user._id))
+    throw new BadRequestException("Message already read");
+
+  await MessageModel.updateOne(
+    {
+      _id: messageId,
+    },
+    { $addToSet: { readBy: userId } },
+  );
+
+  const allParticipantIds = chat.participants.map((p: any) =>
+    p._id ? p._id.toString() : p.toString(),
+  );
+
+  emitReadMessageToParticipants(user, allParticipantIds, messageId);
 };
 
 export const deleteMessageService = async (

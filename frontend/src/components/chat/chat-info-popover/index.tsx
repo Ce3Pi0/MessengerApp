@@ -20,6 +20,7 @@ import LeaveOrBlock from "./leave-or-block";
 import DeleteChat from "./delete-chat";
 import ChangeBackground from "./change-background";
 import ChangeAvatarDialog from "./change-avatar-dialog";
+import ChangeBackgroundDialog from "./change-background-dialog";
 
 const ChatInfoPopover = () => {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ const ChatInfoPopover = () => {
   const [userToRemove, setUserToRemove] = useState<UserType | null>(null);
 
   const [changingAvatar, setChangingAvatar] = useState(false);
+  const [changingBackground, setChangingBackground] = useState(false);
 
   const { user } = useAuth();
   const {
@@ -132,7 +134,7 @@ const ChatInfoPopover = () => {
               )}
               {isGroup && isUserAdmin && (
                 <ChangeBackground
-                  handleGroupChangeBg={handleGroupChangeTheme}
+                  openBackgroundDialog={setChangingBackground}
                 />
               )}
               <LeaveOrBlock
@@ -187,6 +189,11 @@ const ChatInfoPopover = () => {
       <ChangeAvatarDialog
         isOpen={changingAvatar}
         onOpenChange={setChangingAvatar}
+      />
+
+      <ChangeBackgroundDialog
+        isOpen={changingBackground}
+        onOpenChange={setChangingBackground}
       />
     </>
   );

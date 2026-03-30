@@ -1,5 +1,5 @@
+import { Button } from "@/components/ui/button";
 import type { MessageType } from "@/types/chat.types";
-import { Button } from "../ui/button";
 import { X } from "lucide-react";
 
 interface Props {

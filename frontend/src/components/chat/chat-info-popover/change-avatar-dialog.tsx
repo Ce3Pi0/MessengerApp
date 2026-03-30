@@ -1,10 +1,5 @@
 import type React from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import {
   formatBytes,
   useFileUpload,
@@ -14,8 +9,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CircleAlertIcon, UserIcon, XIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { OTHER_ROUTES } from "@/routes/routes";
-import { useNavigate } from "react-router-dom";
 import { fileToBase64 } from "@/lib/helper";
 import { useChat } from "@/hooks/use-chat";
 import { toast } from "sonner";
@@ -60,8 +53,6 @@ const ChangeAvatarDialog = ({
   const currentFile = files[0];
   const previewUrl = currentFile?.preview || singleChat?.chat?.avatar;
 
-  const navigate = useNavigate();
-
   const handleRemove = () => {
     if (currentFile) {
       removeFile(currentFile.id);
@@ -90,7 +81,7 @@ const ChangeAvatarDialog = ({
       singleChat?.chat?._id,
       avatarData,
     );
-    if (success) navigate(OTHER_ROUTES.ROOT);
+    if (success) onOpenChange(false);
   };
 
   return (
@@ -179,7 +170,7 @@ const ChangeAvatarDialog = ({
             disabled={updatingChatAvatar || currentFile === undefined}
           >
             {updatingChatAvatar && <Spinner />}
-            Update Account
+            Change Avatar
           </Button>
         </div>
       </DialogContent>
