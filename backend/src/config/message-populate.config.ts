@@ -35,6 +35,10 @@ export const NEW_MESSAGE_POPULATE_CONFIG = [
       select: "name avatar",
     },
   },
+  {
+    path: "readBy",
+    select: "name avatar",
+  },
 ];
 
 export const REACTED_MESSAGE_POPULATE_CONFIG = [

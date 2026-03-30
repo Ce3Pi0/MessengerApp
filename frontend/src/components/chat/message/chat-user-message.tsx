@@ -10,12 +10,14 @@ import CopyToClipboard from "react-copy-to-clipboard";
 import { useState } from "react";
 import ReplyToBox from "./reply-to-box";
 import MessageHeader from "./message-header";
-import SingleChatMessageStatus from "./single-chat-message-status";
+import MessageStatus from "./message-status";
+import GroupChatMessageStatus from "./group-chat-message-status";
 import { useChat } from "@/hooks/use-chat";
 
 interface Props {
   user: UserType | null;
   message: MessageType;
+  nextMessage: MessageType | null;
   onEdit: (message: MessageType) => void;
   onReply: (message: MessageType) => void;
   onDelete: (messageId: string) => void;
@@ -23,6 +25,7 @@ interface Props {
 
 const ChatUserMessage = ({
   message,
+  nextMessage,
   user,
   onEdit,
   onReply,
@@ -30,9 +33,9 @@ const ChatUserMessage = ({
 }: Props) => {
   if (!user) return null;
 
-  const { singleChat } = useChat();
-
   const isCurrentUser = message.sender?._id === user._id;
+
+  const { singleChat } = useChat();
 
   const containerClass = cn(
     "group flex gap-2 py-3 px-4",
@@ -90,10 +93,7 @@ const ChatUserMessage = ({
               />
             )}
             {message.content && <p>{message.content}</p>}
-            {isCurrentUser && !singleChat?.chat.isGroup && (
-              <SingleChatMessageStatus message={message} />
-            )}
-            {/* TODO: READ RECEIPTS FOR A GROUP CHAT */}
+            {isCurrentUser && <MessageStatus message={message} />}
           </div>
 
           {/* Emoji Picker icon button */}
@@ -168,6 +168,10 @@ const ChatUserMessage = ({
             <Copy size={14} />
           </Button>
         </CopyToClipboard>
+
+        {singleChat?.chat.isGroup && (
+          <GroupChatMessageStatus message={message} nextMessage={nextMessage} />
+        )}
       </div>
     </div>
   );

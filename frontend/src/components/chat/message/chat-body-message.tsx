@@ -5,12 +5,19 @@ import SystemMessage from "./system-message";
 
 interface Props {
   message: MessageType;
+  nextMessage: MessageType | null;
   onReply: (message: MessageType) => void;
   onEdit: (message: MessageType) => void;
   onDelete: (message: string) => void;
 }
 
-const ChatBodyMessage = ({ message, onReply, onEdit, onDelete }: Props) => {
+const ChatBodyMessage = ({
+  message,
+  nextMessage,
+  onReply,
+  onEdit,
+  onDelete,
+}: Props) => {
   const { user } = useAuth();
 
   const SYSTEM_ID = import.meta.env.VITE_SYSTEM_USER_ID;
@@ -21,6 +28,7 @@ const ChatBodyMessage = ({ message, onReply, onEdit, onDelete }: Props) => {
         <ChatUserMessage
           user={user}
           message={message}
+          nextMessage={nextMessage}
           onEdit={onEdit}
           onReply={onReply}
           onDelete={onDelete}

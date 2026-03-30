@@ -87,6 +87,7 @@ export const sendMessageService = async (
     chatId,
     sender: user._id,
     content,
+    readBy: [user._id],
     image: imageUrl,
     replyTo: replyToId || null,
   });
@@ -187,9 +188,6 @@ export const readMessageService = async (
 
   if (message.sender.toString() === getEnv("SYSTEM_USER_ID"))
     throw new BadRequestException("System user messages cannot be read");
-
-  if (message.sender.toString() === userId)
-    throw new BadRequestException("You cannot mark your own message as read");
 
   if (message.readBy.includes(user._id))
     throw new BadRequestException("Message already read");

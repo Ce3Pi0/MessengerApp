@@ -67,10 +67,11 @@ const ChatBody = ({ chatId, messages, onReply, onEdit, onDelete }: Props) => {
     <div className="flex-1 overflow-hidden">
       <div className="h-auto w-full min-h-full">
         <div className="w-full max-w-6xl mx-auto h-full flex flex-col px-3">
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <ChatBodyMessage
               key={message._id}
               message={message}
+              nextMessage={messages[index + 1] ?? null}
               onReply={onReply}
               onEdit={onEdit}
               onDelete={onDelete}

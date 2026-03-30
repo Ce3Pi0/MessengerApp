@@ -6,11 +6,11 @@ interface Props {
   message: MessageType;
 }
 
-function SingleChatMessageStatus({ message }: Props) {
+function MessageStatus({ message }: Props) {
   const isSending = message.status === "sending";
 
   const checkClass = cn(
-    message.readBy.length > 0 ? "text-success" : "text-white",
+    message.readBy.length > 1 ? "text-success" : "text-white",
   );
 
   return (
@@ -21,4 +21,4 @@ function SingleChatMessageStatus({ message }: Props) {
   );
 }
 
-export default SingleChatMessageStatus;
+export default MessageStatus;
