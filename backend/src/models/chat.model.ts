@@ -9,6 +9,7 @@ export interface ChatDocument extends Document {
   lastReaction: mongoose.Types.ObjectId;
   isGroup: boolean;
   groupName: string;
+  isAiChat: boolean;
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -32,12 +33,27 @@ const chatSchema = new Schema<ChatDocument>(
     },
     isGroup: { type: Boolean, default: false },
     groupName: { type: String },
+    isAiChat: { type: Boolean, default: false },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
   },
   {
     timestamps: true,
   },
 );
+
+chatSchema.pre("save", async function (next) {
+  if (this.isNew) {
+    const User = mongoose.model("User");
+    const participants = await User.find({
+      _id: { $in: this.participants },
+      isAI: true,
+    });
+    if (participants.length > 0) {
+      this.isAiChat = true;
+    }
+  }
+  next();
+});
 
 const ChatModel = mongoose.model<ChatDocument>("Chat", chatSchema);
 

@@ -32,7 +32,7 @@ const cleanupTask = async () => {
         // TODO: Log user email
         sendMail({
           from: Env.SENDER_EMAIL,
-          to: user.email,
+          to: user.email!,
           subject: "Your account has been deleted",
           text: "Your account on Messenger Application has been deleted due to inactivity",
         });

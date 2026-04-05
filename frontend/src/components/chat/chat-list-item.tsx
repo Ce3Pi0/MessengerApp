@@ -54,6 +54,8 @@ const ChatListItem = ({
       return `${lastReaction.reactor._id === currentUserId ? "You" : lastReaction.reactor.name} reacted: ${lastReaction.emoji}`;
   };
 
+  const MAX_UNSEEN_MESSAGES_COUNT: number = 100;
+
   return (
     <button
       onClick={onClick}
@@ -87,7 +89,9 @@ const ChatListItem = ({
       {unseenMessageCount > 0 && (
         <div className="h-5 w-5 rounded-full bg-primary/30 flex flex-row items-center justify-center text-center">
           <p className="text-[0.6rem] font-bold text-white text-center p-1">
-            {unseenMessageCount > 1 ? "99+" : unseenMessageCount}
+            {unseenMessageCount > MAX_UNSEEN_MESSAGES_COUNT
+              ? "99+"
+              : unseenMessageCount}
           </p>
         </div>
       )}

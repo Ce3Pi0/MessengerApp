@@ -19,6 +19,7 @@ export interface UserType {
   name: string;
   email: string;
   avatar?: string;
+  isAI?: boolean;
   favorites?: ChatType[];
   blocked?: string[];
   provider: Provider;

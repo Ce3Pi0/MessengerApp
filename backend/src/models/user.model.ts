@@ -5,13 +5,14 @@ type Providers = "local" | "google" | "merged";
 
 export interface UserDocument extends Document {
   name: string;
-  email: string;
+  email?: string;
   password?: string;
   googleId?: string;
   refreshToken?: string;
   provider: Providers;
   isVerified: boolean;
   forgotPassword: boolean;
+  isAI: boolean;
   avatar?: string | null;
   enabled2fa: boolean;
   secret2fa?: string;
@@ -28,12 +29,20 @@ const userSchema = new Schema<UserDocument>(
     name: { type: String, required: true },
     email: {
       type: String,
-      required: true,
       unique: true,
       lowercase: true,
       trim: true,
+      sparse: true,
+      required: function (this: UserDocument) {
+        return !this.isAI;
+      },
     },
-    password: { type: String },
+    password: {
+      type: String,
+      required: function (this: UserDocument) {
+        return !this.isAI && this.provider !== "google";
+      },
+    },
     googleId: { type: String },
     refreshToken: { type: String },
     provider: {
@@ -43,6 +52,7 @@ const userSchema = new Schema<UserDocument>(
     },
     isVerified: { type: Boolean, default: false },
     forgotPassword: { type: Boolean, default: false },
+    isAI: { type: Boolean, default: false },
     avatar: { type: String, default: null },
     enabled2fa: { type: Boolean, default: false },
     secret2fa: { type: String },

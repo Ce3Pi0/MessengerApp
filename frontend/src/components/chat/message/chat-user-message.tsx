@@ -13,6 +13,8 @@ import MessageHeader from "./message-header";
 import MessageStatus from "./message-status";
 import GroupChatMessageStatus from "./group-chat-message-status";
 import { useChat } from "@/hooks/use-chat";
+import TypingIndicator from "../typing-indicator";
+import { Typewriter } from "@/components/ui/typewriter";
 
 interface Props {
   user: UserType | null;
@@ -37,6 +39,10 @@ const ChatUserMessage = ({
 
   const { singleChat } = useChat();
 
+  if (!singleChat) return null;
+
+  const isAiChat = singleChat.chat.isAiChat;
+
   const containerClass = cn(
     "group flex gap-2 py-3 px-4",
     isCurrentUser && "flex-row-reverse text-left",
@@ -55,6 +61,9 @@ const ChatUserMessage = ({
   );
 
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+
+  const isLastMessage = singleChat.messages.at(-1)?._id === message._id;
+  const shouldAnimate = message.sender?.isAI && isLastMessage;
 
   return (
     <div className={containerClass}>
@@ -92,16 +101,22 @@ const ChatUserMessage = ({
                 className="lg:max-w-xs w-full h-auto max-w-full block object-cover rounded-md"
               />
             )}
-            {message.content && <p>{message.content}</p>}
-            {isCurrentUser && <MessageStatus message={message} />}
+            {message.content && shouldAnimate && (
+              <Typewriter text={message.content} />
+            )}
+            {message.content && !shouldAnimate && <p>{message.content}</p>}
+            {isCurrentUser && !isAiChat && <MessageStatus message={message} />}
+            {message?.streaming && <TypingIndicator />}
           </div>
 
           {/* Emoji Picker icon button */}
-          <MessageReaction
-            messageId={message._id}
-            isPickerOpen={isPickerOpen}
-            setIsPickerOpen={setIsPickerOpen}
-          />
+          {!isAiChat && (
+            <MessageReaction
+              messageId={message._id}
+              isPickerOpen={isPickerOpen}
+              setIsPickerOpen={setIsPickerOpen}
+            />
+          )}
 
           {/* Reply button */}
           <Button
@@ -120,7 +135,7 @@ const ChatUserMessage = ({
           </Button>
 
           {/* Edit button */}
-          {isCurrentUser && (
+          {isCurrentUser && !isAiChat && (
             <Button
               variant="outline"
               size="icon"
@@ -135,7 +150,7 @@ const ChatUserMessage = ({
           )}
 
           {/* Delete button */}
-          {isCurrentUser && (
+          {isCurrentUser && !isAiChat && (
             <Button
               variant="outline"
               size="icon"

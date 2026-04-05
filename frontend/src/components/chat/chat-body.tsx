@@ -17,11 +17,12 @@ interface Props {
 
 const ChatBody = ({ chatId, messages, onReply, onEdit, onDelete }: Props) => {
   const { socket } = useSocket();
-  const { editMessage, deleteMessage } = useChat();
+  const { editMessage, deleteMessage, addOrUpdateMessage } = useChat();
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const prevLastMessageIdRef = useRef<string | null>(
     messages[messages.length - 1]?._id || null,
   );
+  const [_, setAiChunk] = useState<string>("");
 
   const [typingUsers, setTypingUsers] = useState<UserType[]>([]);
   const visibleTypingUsers = typingUsers.slice(0, 3);
@@ -107,6 +108,52 @@ const ChatBody = ({ chatId, messages, onReply, onEdit, onDelete }: Props) => {
       socket.off("message:delete", handleDeleteMessage);
     };
   }, [socket, chatId, deleteMessage]);
+
+  useEffect(() => {
+    if (!socket || !chatId) return;
+
+    const handleAiStream = ({
+      chatId: streamChatId,
+      chunk,
+      done,
+    }: {
+      chatId: string;
+      chunk: string | null;
+      done: boolean;
+      message: MessageType | null;
+    }) => {
+      if (streamChatId !== chatId) return;
+
+      const lastMessage = messages.at(-1);
+      if (!lastMessage?._id && lastMessage?.streaming) return;
+
+      if (chunk?.trim() && !done) {
+        setAiChunk((prev) => {
+          const newContent = prev + chunk;
+          addOrUpdateMessage(
+            chatId,
+            {
+              ...lastMessage,
+              content: newContent,
+            } as MessageType,
+            lastMessage?._id,
+          );
+          return newContent;
+        });
+        return;
+      }
+
+      if (done) {
+        setAiChunk("");
+      }
+    };
+
+    socket.on("chat:ai", handleAiStream);
+
+    return () => {
+      socket.off("chat:ai", handleAiStream);
+    };
+  }, [addOrUpdateMessage, chatId, messages, socket]);
 
   return (
     <div className="flex-1 overflow-hidden">

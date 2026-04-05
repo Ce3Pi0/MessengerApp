@@ -61,6 +61,7 @@ const SingleChat = () => {
     (theme === "system" &&
       window.matchMedia("(prefers-color-scheme: dark)").matches);
   const backgroundImage = chat?.background || (isDarkMode ? wpDark : wpLight);
+  const isAiChat = chat?.isAiChat || false;
 
   useEffect(() => {
     if (!chatId) return;
@@ -205,6 +206,7 @@ const SingleChat = () => {
         editMessage={editMessage}
         chatId={chatId}
         currentUserId={currentUserId}
+        isAiChat={isAiChat}
         onCancelReply={() => setReplyTo(null)}
         onCancelEdit={() => setEditMessage(null)}
       />

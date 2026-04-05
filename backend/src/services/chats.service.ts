@@ -227,6 +227,8 @@ export const updateChatService = async (
 
   if (!chat) throw new NotFoundException("Chat not found");
 
+  if (chat.isAiChat) throw new BadRequestException("Cannot update an AI chat");
+
   if (!chat.isGroup) throw new BadRequestException("Chat is not a group");
 
   const isUserAdmin = chat.participants.includes(new Types.ObjectId(userId));
@@ -293,6 +295,8 @@ export const addAdminChatService = async (
   const chat = await ChatModel.findById(chatId);
 
   if (!chat) throw new NotFoundException("Chat not found");
+
+  if (chat.isAiChat) throw new BadRequestException("Cannot update an AI chat");
 
   if (!chat.isGroup) throw new BadRequestException("Chat is not a group");
 
@@ -401,6 +405,8 @@ export const removeUserFromChatService = async (
 
   if (!chat) throw new NotFoundException("Chat not found");
 
+  if (chat.isAiChat) throw new BadRequestException("Cannot update an AI chat");
+
   if (!chat.isGroup) throw new BadRequestException("Chat is not a group");
 
   const isUserAdmin = chat.administrators.includes(new Types.ObjectId(userId));
@@ -457,6 +463,8 @@ export const addUserChatService = async (
   const chat = await ChatModel.findById(chatId);
 
   if (!chat) throw new NotFoundException("Chat not found");
+
+  if (chat.isAiChat) throw new BadRequestException("Cannot update an AI chat");
 
   if (!chat.isGroup) throw new BadRequestException("Chat is not a group");
 

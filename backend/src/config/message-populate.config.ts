@@ -1,11 +1,11 @@
 export const MESSAGE_POPULATE_CONFIG = [
-  { path: "sender", select: "name avatar" },
+  { path: "sender", select: "name avatar isAI" },
   {
     path: "replyTo",
     select: "content image sender",
     populate: {
       path: "sender",
-      select: "name avatar",
+      select: "name avatar isAI",
     },
   },
   {
@@ -26,13 +26,13 @@ export const SYSTEM_MESSAGE_POPULATE_CONFIG = [
 ];
 
 export const NEW_MESSAGE_POPULATE_CONFIG = [
-  { path: "sender", select: "name avatar" },
+  { path: "sender", select: "name avatar isAI" },
   {
     path: "replyTo",
     select: "content image sender",
     populate: {
       path: "sender",
-      select: "name avatar",
+      select: "name avatar isAI",
     },
   },
   {
@@ -49,4 +49,17 @@ export const REACTED_MESSAGE_POPULATE_CONFIG = [
       select: "name avatar",
     },
   },
+];
+
+export const AI_CONTENT_POPULATE_CONFIG = [
+  { path: "sender", select: "isAI" },
+  {
+    path: "replyTo",
+    select: "content image sender",
+    populate: { path: "sender", select: "content" },
+  },
+];
+
+export const AI_MESSAGE_POPULATE_CONFIG = [
+  { path: "sender", select: "name avatar isAI" },
 ];

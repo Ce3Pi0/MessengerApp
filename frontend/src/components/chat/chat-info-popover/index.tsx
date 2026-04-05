@@ -50,8 +50,6 @@ const ChatInfoPopover = () => {
   const [isGroupNameChanging, setIsGroupNameChanging] = useState(false);
   const [groupName, setGroupName] = useState(singleChat.chat.groupName);
 
-  const handleGroupChangeTheme = () => {};
-
   const handleDeleteChat = () => {
     sendDeleteChat(singleChat.chat._id);
     navigate(OTHER_ROUTES.ROOT);
@@ -79,6 +77,8 @@ const ChatInfoPopover = () => {
     (p) => p._id !== user?._id,
   );
   const isBlocked = user?.blocked?.includes(otherUser?._id ?? "");
+
+  const isAiChat = singleChat.chat.isAiChat;
 
   const resetGroupNameChange = () => {
     setGroupName(singleChat?.chat.groupName);
@@ -120,14 +120,16 @@ const ChatInfoPopover = () => {
                 <FavoriteChat user={user} chat={singleChat.chat} />
               )}
             </div>
-            <Participants
-              user={user}
-              chat={singleChat.chat}
-              isUserAdmin={isUserAdmin}
-              isGroup={isGroup}
-              setUserToRemove={setUserToRemove}
-              setIsRemoveUserAlertOpen={setIsRemoveUserAlertOpen}
-            />
+            {!isAiChat && (
+              <Participants
+                user={user}
+                chat={singleChat.chat}
+                isUserAdmin={isUserAdmin}
+                isGroup={isGroup}
+                setUserToRemove={setUserToRemove}
+                setIsRemoveUserAlertOpen={setIsRemoveUserAlertOpen}
+              />
+            )}
             <div className="p-2">
               {isGroup && isUserAdmin && (
                 <ChangeGroupAvatar openAvatarDialog={setChangingAvatar} />
@@ -137,13 +139,15 @@ const ChatInfoPopover = () => {
                   openBackgroundDialog={setChangingBackground}
                 />
               )}
-              <LeaveOrBlock
-                user={user}
-                chat={singleChat.chat}
-                isGroup={isGroup}
-                isBlocked={isBlocked}
-                openLeaveChatAlert={openLeaveChatAlert}
-              />
+              {!isAiChat && (
+                <LeaveOrBlock
+                  user={user}
+                  chat={singleChat.chat}
+                  isGroup={isGroup}
+                  isBlocked={isBlocked}
+                  openLeaveChatAlert={openLeaveChatAlert}
+                />
+              )}
               {(isUserAdmin || !isGroup) && (
                 <DeleteChat setIsDeleteAlertOpen={setIsDeleteAlertOpen} />
               )}

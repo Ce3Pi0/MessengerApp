@@ -17,7 +17,7 @@ import { findExistingReaction } from "../utils/findExistingReaction";
 import { REACTED_MESSAGE_POPULATE_CONFIG } from "../config/message-populate.config";
 import UserModel from "../models/user.model";
 import { checkIfBlocked } from "../utils/is-user-blocked";
-import { getEnv } from "../utils/get-env";
+import { Env } from "../config/env.config";
 
 export const sendReactionService = async (
   userId: string,
@@ -33,6 +33,8 @@ export const sendReactionService = async (
 
   if (!chat) throw new NotFoundException("Chat not found");
 
+  if (chat.isAiChat) throw new BadRequestException("Cannot react in AI chats");
+
   if (
     !isParticipant(
       user._id.toString(),
@@ -47,7 +49,7 @@ export const sendReactionService = async (
 
   if (!msg) throw new BadRequestException("Message not found");
 
-  if (msg.sender.toString() === getEnv("SYSTEM_USER_ID"))
+  if (msg.sender.toString() === Env.SYSTEM_USER_ID)
     throw new BadRequestException("System user messages cannot be reacted to");
 
   if (msg.chatId.toString() !== chat._id.toString())

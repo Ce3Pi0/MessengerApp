@@ -147,10 +147,14 @@ export const registerService = async (body: RegisterSchemaType) => {
   }
 
   const newUser = new UserModel({
-    ...body,
+    name: body.name,
+    password: body.password,
+    email: body.email,
+    avatar: body.avatar,
+    provider: "local",
   });
 
-  const validEmail = (await emailValidator(newUser.email, {
+  const validEmail = (await emailValidator(newUser.email!, {
     detailed: true,
     checkMx: true,
     timeout: "500ms",
@@ -163,7 +167,7 @@ export const registerService = async (body: RegisterSchemaType) => {
 
   sendMail({
     from: Env.SENDER_EMAIL,
-    to: newUser.email,
+    to: newUser.email!,
     subject: `Verify You New Account ${newUser.name}`,
     text: `This token will expire in 15 minutes!: ${Env.API_URL}${Env.API_VERSION}auth/verify/${confirmToken}`,
   });
@@ -181,6 +185,8 @@ export const loginService = async (body: LoginSchemaType) => {
   const user = await UserModel.findOne({ email, _id: { $ne: systemId } });
 
   if (!user) throw new NotFoundException("User email not found");
+
+  if (user.isAI) throw new BadRequestException("Invalid user");
 
   if (!user.isVerified)
     throw new UnauthorizedException("User account not confirmed");
@@ -290,6 +296,8 @@ export const resendVerifyService = async (userEmail: EmailSchemaType) => {
 
   if (!user) throw new NotFoundException("User not found");
 
+  if (user.isAI) throw new BadRequestException("Invalid user");
+
   if (user.isVerified)
     throw new NotAllowedException("User is already verified");
 
@@ -297,7 +305,7 @@ export const resendVerifyService = async (userEmail: EmailSchemaType) => {
 
   sendMail({
     from: Env.SENDER_EMAIL,
-    to: user.email,
+    to: user.email!,
     subject: `Verify You New Account ${user.name}`,
     text: `This token will expire in 15 minutes!: ${Env.API_URL}${Env.API_VERSION}auth/verify/${confirmToken}`,
   });
@@ -344,6 +352,8 @@ export const sendForgotPasswordService = async (userEmail: EmailSchemaType) => {
 
   if (!user) throw new NotFoundException("User not found");
 
+  if (user.isAI) throw new BadRequestException("Invalid user");
+
   if (!user.isVerified) throw new NotAllowedException("User is not verified");
 
   if (user.provider === "google")
@@ -353,7 +363,7 @@ export const sendForgotPasswordService = async (userEmail: EmailSchemaType) => {
 
   sendMail({
     from: Env.SENDER_EMAIL,
-    to: user.email,
+    to: user.email!,
     subject: `Update Your Password ${user.name}`,
     text: `This token will expire in 15 minutes!: ${Env.API_URL}${Env.API_VERSION}auth/forgot-password/${forgotPasswordToken}`,
   });

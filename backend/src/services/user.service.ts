@@ -210,6 +210,9 @@ export const blockUserService = async (
   if (!userToBeBlocked)
     throw new NotAllowedException("User to be blocked not found");
 
+  if (userToBeBlocked.isAI)
+    throw new BadRequestException("Cannot block an AI user");
+
   if (user.blocked.includes(userToBeBlocked._id))
     throw new BadRequestException("User already blocked");
 
@@ -267,5 +270,4 @@ export const deleteUserService = async (userId: string) => {
   }
 
   await UserModel.deleteOne({ _id: userId });
-  //TODO: ws cast to all participants
 };

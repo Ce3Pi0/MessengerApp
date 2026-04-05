@@ -20,6 +20,7 @@ interface Props {
   editMessage: MessageType | null;
   chatId: string | null;
   currentUserId: string | null;
+  isAiChat: boolean;
   onCancelReply: () => void;
   onCancelEdit: () => void;
 }
@@ -29,13 +30,15 @@ const ChatFooter = ({
   editMessage,
   chatId,
   currentUserId,
+  isAiChat,
   onCancelReply,
   onCancelEdit,
 }: Props) => {
   const { user } = useAuth();
   const { socket } = useSocket();
 
-  const { sendMessage, sendEditMessage, singleChat } = useChat();
+  const { sendMessage, isSendingMessage, sendEditMessage, singleChat } =
+    useChat();
 
   const [image, setImage] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement | null>(null);
@@ -69,6 +72,8 @@ const ChatFooter = ({
   };
 
   const onSubmit = () => {
+    if (isSendingMessage) return;
+
     if (!text && !image) {
       toast.error("Please enter a message or select an image");
       return;
@@ -83,12 +88,14 @@ const ChatFooter = ({
       sendEditMessage(chatId, editMessage);
       onCancelEdit();
     } else {
-      sendMessage({
+      const payload = {
         chatId,
         content: text,
         image: image || undefined,
         replyTo,
-      });
+      };
+
+      sendMessage(payload, isAiChat);
       onCancelReply();
     }
     handleRemoveImage();
@@ -187,7 +194,7 @@ const ChatFooter = ({
   return (
     <>
       <div className="sticky bottom-0 inset-x-0 z-999 bg-card border-t border-border py-4">
-        {image && (
+        {image && !isSendingMessage && (
           <div className="max-w-6xl mx-auto px-8.5">
             <div className="relative w-fit">
               <img
@@ -217,6 +224,7 @@ const ChatFooter = ({
                 type="button"
                 variant="outline"
                 size="icon"
+                disabled={isSendingMessage}
                 className="rounded-full"
                 onClick={() => imageInputRef.current?.click()}
               >
@@ -227,12 +235,14 @@ const ChatFooter = ({
                 type="file"
                 className="hidden"
                 accept="image/*"
+                disabled={isSendingMessage}
                 ref={imageInputRef}
                 onChange={handleImageChange}
               />
             </div>
             <FormField
               control={form.control}
+              disabled={isSendingMessage}
               name="message"
               render={({ field }) => (
                 <FormItem className="flex-1">
@@ -253,7 +263,9 @@ const ChatFooter = ({
               size="icon"
               className="rounded-lg"
               disabled={
-                (text.length <= 0 && !image) || editMessage?.content === text
+                (text.length <= 0 && !image) ||
+                editMessage?.content === text ||
+                isSendingMessage
               }
             >
               {editMessage?.content && <Check className="h-3.5 w-3.5" />}
@@ -263,7 +275,7 @@ const ChatFooter = ({
         </Form>
       </div>
 
-      {replyTo && (
+      {replyTo && !isSendingMessage && (
         <ChatReplyBar
           replyTo={replyTo}
           currentUserId={currentUserId}

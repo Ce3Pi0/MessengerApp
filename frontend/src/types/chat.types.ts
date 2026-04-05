@@ -8,6 +8,7 @@ export type ChatType = {
   lastReaction: ReactionDataType | null;
   participants: UserType[];
   isGroup: boolean;
+  isAiChat: boolean;
   createdBy: string;
   groupName?: string;
   administrators?: UserType[];
@@ -35,6 +36,7 @@ export type MessageType = {
   updatedAt: string;
   //Only to Frontend
   status?: string;
+  streaming?: boolean;
 };
 
 export type CreateChatType = {

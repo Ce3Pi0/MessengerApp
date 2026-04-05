@@ -387,3 +387,32 @@ export const emitUnblockedToUser = (user: any, participantId: string) => {
   const io = getIO();
   io.to(`user:${participantId}`).emit("user:unblocked", user);
 };
+
+export const emitChatAI = ({
+  chatId,
+  chunk = null,
+  done = false,
+}: {
+  chatId: string;
+  chunk?: string | null;
+  done?: boolean;
+}) => {
+  const io = getIO();
+
+  if (chunk?.trim() && !done) {
+    io.to(`chat:${chatId}`).emit("chat:ai", {
+      chatId,
+      chunk,
+      done,
+    });
+    return;
+  }
+
+  if (done) {
+    io.to(`chat:${chatId}`).emit("chat:ai", {
+      chatId,
+      chunk: null,
+      done,
+    });
+  }
+};

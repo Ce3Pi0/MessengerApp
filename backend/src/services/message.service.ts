@@ -22,14 +22,21 @@ import {
 } from "../config/message-populate.config";
 import { checkIfBlocked } from "../utils/is-user-blocked";
 import UserModel from "../models/user.model";
-import { getEnv } from "../utils/get-env";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { Env } from "../config/env.config";
+import mongoose from "mongoose";
+import { getAIResponse } from "../utils/get-ai-response";
+
+const google = createGoogleGenerativeAI({
+  apiKey: Env.GOOGLE_GENERATIVE_AI_API_KEY,
+});
 
 export const sendSystemMessage = async (chatId: string, content: string) => {
   const chat = await ChatModel.findById(chatId);
 
   if (!chat) throw new NotFoundException("Chat not found");
 
-  const systemId = getEnv("SYSTEM_USER_ID");
+  const systemId = Env.SYSTEM_USER_ID;
 
   const newMessage = await MessageModel.create({
     chatId,
@@ -71,7 +78,7 @@ export const sendMessageService = async (
       chatId,
     });
     if (!replyMessage) throw new NotFoundException("Reply message not found");
-    if (replyMessage.sender.toString() === getEnv("SYSTEM_USER_ID"))
+    if (replyMessage.sender.toString() === Env.SYSTEM_USER_ID)
       throw new BadRequestException(
         "System user messages cannot be replied to",
       );
@@ -94,6 +101,20 @@ export const sendMessageService = async (
 
   await newMessage.populate(NEW_MESSAGE_POPULATE_CONFIG);
 
+  emitNewMessageToChatRoom(user._id.toString(), chatId, newMessage);
+
+  const allParticipantIds = chat.participants.map((id) => id.toString());
+  emitLastUpdateToParticipant(allParticipantIds, chatId, null, newMessage);
+
+  let aiResponseContent: any = null;
+  if (chat.isAiChat) {
+    aiResponseContent = await getAIResponse(chatId, userId);
+    if (aiResponseContent) {
+      chat.lastMessage = aiResponseContent._id as mongoose.Types.ObjectId;
+      await chat.save();
+    }
+  }
+
   const updatedChat = await ChatModel.updateOne(
     {
       _id: chat._id,
@@ -106,12 +127,11 @@ export const sendMessageService = async (
     },
   );
 
-  emitNewMessageToChatRoom(user._id.toString(), chatId, newMessage);
-
-  const allParticipantIds = chat.participants.map((id) => id.toString());
-  emitLastUpdateToParticipant(allParticipantIds, chatId, null, newMessage);
-
-  return { newMessage, chat: updatedChat };
+  return {
+    newMessage,
+    aiResponseContent,
+    chat: updatedChat,
+  };
 };
 
 export const editMessageService = async (
@@ -132,6 +152,8 @@ export const editMessageService = async (
   });
 
   if (!chat) throw new BadRequestException("Chat not found");
+
+  if (chat.isAiChat) throw new BadRequestException("Cannot edit an AI chat");
 
   await checkIfBlocked(chat, user);
 
@@ -177,6 +199,8 @@ export const readMessageService = async (
 
   if (!chat) throw new BadRequestException("Chat not found");
 
+  if (chat.isAiChat) throw new BadRequestException("Cannot read an AI chat");
+
   await checkIfBlocked(chat, user);
 
   const message = await MessageModel.findOne({
@@ -186,7 +210,7 @@ export const readMessageService = async (
 
   if (!message) throw new NotFoundException("Message not found");
 
-  if (message.sender.toString() === getEnv("SYSTEM_USER_ID"))
+  if (message.sender.toString() === Env.SYSTEM_USER_ID)
     throw new BadRequestException("System user messages cannot be read");
 
   if (message.readBy.includes(user._id))
@@ -224,6 +248,8 @@ export const deleteMessageService = async (
   });
 
   if (!chat) throw new BadRequestException("Chat not found");
+
+  if (chat.isAiChat) throw new BadRequestException("Cannot update an AI chat");
 
   await checkIfBlocked(chat, user);
 
