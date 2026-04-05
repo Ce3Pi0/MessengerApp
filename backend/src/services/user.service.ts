@@ -9,6 +9,7 @@ import ChatModel from "../models/chat.model";
 import UserModel from "../models/user.model";
 import {
   BadRequestException,
+  InternalServerException,
   NotAllowedException,
   NotFoundException,
 } from "../utils/app-error";
@@ -46,6 +47,7 @@ export const getUsersService = async (
   }
 
   query.blocked = { $ne: userId };
+  query.isAI = { $ne: true };
 
   const users = await UserModel.find(query)
     .select(
@@ -61,6 +63,19 @@ export const getUsersService = async (
     users,
     nextCursor,
   };
+};
+
+export const getAiUserService = async () => {
+  const aiUser = await UserModel.findOne({ isAI: true })?.select(
+    "-password -refreshToken -forgotPassword -provider -isVerified -enabled2fa -secret2fa",
+  );
+
+  if (!aiUser)
+    throw new InternalServerException(
+      "Internal server error - AI user not found",
+    );
+
+  return aiUser;
 };
 
 export const getSingleUserService = async (

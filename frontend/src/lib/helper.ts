@@ -93,3 +93,5 @@ export const formatChatTime = (date: string | Date) => {
 export const generateUUID = (): string => {
   return uuidv4();
 };
+
+export const tooManyRequestsError = (err: any) => err.response?.status === 429;

@@ -18,6 +18,7 @@ interface ChatState {
   nextChatsCursor: string | null;
   nextUsersCursor: string | null;
   users: UserType[];
+  aiUser: UserType | null;
   singleChat: {
     chat: ChatType;
     messages: MessageType[];
@@ -37,6 +38,7 @@ interface ChatState {
   updatingChatAvatar: boolean;
   updatingChatBackground: boolean;
   isSendingMessage: boolean;
+  gettingAiUser: boolean;
 
   setChats: (data: {
     newChats: ChatType[] | null;
@@ -44,6 +46,7 @@ interface ChatState {
   }) => void;
   fetchUsers: () => void;
   fetchExtraUsers: () => void;
+  fetchAiUser: () => void;
   fetchChats: () => void;
   fetchExtraChats: () => void;
   createChat: (data: CreateChatType) => Promise<ChatType | null>;
@@ -127,6 +130,7 @@ export const useChat = create<ChatState>()((set, get) => ({
   nextChatsCursor: null,
   nextUsersCursor: null,
   users: [],
+  aiUser: null,
   singleChat: null,
 
   gettingMoreMessages: false,
@@ -142,7 +146,7 @@ export const useChat = create<ChatState>()((set, get) => ({
   updatingChatAvatar: false,
   updatingChatBackground: false,
   isSendingMessage: false,
-
+  gettingAiUser: false,
   setChats: ({ newChats, newNext }) =>
     set((state) => ({
       ...state,
@@ -180,6 +184,17 @@ export const useChat = create<ChatState>()((set, get) => ({
       toast.error(err?.response?.data?.message || "Failed to fetch more users");
     } finally {
       set({ gettingMoreUsers: false });
+    }
+  },
+  fetchAiUser: async () => {
+    set({ gettingAiUser: true });
+    try {
+      const { data } = await API.get("/users/ai");
+      set({ aiUser: data.aiUser });
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to fetch AI user");
+    } finally {
+      set({ gettingAiUser: false });
     }
   },
   fetchChats: async () => {

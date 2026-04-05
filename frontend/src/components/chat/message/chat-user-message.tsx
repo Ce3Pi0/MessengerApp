@@ -1,3 +1,5 @@
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { MessageType } from "@/types/chat.types";
 import AvatarWithBadge from "../../avatar-with-badge";
 import { cn } from "@/lib/utils";
@@ -14,7 +16,6 @@ import MessageStatus from "./message-status";
 import GroupChatMessageStatus from "./group-chat-message-status";
 import { useChat } from "@/hooks/use-chat";
 import TypingIndicator from "../typing-indicator";
-import { Typewriter } from "@/components/ui/typewriter";
 
 interface Props {
   user: UserType | null;
@@ -62,9 +63,6 @@ const ChatUserMessage = ({
 
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
-  const isLastMessage = singleChat.messages.at(-1)?._id === message._id;
-  const shouldAnimate = message.sender?.isAI && isLastMessage;
-
   return (
     <div className={containerClass}>
       {!isCurrentUser && (
@@ -76,6 +74,8 @@ const ChatUserMessage = ({
         </div>
       )}
 
+      {/* {message.streaming || */}
+      {/* ((message.content || message.image) && ( */}
       <div className={contentWrapperClass}>
         <div
           className={cn(
@@ -101,12 +101,36 @@ const ChatUserMessage = ({
                 className="lg:max-w-xs w-full h-auto max-w-full block object-cover rounded-md"
               />
             )}
-            {message.content && shouldAnimate && (
-              <Typewriter text={message.content} />
+
+            {message.content && (
+              <Markdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code(props) {
+                    const { children, className } = props;
+                    const isBlock = className?.includes("language-");
+
+                    if (isBlock) {
+                      return (
+                        <pre className="overflow-x-auto rounded-md bg-zinc-950 p-4 text-zinc-100">
+                          <code className={className}>{children}</code>
+                        </pre>
+                      );
+                    }
+
+                    return (
+                      <code className="rounded bg-muted px-1 py-0.5 text-sm">
+                        {children}
+                      </code>
+                    );
+                  },
+                }}
+              >
+                {message.content}
+              </Markdown>
             )}
-            {message.content && !shouldAnimate && <p>{message.content}</p>}
             {isCurrentUser && !isAiChat && <MessageStatus message={message} />}
-            {message?.streaming && <TypingIndicator />}
+            {message?.streaming && !message.content && <TypingIndicator />}
           </div>
 
           {/* Emoji Picker icon button */}

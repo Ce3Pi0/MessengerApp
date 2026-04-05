@@ -13,6 +13,7 @@ export const ErrorCodes = {
   ERR_NOT_ALLOWED: "ERR_NOT_ALLOWED",
   ERR_CONFLICT: "ERR_CONFLICT",
   ERR_UNPROCESSABLE_ENTITY: "ERR_UNPROCESSABLE_ENTITY",
+  ERR_TOO_MANY_REQUESTS: "ERR_TOO_MANY_REQUESTS",
 } as const;
 export type ErrorCodeType = keyof typeof ErrorCodes;
 export class AppError extends Error {
@@ -78,6 +79,17 @@ export class UnprocessableEntityException extends AppError {
       message,
       HTTP_STATUS.UNPROCESSABLE_ENTITY,
       ErrorCodes.ERR_UNPROCESSABLE_ENTITY,
+    );
+  }
+}
+export class TooManyRequestsException extends AppError {
+  constructor(
+    message: string = HTTP_STATUS_MESSAGE[HTTP_STATUS.TOO_MANY_REQUESTS],
+  ) {
+    super(
+      message,
+      HTTP_STATUS.TOO_MANY_REQUESTS,
+      ErrorCodes.ERR_TOO_MANY_REQUESTS,
     );
   }
 }

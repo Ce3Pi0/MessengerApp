@@ -3,6 +3,7 @@ import {
   addFavoriteUserController,
   blockUserController,
   deleteUserController,
+  getAiUserController,
   getSingleUserController,
   getUsersController,
   removeFavoriteUserController,
@@ -14,6 +15,7 @@ import { passportAuthenticateJwt } from "../middlewares/authJwt.middleware";
 const userRoutes = Router()
   .use(passportAuthenticateJwt)
   .get("/all", getUsersController)
+  .get("/ai", getAiUserController)
   .get("/:id", getSingleUserController)
   .put("/update", updateUserController)
   .put("/add-favorite", addFavoriteUserController)

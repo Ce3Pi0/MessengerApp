@@ -21,11 +21,14 @@ export const NewChatPopover = memo(() => {
   const {
     fetchUsers,
     fetchExtraUsers,
+    fetchAiUser,
     users,
+    aiUser,
     isUsersLoading,
     gettingMoreUsers,
     createChat,
     isCreatingChat,
+    gettingAiUser,
   } = useChat();
 
   const { user } = useAuth();
@@ -68,6 +71,10 @@ export const NewChatPopover = memo(() => {
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
+
+  useEffect(() => {
+    fetchAiUser();
+  }, [fetchAiUser]);
 
   const toggleUserSelection = (id: string) => {
     setSelectedUsers((prev) =>
@@ -189,6 +196,14 @@ export const NewChatPopover = memo(() => {
                 disabled={isCreatingChat}
                 onClick={() => setIsGroupMode(true)}
               />
+              {aiUser && (
+                <AiChatUserItem
+                  user={aiUser}
+                  isLoading={loadingUserId === aiUser._id || gettingAiUser}
+                  disabled={loadingUserId !== null}
+                  onClick={handleCreateChat}
+                />
+              )}
               {filteredUsers?.map((otherUser) => {
                 return (
                   <ChatUserItem
@@ -281,6 +296,22 @@ const UserAvatar = memo(
 
 UserAvatar.displayName = "UserAvatar";
 
+const AiAvatar = memo(({ user }: { user: UserType }) => {
+  return (
+    <>
+      <AvatarWithBadge name={user.name} src={user.avatar ?? ""} />
+      <div className="flex-1 min-w-0">
+        <h5 className="text-[13.5px] font-medium truncate">{user.name}</h5>
+        <p className="text-xs text-muted-foreground">
+          Hey there! I'm your AI assistant
+        </p>
+      </div>
+    </>
+  );
+});
+
+AiAvatar.displayName = "AiAvatar";
+
 const NewGroupItem = memo(
   ({ disabled, onClick }: { disabled: boolean; onClick: () => void }) => (
     <button
@@ -340,6 +371,37 @@ const ChatUserItem = memo(
 );
 
 ChatUserItem.displayName = "ChatUserItem";
+
+const AiChatUserItem = memo(
+  ({
+    user,
+    isLoading,
+    disabled,
+    onClick,
+  }: {
+    user: UserType;
+    disabled: boolean;
+    isLoading: boolean;
+    onClick: (id: string) => void;
+  }) => {
+    const handleClick = () => {
+      onClick(user._id);
+    };
+
+    return (
+      <button
+        className="w-full flex items-center gap-2 p-2 rounded-sm hover:bg-accent transition-colors text-left disabled:opacity-50"
+        disabled={isLoading || disabled}
+        onClick={handleClick}
+      >
+        <AiAvatar user={user} />
+        {isLoading && <Spinner className="absolute right-2 w-4 h-4 ml-auto" />}
+      </button>
+    );
+  },
+);
+
+AiChatUserItem.displayName = "AiChatUserItem";
 
 const GroupUserItem = memo(
   ({

@@ -4,6 +4,7 @@ import { HTTP_STATUS } from "../config/http.config";
 import {
   addFavoriteUserService,
   blockUserService,
+  getAiUserService,
   getSingleUserService,
   getUsersService,
   removeFavoriteUserService,
@@ -26,6 +27,17 @@ export const getUsersController = asyncHandler(
       message: "Users retrieved successfully",
       next: nextCursor,
       users,
+    });
+  },
+);
+
+export const getAiUserController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const aiUser = await getAiUserService();
+
+    return res.status(HTTP_STATUS.OK).json({
+      message: "AI User retrieved successfully",
+      aiUser,
     });
   },
 );

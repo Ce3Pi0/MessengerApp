@@ -248,6 +248,10 @@
           "query": {
             "cursor": "string"
           },
+          "ai": {
+            "methods": "GET",
+            "required": null
+          },
           ":id": {
             "methods": "GET",
             "required": null
