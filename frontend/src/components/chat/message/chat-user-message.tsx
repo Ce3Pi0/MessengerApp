@@ -16,6 +16,7 @@ import MessageStatus from "./message-status";
 import GroupChatMessageStatus from "./group-chat-message-status";
 import { useChat } from "@/hooks/use-chat";
 import TypingIndicator from "../typing-indicator";
+import UnknownUserMessage from "./unknown-user-message";
 
 interface Props {
   user: UserType | null;
@@ -63,156 +64,167 @@ const ChatUserMessage = ({
 
   const [isPickerOpen, setIsPickerOpen] = useState(false);
 
+  const isUnknownUser = message.sender === null || message.sender === undefined;
+
   return (
-    <div className={containerClass}>
-      {!isCurrentUser && (
-        <div className="shrink-0 flex items-start">
-          <AvatarWithBadge
-            name={message.sender?.name || "Unknown"}
-            src={message.sender?.avatar || ""}
-          />
+    <>
+      {isUnknownUser ? (
+        <UnknownUserMessage />
+      ) : (
+        <div className={containerClass}>
+          {!isCurrentUser && (
+            <div className="shrink-0 flex items-start">
+              <AvatarWithBadge
+                name={message.sender?.name || "Unknown"}
+                src={message.sender?.avatar || ""}
+              />
+            </div>
+          )}
+
+          <div className={contentWrapperClass}>
+            <div
+              className={cn(
+                "flex items-center gap-1",
+                isCurrentUser && "flex-row-reverse",
+              )}
+            >
+              <div className={messageClass}>
+                {/* {Header} */}
+                <MessageHeader message={message} user={user} />
+                {message.replyTo && (
+                  <ReplyToBox
+                    isCurrentUser={isCurrentUser}
+                    message={message}
+                    user={user}
+                  />
+                )}
+
+                {message?.image && (
+                  <img
+                    src={message?.image || ""}
+                    alt=""
+                    className="lg:max-w-xs w-full h-auto max-w-full block object-cover rounded-md"
+                  />
+                )}
+
+                {message.content && (
+                  <Markdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      code(props) {
+                        const { children, className } = props;
+                        const isBlock = className?.includes("language-");
+
+                        if (isBlock) {
+                          return (
+                            <pre className="overflow-x-auto rounded-md bg-zinc-950 p-4 text-zinc-100">
+                              <code className={className}>{children}</code>
+                            </pre>
+                          );
+                        }
+
+                        return (
+                          <code className="rounded bg-muted px-1 py-0.5 text-sm">
+                            {children}
+                          </code>
+                        );
+                      },
+                    }}
+                  >
+                    {message.content}
+                  </Markdown>
+                )}
+                {isCurrentUser && !isAiChat && (
+                  <MessageStatus message={message} />
+                )}
+                {message?.streaming && !message.content && <TypingIndicator />}
+              </div>
+
+              {/* Emoji Picker icon button */}
+              {!isAiChat && (
+                <MessageReaction
+                  messageId={message._id}
+                  isPickerOpen={isPickerOpen}
+                  setIsPickerOpen={setIsPickerOpen}
+                />
+              )}
+
+              {/* Reply button */}
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => onReply(message)}
+                className="flex opacity-0 group-hover:opacity-100 transition-opacity rounded-full size-8!"
+              >
+                <ReplyIcon
+                  size={16}
+                  className={cn(
+                    "text-gray-500 dark:text-white stroke-[1.9]!",
+                    isCurrentUser && "scale-x-[-1]",
+                  )}
+                />
+              </Button>
+
+              {/* Edit button */}
+              {isCurrentUser && !isAiChat && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onEdit(message)}
+                  className="flex opacity-0 group-hover:opacity-100 transition-opacity rounded-full size-8!"
+                >
+                  <Edit2Icon
+                    size={16}
+                    className="text-gray-500 dark:text-white stroke-[1.9]! scale-x-[-1]"
+                  />
+                </Button>
+              )}
+
+              {/* Delete button */}
+              {isCurrentUser && !isAiChat && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => onDelete(message._id)}
+                  className="flex opacity-0 group-hover:opacity-100 transition-opacity rounded-full size-8!"
+                >
+                  <Trash2
+                    size={16}
+                    className="text-red-400 stroke-[1.9]! scale-x-[-1]"
+                  />
+                </Button>
+              )}
+            </div>
+            <MessageReactionsInfo
+              messageId={message._id}
+              currentUserId={user?._id}
+              isCurrentUser={isCurrentUser}
+            />
+            <CopyToClipboard
+              text={
+                message?.content ? message?.content : message.image?.toString()!
+              }
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <Copy size={14} />
+              </Button>
+            </CopyToClipboard>
+
+            {singleChat?.chat.isGroup && (
+              <GroupChatMessageStatus
+                message={message}
+                nextMessage={nextMessage}
+              />
+            )}
+          </div>
         </div>
       )}
-
-      {/* {message.streaming || */}
-      {/* ((message.content || message.image) && ( */}
-      <div className={contentWrapperClass}>
-        <div
-          className={cn(
-            "flex items-center gap-1",
-            isCurrentUser && "flex-row-reverse",
-          )}
-        >
-          <div className={messageClass}>
-            {/* {Header} */}
-            <MessageHeader message={message} user={user} />
-            {message.replyTo && (
-              <ReplyToBox
-                isCurrentUser={isCurrentUser}
-                message={message}
-                user={user}
-              />
-            )}
-
-            {message?.image && (
-              <img
-                src={message?.image || ""}
-                alt=""
-                className="lg:max-w-xs w-full h-auto max-w-full block object-cover rounded-md"
-              />
-            )}
-
-            {message.content && (
-              <Markdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  code(props) {
-                    const { children, className } = props;
-                    const isBlock = className?.includes("language-");
-
-                    if (isBlock) {
-                      return (
-                        <pre className="overflow-x-auto rounded-md bg-zinc-950 p-4 text-zinc-100">
-                          <code className={className}>{children}</code>
-                        </pre>
-                      );
-                    }
-
-                    return (
-                      <code className="rounded bg-muted px-1 py-0.5 text-sm">
-                        {children}
-                      </code>
-                    );
-                  },
-                }}
-              >
-                {message.content}
-              </Markdown>
-            )}
-            {isCurrentUser && !isAiChat && <MessageStatus message={message} />}
-            {message?.streaming && !message.content && <TypingIndicator />}
-          </div>
-
-          {/* Emoji Picker icon button */}
-          {!isAiChat && (
-            <MessageReaction
-              messageId={message._id}
-              isPickerOpen={isPickerOpen}
-              setIsPickerOpen={setIsPickerOpen}
-            />
-          )}
-
-          {/* Reply button */}
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => onReply(message)}
-            className="flex opacity-0 group-hover:opacity-100 transition-opacity rounded-full size-8!"
-          >
-            <ReplyIcon
-              size={16}
-              className={cn(
-                "text-gray-500 dark:text-white stroke-[1.9]!",
-                isCurrentUser && "scale-x-[-1]",
-              )}
-            />
-          </Button>
-
-          {/* Edit button */}
-          {isCurrentUser && !isAiChat && (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => onEdit(message)}
-              className="flex opacity-0 group-hover:opacity-100 transition-opacity rounded-full size-8!"
-            >
-              <Edit2Icon
-                size={16}
-                className="text-gray-500 dark:text-white stroke-[1.9]! scale-x-[-1]"
-              />
-            </Button>
-          )}
-
-          {/* Delete button */}
-          {isCurrentUser && !isAiChat && (
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => onDelete(message._id)}
-              className="flex opacity-0 group-hover:opacity-100 transition-opacity rounded-full size-8!"
-            >
-              <Trash2
-                size={16}
-                className="text-red-400 stroke-[1.9]! scale-x-[-1]"
-              />
-            </Button>
-          )}
-        </div>
-        <MessageReactionsInfo
-          messageId={message._id}
-          currentUserId={user?._id}
-          isCurrentUser={isCurrentUser}
-        />
-        <CopyToClipboard
-          text={
-            message?.content ? message?.content : message.image?.toString()!
-          }
-        >
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-xs"
-            className="opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <Copy size={14} />
-          </Button>
-        </CopyToClipboard>
-
-        {singleChat?.chat.isGroup && (
-          <GroupChatMessageStatus message={message} nextMessage={nextMessage} />
-        )}
-      </div>
-    </div>
+    </>
   );
 };
 

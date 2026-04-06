@@ -1,12 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import axios from "axios";
-import {
-  accessTokenExpiredError,
-  handleRefresh,
-  tooManyRequestsError,
-} from "./helper";
+import { accessTokenExpiredError, handleRefresh } from "./helper";
 import { useChat } from "@/hooks/use-chat";
-import { toast } from "sonner";
 
 export const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL + "api/v1",
@@ -17,13 +12,6 @@ API.interceptors.response.use(
   (response) => response,
   async (err) => {
     const originalRequest = err.config;
-
-    if (tooManyRequestsError(err)) {
-      toast.error("Too many requests. Please try again later.");
-      return Promise.reject(
-        new Error("Too many requests. Please try again later."),
-      );
-    }
 
     if (
       accessTokenExpiredError(err, useAuth.getState().user) &&

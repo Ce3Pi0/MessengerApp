@@ -5,7 +5,7 @@ import {
 } from "../config/message-populate.config";
 import MessageModel from "../models/message.model";
 import UserModel from "../models/user.model";
-import { NotFoundException } from "./app-error";
+import { NotFoundException, TooManyRequestsException } from "./app-error";
 import { google } from "@ai-sdk/google";
 import { emitChatAI, emitLastUpdateToParticipant } from "../lib/socket";
 
@@ -53,9 +53,20 @@ export const getAIResponse = async (chatId: string, userId: string) => {
     messages: formattedMessages,
     system:
       "You are a Messenger AI, a helpful and friendly assistant. Respond only with text and attend to the last user message only.",
+    maxRetries: 0,
+    onError() {
+      emitChatAI({
+        chatId,
+        chunk: null,
+        done: true,
+      });
+
+      throw new TooManyRequestsException(
+        "Too many AI requests. Please try again later.",
+      );
+    },
   });
 
-  //TODO: Add error handling when quota reached
   let fullResponse = "";
   for await (const chunk of result.textStream) {
     emitChatAI({
