@@ -4,22 +4,14 @@ import { useChat } from "@/hooks/use-chat";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AlertTriangleIcon } from "lucide-react";
 
-const UnknownUserMessage = () => {
+interface Props {
+  message: MessageType;
+}
+
+const UnknownUserMessage = ({ message }: Props) => {
   const { singleChat } = useChat();
 
   if (!singleChat) return null;
-
-  const unknownMessage: MessageType = {
-    _id: "0",
-    chatId: singleChat?.chat._id,
-    content: "There was an error receiving the message!",
-    image: null,
-    replyTo: null,
-    sender: null,
-    readBy: [],
-    createdAt: new Date().toString(),
-    updatedAt: new Date().toString(),
-  };
 
   return (
     <div className="group flex gap-2 py-3 px-4">
@@ -39,8 +31,8 @@ const UnknownUserMessage = () => {
       <div className="max-w-[70%] flex flex-col relative">
         <div className="flex items-center gap-1">
           <div className="min-w-50 max-w-100 px-3 py-2 text-sm wrap-break-words shadow-sm bg-[#F5F5F5] dark:bg-accent rounded-bl-xl rounded-r-xl">
-            <MessageHeader message={unknownMessage} user={null} />
-            <p className="text-destructive">{unknownMessage.content}</p>
+            <MessageHeader message={message} user={null} />
+            <p className="text-destructive">{message.content}</p>
           </div>
         </div>
       </div>

@@ -49,12 +49,15 @@ export const getAIResponse = async (chatId: string, userId: string) => {
   });
 
   const result = streamText({
-    model: google("gemini-2.5-flash"), // TODO:Add -lite
+    model: google("gemini-2.5-flash-lite"),
     messages: formattedMessages,
     system:
       "You are a Messenger AI, a helpful and friendly assistant. Respond only with text and attend to the last user message only.",
     maxRetries: 0,
-    onError() {
+    onError(err) {
+      // FIXME: Testing only
+      console.error(err);
+
       emitChatAI({
         chatId,
         chunk: null,

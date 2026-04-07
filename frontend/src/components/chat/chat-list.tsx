@@ -87,7 +87,6 @@ const ChatList = () => {
     if (!socket) return;
 
     const handleChangeChat = (chat: any) => {
-      console.log("Change chat", chat);
       changeChat(chat);
     };
 
@@ -185,7 +184,6 @@ const ChatList = () => {
       user: UserType;
       seenMessages: string[];
     }) => {
-      console.log("Read messages", data);
       readMessages(data.user, data.seenMessages);
     };
 

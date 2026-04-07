@@ -10,7 +10,11 @@ import type {
 import { toast } from "sonner";
 import { create } from "zustand";
 import { useAuth } from "./use-auth";
-import { generateUUID } from "@/lib/helper";
+import {
+  createUnknownMessage,
+  generateUUID,
+  tooManyRequestsError,
+} from "@/lib/helper";
 
 interface ChatState {
   chats: ChatType[];
@@ -400,6 +404,7 @@ export const useChat = create<ChatState>()((set, get) => ({
     if (!singleChat || singleChat.chat._id !== chatId) return;
 
     const messages = singleChat.messages;
+
     const msgIndex = tempId ? messages.findIndex((m) => m._id === tempId) : -1;
 
     let updatedMessages;
@@ -619,9 +624,13 @@ export const useChat = create<ChatState>()((set, get) => ({
       get().addOrUpdateMessage(chatId, newMessage, tempMsgId);
 
       // Replace temp AI message
-      if (isAiChat && aiSender)
+      if (isAiChat && aiResponseContent)
         get().addOrUpdateMessage(chatId, aiResponseContent, tempAiMsgId);
     } catch (err: any) {
+      if (tooManyRequestsError(err)) {
+        const unknownMessage: MessageType = createUnknownMessage(chatId);
+        get().addOrUpdateMessage(chatId, unknownMessage, tempAiMsgId);
+      }
       toast.error(err?.response?.data?.message || "Failed to send message");
     } finally {
       set({ isSendingMessage: false });

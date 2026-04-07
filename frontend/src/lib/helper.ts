@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { useSocket } from "@/hooks/use-socket";
 import { API } from "./axios-client";
 import type { UserType } from "@/types/auth.type";
-import type { ChatType } from "@/types/chat.types";
+import type { ChatType, MessageType } from "@/types/chat.types";
 
 export const isUserOnline = (userId?: string): boolean => {
   if (!userId) return false;
@@ -93,3 +93,19 @@ export const formatChatTime = (date: string | Date) => {
 export const generateUUID = (): string => {
   return uuidv4();
 };
+
+export const createUnknownMessage = (chatId: string): MessageType => {
+  return {
+    _id: "0",
+    chatId,
+    content: "There was an error receiving the message!",
+    image: null,
+    replyTo: null,
+    sender: null,
+    readBy: [],
+    createdAt: new Date().toString(),
+    updatedAt: new Date().toString(),
+  };
+};
+
+export const tooManyRequestsError = (err: any) => err.response?.status === 429;

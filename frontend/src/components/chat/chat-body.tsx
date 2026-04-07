@@ -36,8 +36,12 @@ const ChatBody = ({ chatId, messages, onReply, onEdit, onDelete }: Props) => {
       prevLastMessageIdRef.current &&
       currentLastMessageId !== prevLastMessageIdRef.current
     ) {
+      const lastMessage = messages[messages.length - 1];
+      const isStreaming = lastMessage.streaming;
       setTimeout(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+        bottomRef.current?.scrollIntoView({
+          behavior: isStreaming ? "auto" : "smooth",
+        });
       }, 0);
 
       setTypingUsers([]);
@@ -120,7 +124,6 @@ const ChatBody = ({ chatId, messages, onReply, onEdit, onDelete }: Props) => {
       chatId: string;
       chunk: string | null;
       done: boolean;
-      message: MessageType | null;
     }) => {
       if (streamChatId !== chatId) return;
 

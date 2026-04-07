@@ -1,7 +1,8 @@
+import path from "path";
 import http from "http";
 import cookieParser from "cookie-parser";
 import "dotenv/config";
-import express from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 import passport from "passport";
 import { Env } from "./config/env.config";
@@ -11,7 +12,6 @@ import "./config/jwt.strategy.config";
 import router from "./routes";
 import { rateLimiter } from "./config/rateLimiter.config";
 import { rateSlowDown } from "./config/rateSlowDown.config";
-import path from "path";
 import { initializeSocket } from "./lib/socket";
 
 const app = express();
@@ -30,13 +30,23 @@ app.use(
 );
 app.use(passport.initialize());
 
-app.get("/", (_, res) => {
+app.get("/docs", (_, res) => {
   res.sendFile(path.join(process.cwd(), "docs.json"));
 });
 
 app.use("/api", rateLimiter);
 app.use("/api", rateSlowDown);
 app.use("/api/v1", router);
+
+if (Env.NODE_ENV === "production") {
+  const clientPath = path.resolve(__dirname, "../../frontend/dist");
+
+  //Serve static files
+  app.use(express.static(clientPath));
+  app.get(/^(?!\/api).*/, (req: Request, res: Response) => {
+    res.sendFile(path.join(clientPath, "index.html"));
+  });
+}
 
 app.use(errorHandler);
 

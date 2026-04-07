@@ -69,7 +69,7 @@ const ChatUserMessage = ({
   return (
     <>
       {isUnknownUser ? (
-        <UnknownUserMessage />
+        <UnknownUserMessage message={message} />
       ) : (
         <div className={containerClass}>
           {!isCurrentUser && (

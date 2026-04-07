@@ -115,6 +115,7 @@ export const getUserChatService = async (
   const unseenMessages = await MessageModel.find({
     chatId: { $in: chats.map((chat) => chat._id) },
     readBy: { $nin: [userId] },
+    isAiChat: false,
   });
 
   const next =
