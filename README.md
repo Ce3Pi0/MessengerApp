@@ -20,6 +20,22 @@ Repository: https://github.com/Ce3Pi0/MessengerApp
 
 ## Table of contents
 - [Getting Started](#getting-started)
+- [Prerequisites](#prerequisites)
+- [Installing](#installing)
+- [Environment Variables](#environment-variables)
+- [System Architecture](#system-architecture)
+- [API Architecture](#api-architecture)
+- [Real-Time WebSocket Events](#real-time-websocket-events)
+- [Database Design](#database-design)
+- [AI System Integration](#ai-system-integration)
+- [Deployment Architecture](#deployment-architecture)
+- [Testing Strategy](#testing-strategy)
+- [Coding Style](#coding-style)
+- [Deployment](#deployment)
+- [Screenshots](#screenshots)
+- [Built With](#built-with)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
 
 <a id="getting-started"></a>
 ## Getting Started
@@ -28,6 +44,7 @@ This project is a full-stack application built with **React (Vite)**, **Express 
 
 ---
 
+<a id="prerequisites"></a>
 ## Prerequisites
 
 - Node.js (v18+)
@@ -38,6 +55,7 @@ This project is a full-stack application built with **React (Vite)**, **Express 
 
 ---
 
+<a id="installing"></a>
 ## Installing
 
 Clone the repository:
@@ -54,6 +72,7 @@ cd frontend && npm install
 cd ../backend && npm install
 ```
 
+<a id="environment-variables"></a>
 ## Environment Variables
 
 Create .env files in both frontend and backend:
@@ -96,6 +115,7 @@ Create .env files in both frontend and backend:
   SYSTEM_USER_ID
   ```
 
+<a id="running-the-project"></a>
 ## Running the Project
 
 - Backend:
@@ -116,6 +136,7 @@ Create .env files in both frontend and backend:
 - Frontend: http://localhost:5173
 - Backend: http://localhost:8000
 
+<a id="system-architecture"></a>
 ## System Architecture
 
 ### High Level Architecture
@@ -145,6 +166,7 @@ Create .env files in both frontend and backend:
      - Group Chat Backgrounds
      - Chat Media
 
+<a id="api-architecture"></a>
 ## API Architecture
 
 ### Base URL
@@ -223,6 +245,7 @@ Create .env files in both frontend and backend:
   | POST | /api/v1/reaction/send | Send reaction |
   | DELETE | /api/v1/reaction/delete | Remove reaction |
 
+<a id="real-time-websocket-events"></a>
 ## Real-Time WebSocket Events
 
 - ### Connection Flow
@@ -262,7 +285,7 @@ Create .env files in both frontend and backend:
   ![SendingMessageDataFlow](https://github.com/user-attachments/assets/05f5525a-d25c-4fbf-8925-634c18d8e8b0)
 
  
-
+<a id="database-design"></a>
 ## Database Design
 
 
@@ -342,6 +365,7 @@ Create .env files in both frontend and backend:
   - User.blocked -> User (1 -> N/0)
 
 
+<a id="ai-system-integration"></a>
 ## AI System Integration
 
 - ### Flow
@@ -351,6 +375,7 @@ Create .env files in both frontend and backend:
 - ### Usage
   Context-based AI responses/replies
 
+<a id="deployment-architecture"></a>
 ## Deployment Architecture
 
 ```
@@ -361,6 +386,7 @@ Media -> Cloudinary
 AI -> Google Gemini API
 ```
 
+<a id="testing-strategy"></a>
 ## Testing Strategy
 
 This project does not include automated unit tests.
@@ -379,11 +405,13 @@ This project does not include automated unit tests.
   - Messages
   - Reactions
 
+<a id="coding-style"></a>
 ## Coding Style
 
 - ESLint
 - Prettier
 
+<a id="deployment"></a>
 ## Deployment
 
 Deployed on Render.
@@ -394,6 +422,7 @@ Build command:
 cd frontend && npm install --include=dev && npm run build && cd ../backend && npm install --include=dev && npm run build
 ```
 
+<a id="screenshots"></a>
 ## Screenshots:
 
 - ### Login Page
@@ -416,6 +445,7 @@ cd frontend && npm install --include=dev && npm run build && cd ../backend && np
 
 <img width="1252" height="717" alt="image" src="https://github.com/user-attachments/assets/06529b1c-ba75-448b-84bd-0dba7eae3e0c" />
 
+<a id="built-with"></a>
 ## Built With
 
 - React (Vite)
@@ -425,6 +455,7 @@ cd frontend && npm install --include=dev && npm run build && cd ../backend && np
 - Cloudinary
 - Gemini AI
 
+<a id="license"></a>
 ## License
 
 This project is based on:
@@ -435,6 +466,7 @@ License terms:
 - Allowed for learning and portfolio use
 - Not allowed for commercial use or redistribution without permission
 
+<a id="acknowledgments"></a>
 ## Acknowledgments
 
 - TechWithEmmaYT (base project inspiration)
