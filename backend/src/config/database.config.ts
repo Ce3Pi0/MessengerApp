@@ -29,7 +29,6 @@ const cleanupTask = async () => {
 
     if (staleUsers.length > 0) {
       for (const user of staleUsers) {
-        // TODO: Log user email
         sendMail({
           from: Env.SENDER_EMAIL,
           to: user.email!,

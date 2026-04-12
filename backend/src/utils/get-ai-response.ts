@@ -55,7 +55,6 @@ export const getAIResponse = async (chatId: string, userId: string) => {
       "You are a Messenger AI, a helpful and friendly assistant. Respond only with text and attend to the last user message only.",
     maxRetries: 0,
     onError(err) {
-      // FIXME: Testing only
       console.error(err);
 
       emitChatAI({
