@@ -19,8 +19,9 @@ Repository: https://github.com/Ce3Pi0/MessengerApp
 ---
 
 ## Table of contents
+- [Getting Started](#getting-started)
 
-
+<a id="getting-started"></a>
 ## Getting Started
 
 This project is a full-stack application built with **React (Vite)**, **Express (TypeScript)**, and **MongoDB**, featuring real-time messaging and AI integration.
