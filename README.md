@@ -158,7 +158,7 @@ Create .env files in both frontend and backend:
 1. #### Stateless Authentication
    - JWT-Based Authentication
    - Access + Refresh Token System
-   - OAuth Intefration via Google
+   - OAuth Integration via Google
 1. #### Cloud-Backed Media Layer
    - Cloudinary Handles:
      - Profile Images
