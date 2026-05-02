@@ -6,11 +6,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import type { LoginFormSchemaType } from "@/validators/auth.validator";
+import type {
+  LoginFormSchemaType,
+  RegisterFormSchemaType,
+} from "@/validators/auth.validator";
 import type { Control } from "react-hook-form";
 
 interface Props {
-  control: Control<LoginFormSchemaType, any, LoginFormSchemaType>;
+  control:
+    | Control<LoginFormSchemaType, any, LoginFormSchemaType>
+    | Control<RegisterFormSchemaType, any, RegisterFormSchemaType>;
   fieldName: string;
   name: string;
   type?: React.HTMLInputTypeAttribute;
@@ -26,8 +31,8 @@ const CustomFormField = ({
 }: Props) => {
   return (
     <FormField
-      control={control}
-      name={name === "email" ? "email" : "password"}
+      control={control as Control<any, any, any>}
+      name={name}
       render={({ field }) => (
         <FormItem>
           <FormLabel>{fieldName}</FormLabel>
