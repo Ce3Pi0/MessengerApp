@@ -145,7 +145,7 @@ export const useAuth = create<AuthState>()(
               "Password reset email could not be sent",
           );
         } finally {
-          set({ isLoading: true });
+          set({ isLoading: false });
         }
       },
       updatePassword: async (

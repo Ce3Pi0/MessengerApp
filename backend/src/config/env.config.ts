@@ -7,10 +7,7 @@ export const Env = {
   API_URL: getEnv("API_URL", "http://localhost:8000/api/"),
   API_VERSION: getEnv("API_VERSION", "v1/"),
   MONGO_URI: getEnv("MONGO_URI"),
-  SMTP_HOST: getEnv("SMTP_HOST", "smtp.gmail.com"),
-  SMTP_PORT: getEnv("SMTP_PORT", "587"),
   SENDER_EMAIL: getEnv("SENDER_EMAIL"),
-  SENDER_PASS: getEnv("SENDER_PASS"),
   GOOGLE_CLIENT_ID: getEnv("GOOGLE_CLIENT_ID"),
   GOOGLE_CLIENT_SECRET: getEnv("GOOGLE_CLIENT_SECRET"),
   GOOGLE_URL: getEnv("GOOGLE_URL", "auth/google"),
@@ -28,4 +25,5 @@ export const Env = {
   CLOUDINARY_API_SECRET: getEnv("CLOUDINARY_API_SECRET"),
   SYSTEM_USER_ID: getEnv("SYSTEM_USER_ID"),
   GOOGLE_GENERATIVE_AI_API_KEY: getEnv("GOOGLE_GENERATIVE_AI_API_KEY"),
+  BREVO_API_KEY: getEnv("BREVO_API_KEY"),
 } as const;

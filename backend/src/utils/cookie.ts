@@ -1,4 +1,3 @@
-import jwt from "jsonwebtoken";
 import { Response } from "express";
 import { Env } from "../config/env.config";
 

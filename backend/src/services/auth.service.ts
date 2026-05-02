@@ -166,7 +166,6 @@ export const registerService = async (body: RegisterSchemaType) => {
   const confirmToken: string = signConfirmToken(newUser);
 
   sendMail({
-    from: Env.SENDER_EMAIL,
     to: newUser.email!,
     subject: `Verify You New Account ${newUser.name}`,
     text: `This token will expire in 15 minutes!: ${Env.API_URL}${Env.API_VERSION}auth/verify/${confirmToken}`,
@@ -304,7 +303,6 @@ export const resendVerifyService = async (userEmail: EmailSchemaType) => {
   const confirmToken: string = signConfirmToken(user);
 
   sendMail({
-    from: Env.SENDER_EMAIL,
     to: user.email!,
     subject: `Verify You New Account ${user.name}`,
     text: `This token will expire in 15 minutes!: ${Env.API_URL}${Env.API_VERSION}auth/verify/${confirmToken}`,
@@ -362,7 +360,6 @@ export const sendForgotPasswordService = async (userEmail: EmailSchemaType) => {
   const forgotPasswordToken: string = signForgotPasswordToken(user);
 
   sendMail({
-    from: Env.SENDER_EMAIL,
     to: user.email!,
     subject: `Update Your Password ${user.name}`,
     text: `This token will expire in 15 minutes!: ${Env.API_URL}${Env.API_VERSION}auth/forgot-password/${forgotPasswordToken}`,

@@ -30,7 +30,6 @@ const cleanupTask = async () => {
     if (staleUsers.length > 0) {
       for (const user of staleUsers) {
         sendMail({
-          from: Env.SENDER_EMAIL,
           to: user.email!,
           subject: "Your account has been deleted",
           text: "Your account on Messenger Application has been deleted due to inactivity",
