@@ -109,10 +109,8 @@ Create .env files in both frontend and backend:
   PORT
   SALT
   SENDER_EMAIL
-  SENDER_PASS
-  SMTP_HOST
-  SMTP_PORT
   SYSTEM_USER_ID
+  BREVO_API_KEY
   ```
 
 <a id="running-the-project"></a>
@@ -141,7 +139,7 @@ Create .env files in both frontend and backend:
 
 ### High Level Architecture
 
-![MessengerAppSystemArchitecture](https://github.com/user-attachments/assets/9dafe6ee-0f92-455e-882c-1d95b582a49d)
+<img width="558" height="493" alt="MessengerAppSystemArchitecture" src="https://github.com/user-attachments/assets/472dd420-1019-4d08-b47f-9a7e91a6efe0" />
 
 ### Architecture Principles
 
@@ -165,6 +163,8 @@ Create .env files in both frontend and backend:
      - Chat Avatars
      - Group Chat Backgrounds
      - Chat Media
+1. #### Email API
+     - Email Delivery Through Brevo
 
 <a id="api-architecture"></a>
 ## API Architecture
