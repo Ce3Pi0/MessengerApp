@@ -454,6 +454,7 @@ cd frontend && npm install --include=dev && npm run build && cd ../backend && np
 - WebSockets
 - Cloudinary
 - Gemini AI
+- Brevo
 
 <a id="license"></a>
 ## License
