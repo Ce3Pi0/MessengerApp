@@ -24,6 +24,10 @@ export const handleRefresh = async (
   } catch (err: any) {
     setUsers({ user: null });
     setChats({ newChats: [], newNext: null });
+
+    useSocket.getState().disconnectSocket();
+
+    window.location.href = "/";
     return false;
   }
 };
