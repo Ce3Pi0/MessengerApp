@@ -33,7 +33,6 @@ import {
   UnauthorizedException,
 } from "../utils/app-error";
 import { Env } from "../config/env.config";
-import { USER_POPULATE_CONFIG } from "../config/user-populate.config";
 
 export const googleAuthController = asyncHandler(
   async (req: Request, res: Response) => {

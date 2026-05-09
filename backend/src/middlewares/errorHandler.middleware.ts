@@ -2,7 +2,6 @@ import { ErrorRequestHandler } from "express";
 import { HTTP_STATUS, HTTP_STATUS_MESSAGE } from "../config/http.config";
 import {
   AppError,
-  BadRequestException,
   ErrorCodes,
   ForbiddenException,
   UnauthorizedException,
